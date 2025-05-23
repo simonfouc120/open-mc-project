@@ -7,3 +7,9 @@ statepoint*
 summary*
 tallies.out
 tallies.xml
+
+
+# Ignore  file from openMC plotter 
+plot_settings.pkl
+
+__pycache__
