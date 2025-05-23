@@ -2,8 +2,11 @@ import openmc
 import os 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from pathlib import Path
+from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
+cwd = Path.cwd()
 
-os.environ["OPENMC_CROSS_SECTIONS"] = "/Users/simonfoucambert/endfb-viii.0-hdf5/cross_sections.xml"
+os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 # Création des matériaux
 cs137 = openmc.Material(name="Cs137")
