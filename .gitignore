@@ -1,0 +1,9 @@
+
+# Ignore output files from Open MC simulation
+geometry.xml
+materials.xml
+settings.xml
+statepoint*
+summary*
+tallies.out
+tallies.xml
