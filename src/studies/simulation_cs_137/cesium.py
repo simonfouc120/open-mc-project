@@ -54,17 +54,20 @@ geometry = openmc.Geometry(universe)
 source = openmc.Source()
 source.space = openmc.stats.Point((0, 0, 0))
 source.energy = openmc.stats.Discrete([0.662], [1.0])  # Énergie du photon de 662 keV pour Cs137
+# source.energy = openmc.data.decay_photon_energy("Ba137_m1")
 source.particle = "photon"
+source.strength = 1e1
 
 # Création des tallies
+
+# Tally du calcul du flux dans le détecteur en p/p-source
 tally = openmc.Tally(name="detector_tally")
 tally.scores = ["flux"]
 tally.filters = [openmc.CellFilter(detector_cell)]
-
 tallies = openmc.Tallies([tally])
 
+# Mesh tally de dose 
 mesh = openmc.RegularMesh()
-
 mesh.dimension = [500, 500, 1]  # XY
 mesh.lower_left = [-50.0, -50.0, -1.0]
 mesh.upper_right = [50.0, 50.0, 1.0]
@@ -73,25 +76,27 @@ mesh_filter = openmc.MeshFilter(mesh)
 mesh_tally = openmc.Tally(name='flux_mesh')
 mesh_tally.filters = [mesh_filter]
 mesh_tally.scores = ['flux']
-
 tallies.append(mesh_tally)
 
+# Tally pour le spectre d'énergie déposée dans le détecteur
 energy_bins = np.linspace(1e-3, 1.0, 500)  # de 1 keV à 2 MeV en 500 bins
 energy_filter = openmc.EnergyFilter(energy_bins)
+cell_filter = openmc.CellFilter(detector_cell)
 
-# Tally pour le spectre d'énergie déposée dans le détecteur
-energy_dep_tally = openmc.Tally(name="energy_deposition_spectrum")
-energy_dep_tally.filters = [openmc.CellFilter(detector_cell), energy_filter]
-energy_dep_tally.scores = ["heating"]
+energy_dep_tally = openmc.Tally(name="pulse-height")
+energy_dep_tally.filters = [cell_filter, energy_filter]
+energy_dep_tally.scores = ["pulse-height"]
 
 tallies.append(energy_dep_tally)
+
 
 
 # Configuration de la simulation
 settings = openmc.Settings()
 settings.batches = 5
-settings.particles = 10000000
+settings.particles = 1000000
 settings.source = source
+settings.photon_transport = True 
 settings.run_mode = "fixed source"
 
 # Export des fichiers nécessaires pour la simulation
@@ -105,7 +110,8 @@ if os.path.exists("summary.h5"):
     os.remove("summary.h5")
 
 if os.path.exists("statepoint.5.h5"):
-    os.remove("statepoint.5.h5")
+    os.remove("statepoint.5.h5")  #TODO à mettre en fonction dans utils 
+
 
 openmc.run()
 
@@ -146,12 +152,12 @@ plt.show()
 ### spectre ####
 
 sp = openmc.StatePoint("statepoint.5.h5")
-tally = sp.get_tally(name="energy_deposition_spectrum")
+tally = sp.get_tally(name="pulse-height")
+pulse_height_values = tally.get_values(scores=['pulse-height']).flatten()
 
 # Récupération des énergies moyennes par bin (approximation)
-energy_filter = tally.filters[1]
-energy_bins = energy_filter.values
-bin_centers = 0.5 * (np.array(energy_bins[:-1]) + np.array(energy_bins[1:]))
+energy_bin_centers = energy_bins[1:] + 0.5 * (energy_bins[1] - energy_bins[0])
+
 
 # Moyenne et écart-type de l'énergie déposée
 spectrum = tally.mean.flatten()
@@ -159,13 +165,13 @@ spectrum_std = tally.std_dev.flatten()
 
 # Tracé
 plt.figure()
-plt.plot(bin_centers, spectrum, drawstyle='steps-mid', label='Énergie déposée')
-plt.fill_between(bin_centers, spectrum - spectrum_std, spectrum + spectrum_std, alpha=0.3)
+# plt.plot(bin_centers, spectrum, drawstyle='steps-mid', label='Énergie déposée')
+plt.semilogy(energy_bin_centers, spectrum)
+# plt.fill_between(bin_centers, spectrum - spectrum_std, spectrum + spectrum_std, alpha=0.3)
 plt.xlabel("Énergie [MeV]")
-plt.ylabel("Énergie déposée [a.u.]")
+plt.ylabel("Occurence")
 plt.title("Spectre d'énergie déposée dans le détecteur")
 plt.grid(True)
-plt.yscale("log")
 plt.legend()
 plt.tight_layout()
 plt.show()
