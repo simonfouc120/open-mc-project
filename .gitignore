@@ -7,7 +7,7 @@ statepoint*
 summary*
 tallies.out
 tallies.xml
-
+plot*
 
 # Ignore  file from openMC plotter 
 plot_settings.pkl
