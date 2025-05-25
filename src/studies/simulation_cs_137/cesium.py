@@ -150,6 +150,7 @@ plt.title('Carte de flux XY (échelle log)')
 plt.xlabel('X [cm]')
 plt.ylabel('Y [cm]')
 plt.tight_layout()
+plt.savefig(cwd / "mesh_tally.png")
 plt.show()
 
 ### spectre ####
@@ -172,5 +173,6 @@ plt.ylabel("Occurence")
 plt.title("Spectre d'énergie déposée dans le détecteur")
 plt.grid(True)
 plt.tight_layout()
+plt.savefig(cwd / "spectrum.png")
 plt.show()
 
