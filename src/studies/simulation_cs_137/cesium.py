@@ -1,4 +1,5 @@
 import openmc
+import openmc_plotter
 import os 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -17,12 +18,12 @@ cs137 = openmc.Material(name="Cs137")
 cs137.add_nuclide("Cs137", 1.0)
 cs137.set_density("g/cm3", 4.0)
 
-csi = openmc.Material(name="CsI")
-csi.add_element("Cs", 1.0)
-csi.add_element("I", 1.0)
-csi.set_density("g/cm3", 4.51)
+cdte = openmc.Material(name="CdTe")
+cdte.add_element("Cd", 1.0)
+cdte.add_element("Te", 1.0)
+cdte.set_density("g/cm3", 6.2)
 
-materials = openmc.Materials([cs137, csi])
+materials = openmc.Materials([cs137, cdte])
 
 air = openmc.Material(name="Air")
 air.add_element("N", 0.78)
@@ -33,7 +34,7 @@ air.set_density("g/cm3", 0.001225)
 materials.append(air)
 
 sphere = openmc.Sphere(r=1.0, surface_id=1)
-detector = openmc.Sphere(y0=25., r=6.0, surface_id=2)
+detector = openmc.Sphere(x0=30., r=10.0, surface_id=2)
 outer_boundary = openmc.Sphere(r=100.0, surface_id=3, boundary_type='vacuum')  # Limite du monde
 
 source_cell = openmc.Cell(name="source_cell")
@@ -41,8 +42,8 @@ source_cell.fill = cs137
 source_cell.region = -sphere
 
 detector_cell = openmc.Cell(name="detector_cell")
-detector_cell.fill = csi
-detector_cell.region = -detector & +sphere
+detector_cell.fill = cdte
+detector_cell.region = -detector
 
 outer_boundary_cell = -outer_boundary & +detector
 void_cell = openmc.Cell(name="air_cell", fill=air, region=outer_boundary_cell)
@@ -53,33 +54,36 @@ geometry = openmc.Geometry(universe)
 # Création de la source
 source = openmc.Source()
 source.space = openmc.stats.Point((0, 0, 0))
-source.energy = openmc.stats.Discrete([0.662], [1.0])  # Énergie du photon de 662 keV pour Cs137
+source.energy = openmc.stats.Discrete([661_700], [1.0])  # Énergie du photon de 662 keV pour Cs137
 # source.energy = openmc.data.decay_photon_energy("Ba137_m1")
+source.angle = openmc.stats.Isotropic()  # Distribution isotrope des angles
 source.particle = "photon"
-source.strength = 1e1
+source.strength = 1E6
 
 # Création des tallies
 
 # Tally du calcul du flux dans le détecteur en p/p-source
 tally = openmc.Tally(name="detector_tally")
 tally.scores = ["flux"]
-tally.filters = [openmc.CellFilter(detector_cell)]
+particle_filter = openmc.ParticleFilter(['photon'])
+tally.filters = [openmc.CellFilter(detector_cell), particle_filter]
 tallies = openmc.Tallies([tally])
 
 # Mesh tally de dose 
 mesh = openmc.RegularMesh()
-mesh.dimension = [500, 500, 1]  # XY
-mesh.lower_left = [-50.0, -50.0, -1.0]
-mesh.upper_right = [50.0, 50.0, 1.0]
+mesh.dimension = [500, 500]  # XY
+mesh.lower_left = [-50.0, -50.0]
+mesh.upper_right = [50.0, 50.0]
 
 mesh_filter = openmc.MeshFilter(mesh)
 mesh_tally = openmc.Tally(name='flux_mesh')
-mesh_tally.filters = [mesh_filter]
+particle_filter = openmc.ParticleFilter(['photon'])
+mesh_tally.filters = [mesh_filter, particle_filter]
 mesh_tally.scores = ['flux']
 tallies.append(mesh_tally)
 
 # Tally pour le spectre d'énergie déposée dans le détecteur
-energy_bins = np.linspace(1e-3, 1.0, 500)  # de 1 keV à 2 MeV en 500 bins
+energy_bins = np.linspace(1e-3, 1.0e6, 500)  # de 1 keV à 2 MeV en 500 bins
 energy_filter = openmc.EnergyFilter(energy_bins)
 cell_filter = openmc.CellFilter(detector_cell)
 
@@ -93,8 +97,9 @@ tallies.append(energy_dep_tally)
 
 # Configuration de la simulation
 settings = openmc.Settings()
-settings.batches = 5
-settings.particles = 1000000
+batches_number = 10
+settings.batches = batches_number
+settings.particles = 10**5
 settings.source = source
 settings.photon_transport = True 
 settings.run_mode = "fixed source"
@@ -109,32 +114,30 @@ tallies.export_to_xml()
 if os.path.exists("summary.h5"):
     os.remove("summary.h5")
 
-if os.path.exists("statepoint.5.h5"):
-    os.remove("statepoint.5.h5")  #TODO à mettre en fonction dans utils 
-
+if os.path.exists(f"statepoint.{batches_number}.h5"):
+    os.remove(f"statepoint.{batches_number}.h5")  #TODO à mettre en fonction dans utils 
 
 openmc.run()
 
-print("Calcul fini")
+print("Calcul fini")  # TODO : faire fonction print calcul terminé 
 
-
-sp = openmc.StatePoint("statepoint.5.h5")
+sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 tally = sp.get_tally(name="detector_tally")
 flux_mean = tally.mean.flatten()
 flux_std_dev = tally.std_dev.flatten()
 
-print("Flux moyen :", flux_mean[0])
-print("Écart-type :", flux_std_dev[0])
+print("Flux moyen :", flux_mean[0]/ source.strength)
+print("Écart-type :", flux_std_dev[0]/ source.strength)
 
 # Charger le fichier de sortie
-sp = openmc.StatePoint('statepoint.5.h5')
+sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 
 ### mesh tallty ####
 # Récupérer le tally du maillage
 tally = sp.get_tally(name='flux_mesh')
 flux_data = tally.mean.reshape((500, 500))
-
+flux_data /= source.strength
 # Affichage avec échelle logarithmique
 plt.imshow(flux_data, 
            origin='lower', 
@@ -150,14 +153,12 @@ plt.tight_layout()
 plt.show()
 
 ### spectre ####
-
-sp = openmc.StatePoint("statepoint.5.h5")
+sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 tally = sp.get_tally(name="pulse-height")
 pulse_height_values = tally.get_values(scores=['pulse-height']).flatten()
 
 # Récupération des énergies moyennes par bin (approximation)
 energy_bin_centers = energy_bins[1:] + 0.5 * (energy_bins[1] - energy_bins[0])
-
 
 # Moyenne et écart-type de l'énergie déposée
 spectrum = tally.mean.flatten()
@@ -165,13 +166,11 @@ spectrum_std = tally.std_dev.flatten()
 
 # Tracé
 plt.figure()
-# plt.plot(bin_centers, spectrum, drawstyle='steps-mid', label='Énergie déposée')
 plt.semilogy(energy_bin_centers, spectrum)
-# plt.fill_between(bin_centers, spectrum - spectrum_std, spectrum + spectrum_std, alpha=0.3)
 plt.xlabel("Énergie [MeV]")
 plt.ylabel("Occurence")
 plt.title("Spectre d'énergie déposée dans le détecteur")
 plt.grid(True)
-plt.legend()
 plt.tight_layout()
 plt.show()
+
