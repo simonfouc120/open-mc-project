@@ -13,54 +13,54 @@ CWD = Path(__file__).parent.resolve()
 project_root = Path(__file__).resolve().parents[3]  # remonte de src/studies/simulation_cs_137
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
-
+from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-# Création des matériaux
-cs137 = openmc.Material(name="Cs137")
-cs137.add_nuclide("Cs137", 1.0)
-cs137.set_density("g/cm3", 4.0)
+materials = openmc.Materials([CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL])
 
-cdte = openmc.Material(name="CdTe")
-cdte.add_element("Cd", 1.0)
-cdte.add_element("Te", 1.0)
-cdte.set_density("g/cm3", 6.2)
-
-materials = openmc.Materials([cs137, cdte])
-
-air = openmc.Material(name="Air")
-air.add_element("N", 0.78)
-air.add_element("O", 0.21)
-air.add_element("Ar", 0.01)
-air.set_density("g/cm3", 0.001225)  
-
-materials.append(air)
-
+# Surfaces
 sphere = openmc.Sphere(r=1.0, surface_id=1)
 detector = openmc.Sphere(x0=30., r=10.0, surface_id=2)
 outer_boundary = openmc.Sphere(r=100.0, surface_id=3, boundary_type='vacuum')  # Limite du monde
 
+# Concrete wall surfaces
+wall_xmin = openmc.XPlane(x0=-40, surface_id=10)
+wall_xmax = openmc.XPlane(x0=-20, surface_id=11)
+wall_ymin = openmc.YPlane(y0=-50, surface_id=12)
+wall_ymax = openmc.YPlane(y0=50, surface_id=13)
+wall_zmin = openmc.ZPlane(z0=-50, surface_id=14)
+wall_zmax = openmc.ZPlane(z0=50, surface_id=15)
+
+# Cells
 source_cell = openmc.Cell(name="source_cell")
-source_cell.fill = cs137
+source_cell.fill = CS137_MATERIAL
 source_cell.region = -sphere
 
 detector_cell = openmc.Cell(name="detector_cell")
-detector_cell.fill = cdte
+detector_cell.fill = CDTE_MATERIAL
 detector_cell.region = -detector
 
-outer_boundary_cell = -outer_boundary & +detector
-void_cell = openmc.Cell(name="air_cell", fill=air, region=outer_boundary_cell)
+# Concrete wall cell
+wall_region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -wall_zmax
+wall_cell = openmc.Cell(name="concrete_wall", fill=CONCRETE_MATERIAL, region=wall_region)
 
-universe = openmc.Universe(cells=[source_cell, detector_cell, void_cell])
+# Air cell (everything else inside the outer boundary, minus source, detector, and wall)
+outer_boundary_cell = -outer_boundary & +detector
+void_region = outer_boundary_cell & ~source_cell.region & ~detector_cell.region & ~wall_region
+void_cell = openmc.Cell(name="air_cell", fill=AIR_MATERIAL, region=void_region)
+
+universe = openmc.Universe(cells=[source_cell, detector_cell, wall_cell, void_cell])
 geometry = openmc.Geometry(universe)
 
 # Création de la source
+
 source = openmc.Source()
 source.space = openmc.stats.Point((0, 0, 0))
 source.energy = openmc.stats.Discrete([661_700], [1.0])  # Énergie du photon de 662 keV pour Cs137
 # source.energy = openmc.data.decay_photon_energy("Ba137_m1")
 source.angle = openmc.stats.Isotropic()  # Distribution isotrope des angles
 source.particle = "photon"
+
 # source.strength = 1E6  # TODO mettre dans une constante ou variable 
 
 # Création des tallies
