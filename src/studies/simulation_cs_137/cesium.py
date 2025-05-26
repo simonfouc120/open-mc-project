@@ -14,6 +14,7 @@ project_root = Path(__file__).resolve().parents[3]  # remonte de src/studies/sim
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL
+from src.utils.pre_processing.pre_processing import remove_previous_results
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 materials = openmc.Materials([CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL])
@@ -21,7 +22,7 @@ materials = openmc.Materials([CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCR
 # Surfaces
 sphere = openmc.Sphere(r=1.0, surface_id=1)
 detector = openmc.Sphere(x0=30., r=10.0, surface_id=2)
-outer_boundary = openmc.Sphere(r=100.0, surface_id=3, boundary_type='vacuum')  # Limite du monde
+outer_boundary = openmc.Sphere(r=200.0, surface_id=3, boundary_type='vacuum')  # Limite du monde
 
 # Concrete wall surfaces
 wall_xmin = openmc.XPlane(x0=-40, surface_id=10)
@@ -45,7 +46,7 @@ wall_region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -
 wall_cell = openmc.Cell(name="concrete_wall", fill=CONCRETE_MATERIAL, region=wall_region)
 
 # Air cell (everything else inside the outer boundary, minus source, detector, and wall)
-outer_boundary_cell = -outer_boundary & +detector
+outer_boundary_cell = -outer_boundary 
 void_region = outer_boundary_cell & ~source_cell.region & ~detector_cell.region & ~wall_region
 void_cell = openmc.Cell(name="air_cell", fill=AIR_MATERIAL, region=void_region)
 
@@ -74,7 +75,7 @@ tallies = openmc.Tallies([tally])
 
 # Mesh tally de dose 
 mesh = openmc.RegularMesh()
-mesh.dimension = [500, 500]  # XY
+mesh.dimension = [100, 100]  # XY
 mesh.lower_left = [-50.0, -50.0]
 mesh.upper_right = [50.0, 50.0]
 
@@ -98,12 +99,14 @@ tallies.append(energy_dep_tally)
 
 # Configuration de la simulation
 settings = openmc.Settings()
-batches_number = 10
+batches_number = 100
 settings.batches = batches_number
-settings.particles = 10**5
+settings.particles = 10**4
 settings.source = source
 settings.photon_transport = True 
 settings.run_mode = "fixed source"
+settings.verbose = True
+
 
 # Export des fichiers nécessaires pour la simulation
 materials.export_to_xml()
@@ -112,11 +115,9 @@ settings.export_to_xml()
 tallies.export_to_xml()
 
 # Exécution de la simulation
-if os.path.exists("summary.h5"):
-    os.remove("summary.h5")
 
-if os.path.exists(f"statepoint.{batches_number}.h5"):
-    os.remove(f"statepoint.{batches_number}.h5")  #TODO à mettre en fonction dans utils 
+
+remove_previous_results(batches_number)
 
 openmc.run()
 
@@ -145,7 +146,7 @@ sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 ### mesh tallty ####
 # Récupérer le tally du maillage
 tally = sp.get_tally(name='flux_mesh')
-flux_data = tally.mean.reshape((500, 500))
+flux_data = tally.mean.reshape((100, 100))
 flux_data /= source.strength   # TODO remplacerr par constante 
 # Affichage avec échelle logarithmique
 plt.imshow(flux_data, 
