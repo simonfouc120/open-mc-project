@@ -1,17 +1,20 @@
 import openmc
 import openmc_plotter
 import os 
+import json
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from pathlib import Path
 import sys 
 import numpy as np
+
+CWD = Path(__file__).parent.resolve()
+
 project_root = Path(__file__).resolve().parents[3]  # remonte de src/studies/simulation_cs_137
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
-cwd = Path.cwd()
 
 # Création des matériaux
 cs137 = openmc.Material(name="Cs137")
@@ -58,7 +61,7 @@ source.energy = openmc.stats.Discrete([661_700], [1.0])  # Énergie du photon de
 # source.energy = openmc.data.decay_photon_energy("Ba137_m1")
 source.angle = openmc.stats.Isotropic()  # Distribution isotrope des angles
 source.particle = "photon"
-source.strength = 1E6
+# source.strength = 1E6  # TODO mettre dans une constante ou variable 
 
 # Création des tallies
 
@@ -93,8 +96,6 @@ energy_dep_tally.scores = ["pulse-height"]
 
 tallies.append(energy_dep_tally)
 
-
-
 # Configuration de la simulation
 settings = openmc.Settings()
 batches_number = 10
@@ -126,31 +127,39 @@ tally = sp.get_tally(name="detector_tally")
 flux_mean = tally.mean.flatten()
 flux_std_dev = tally.std_dev.flatten()
 
-print("Flux moyen :", flux_mean[0]/ source.strength)
+print("Flux moyen :", flux_mean[0]/ source.strength)  # TODO remplacer par constante 
 print("Écart-type :", flux_std_dev[0]/ source.strength)
+
+
+results = {
+    "flux_mean": float(flux_mean[0] / source.strength),
+    "flux_std_dev": float(flux_std_dev[0] / source.strength)
+}
+
+with open(CWD / "results.json", "w") as f:
+    json.dump(results, f, indent=4, ensure_ascii=False)
 
 # Charger le fichier de sortie
 sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
-
 
 ### mesh tallty ####
 # Récupérer le tally du maillage
 tally = sp.get_tally(name='flux_mesh')
 flux_data = tally.mean.reshape((500, 500))
-flux_data /= source.strength
+flux_data /= source.strength   # TODO remplacerr par constante 
 # Affichage avec échelle logarithmique
 plt.imshow(flux_data, 
            origin='lower', 
            extent=[-50, 50, -50, 50], 
            cmap='plasma',
-           norm=LogNorm(vmin=1e-6, vmax=flux_data.max()))  # vmin > 0 obligatoire
+           norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  # vmin > 0 obligatoire
 
 plt.colorbar(label='Flux [a.u.] (log scale)')
 plt.title('Carte de flux XY (échelle log)')
 plt.xlabel('X [cm]')
 plt.ylabel('Y [cm]')
 plt.tight_layout()
-plt.savefig(cwd / "mesh_tally.png")
+plt.savefig(CWD / "mesh_tally.png")
 plt.show()
 
 ### spectre ####
@@ -160,7 +169,7 @@ pulse_height_values = tally.get_values(scores=['pulse-height']).flatten()
 
 # Récupération des énergies moyennes par bin (approximation)
 energy_bin_centers = energy_bins[1:] + 0.5 * (energy_bins[1] - energy_bins[0])
-
+energy_bin_centers /= 1e6
 # Moyenne et écart-type de l'énergie déposée
 spectrum = tally.mean.flatten()
 spectrum_std = tally.std_dev.flatten()
@@ -173,6 +182,5 @@ plt.ylabel("Occurence")
 plt.title("Spectre d'énergie déposée dans le détecteur")
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(cwd / "spectrum.png")
+plt.savefig(CWD / "spectrum.png")
 plt.show()
-
