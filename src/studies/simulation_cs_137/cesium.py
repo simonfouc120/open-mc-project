@@ -14,7 +14,7 @@ project_root = Path(__file__).resolve().parents[3]  # remonte de src/studies/sim
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results
+from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 materials = openmc.Materials([CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL])
@@ -24,13 +24,9 @@ sphere = openmc.Sphere(r=1.0, surface_id=1)
 detector = openmc.Sphere(x0=30., r=10.0, surface_id=2)
 outer_boundary = openmc.Sphere(r=200.0, surface_id=3, boundary_type='vacuum')  # Limite du monde
 
-# Concrete wall surfaces
-wall_xmin = openmc.XPlane(x0=-40, surface_id=10)
-wall_xmax = openmc.XPlane(x0=-20, surface_id=11)
-wall_ymin = openmc.YPlane(y0=-50, surface_id=12)
-wall_ymax = openmc.YPlane(y0=50, surface_id=13)
-wall_zmin = openmc.ZPlane(z0=-50, surface_id=14)
-wall_zmax = openmc.ZPlane(z0=50, surface_id=15)
+# Create concrete wall using parallelepiped
+wall_region = parallelepiped(-40, -20, -50, 50, -50, 50, surface_id_start=10)
+wall_cell = openmc.Cell(name="concrete_wall", fill=CONCRETE_MATERIAL, region=wall_region)
 
 # Cells
 source_cell = openmc.Cell(name="source_cell")
@@ -40,10 +36,6 @@ source_cell.region = -sphere
 detector_cell = openmc.Cell(name="detector_cell")
 detector_cell.fill = CDTE_MATERIAL
 detector_cell.region = -detector
-
-# Concrete wall cell
-wall_region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -wall_zmax
-wall_cell = openmc.Cell(name="concrete_wall", fill=CONCRETE_MATERIAL, region=wall_region)
 
 # Air cell (everything else inside the outer boundary, minus source, detector, and wall)
 outer_boundary_cell = -outer_boundary 
@@ -61,7 +53,6 @@ source.energy = openmc.stats.Discrete([661_700], [1.0])  # Énergie du photon de
 # source.energy = openmc.data.decay_photon_energy("Ba137_m1")
 source.angle = openmc.stats.Isotropic()  # Distribution isotrope des angles
 source.particle = "photon"
-
 # source.strength = 1E6  # TODO mettre dans une constante ou variable 
 
 # Création des tallies
@@ -116,9 +107,8 @@ tallies.export_to_xml()
 
 # Exécution de la simulation
 
-
 remove_previous_results(batches_number)
-
+os.environ["OMP_NUM_THREADS"] = "1"
 openmc.run()
 
 print("Calcul fini")  # TODO : faire fonction print calcul terminé 
@@ -145,8 +135,8 @@ sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 ### mesh tallty ####
 # Récupérer le tally du maillage
-tally = sp.get_tally(name='flux_mesh')
-flux_data = tally.mean.reshape((100, 100))
+mesh_tally = sp.get_tally(name='flux_mesh')
+flux_data = mesh_tally.mean.reshape((100, 100))
 flux_data /= source.strength   # TODO remplacerr par constante 
 # Affichage avec échelle logarithmique
 plt.imshow(flux_data, 
