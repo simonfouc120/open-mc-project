@@ -13,3 +13,7 @@ plot*
 plot_settings.pkl
 
 __pycache__
+
+
+# ignore every files in lib/cross_sections
+lib/cross_sections/*

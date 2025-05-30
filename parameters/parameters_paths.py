@@ -1,1 +1,1 @@
-PATH_TO_CROSS_SECTIONS = "/Users/simonfoucambert/endfb-viii.0-hdf5/cross_sections.xml"
+PATH_TO_CROSS_SECTIONS = "/Users/simonfoucambert/Documents/projects/open-mc-project/lib/cross_sections/cross_sections.xml"
