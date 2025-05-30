@@ -1,11 +1,19 @@
+# -*- coding: utf-8 -*-
+
+"""
+Simulation d'une source de Cs-137 dans un détecteur CdTe
+Ce script crée une simulation OpenMC d'une source de Cs-137 dans un détecteur CdTe, avec un mur en béton et une région d'air.
+Il inclut la configuration des matériaux, des surfaces, des cellules, de la source et des tallies.
+"""
+
 import openmc
-import openmc_plotter
 import os 
 import json
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from pathlib import Path
 import sys 
+from PIL import Image
 import numpy as np
 
 CWD = Path(__file__).parent.resolve()
@@ -66,7 +74,8 @@ tallies = openmc.Tallies([tally])
 
 # Mesh tally de dose 
 mesh = openmc.RegularMesh()
-mesh.dimension = [100, 100]  # XY
+bin_number = 400 
+mesh.dimension = [bin_number, bin_number]  # XY
 mesh.lower_left = [-50.0, -50.0]
 mesh.upper_right = [50.0, 50.0]
 
@@ -92,7 +101,7 @@ tallies.append(energy_dep_tally)
 settings = openmc.Settings()
 batches_number = 100
 settings.batches = batches_number
-settings.particles = 10**4
+settings.particles = 10**5
 settings.source = source
 settings.photon_transport = True 
 settings.run_mode = "fixed source"
@@ -104,6 +113,18 @@ materials.export_to_xml()
 geometry.export_to_xml()
 settings.export_to_xml()
 tallies.export_to_xml()
+
+# Plot geometry in XY
+plot = openmc.Plot()
+plot.origin = (0, 0, 0)
+plot.width = (120, 120)
+plot.pixels = (600, 600)
+plot.color_by = 'material'
+plot.basis = 'xy'
+
+plots = openmc.Plots([plot])
+plots.export_to_xml()
+openmc.plot_geometry()
 
 # Exécution de la simulation
 
@@ -136,7 +157,7 @@ sp = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 ### mesh tallty ####
 # Récupérer le tally du maillage
 mesh_tally = sp.get_tally(name='flux_mesh')
-flux_data = mesh_tally.mean.reshape((100, 100))
+flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
 flux_data /= source.strength   # TODO remplacerr par constante 
 # Affichage avec échelle logarithmique
 plt.imshow(flux_data, 
