@@ -89,3 +89,16 @@ fuel.add_nuclide("U235", 0.1975)
 fuel.add_nuclide("U238", 0.8025)
 fuel.set_density("g/cm3", 10.0)
 FUEL_MATERIAL = fuel
+
+# WATER MODERATOR MATERIALS ##
+water = openmc.Material(name="Water")
+water.add_element("H", 2.0)
+water.add_element("O", 1.0)
+water.set_density("g/cm3", 1.0)
+WATER_MATERIAL = water
+
+# BORON MATERIALS ##
+boron = openmc.Material(name="Boron")
+boron.add_element("B", 1.0)
+boron.set_density("g/cm3", 2.34)
+BORON_MATERIAL = boron
