@@ -90,6 +90,12 @@ fuel.add_nuclide("U238", 0.8025)
 fuel.set_density("g/cm3", 10.0)
 FUEL_MATERIAL = fuel
 
+# URANIUM NATURAL ##
+uranium = openmc.Material(name="Uranium")
+uranium.add_element("U", 1.0)
+uranium.set_density("g/cm3", 18.95)
+URANIUM_MATERIAL = uranium
+
 # WATER MODERATOR MATERIALS ##
 water = openmc.Material(name="Water")
 water.add_element("H", 2.0)
@@ -102,3 +108,11 @@ boron = openmc.Material(name="Boron")
 boron.add_element("B", 1.0)
 boron.set_density("g/cm3", 2.34)
 BORON_MATERIAL = boron
+
+# BERYLLIUM MATERIALS ##
+beryllium = openmc.Material(name="Beryllium")
+beryllium.add_element("Be", 1.0)
+beryllium.set_density("g/cm3", 1.85)
+BERYLLIUM_MATERIAL = beryllium
+
+
