@@ -1,5 +1,9 @@
 import os
 import openmc
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+
 
 def remove_previous_results(batches_number):
     summary_path = "summary.h5"
@@ -35,3 +39,45 @@ def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax, surface_id_start=10):
     region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -wall_zmax
     return region
 
+
+def plot_geometry(materials:list, plane:str="xy",width: float = 10.0, height: float = 10.0):
+    """
+    Plots the OpenMC geometry in a plane.
+    """
+
+    plot = openmc.Plot()
+
+    width = 10  # cm
+    height = 10  # cm
+
+    plot.origin = (0, 0, 0)
+    plot.width = (width, height)
+    plot.pixels = (600, 600)
+
+    X_VALUES = np.linspace(-width//2, width//2, 600)
+    Y_VALUES = np.linspace(-height//2, height//2, 600)
+
+    X, Y = np.meshgrid(X_VALUES, Y_VALUES)
+
+    # Define the colors for each material
+    default_colors = ['red', 'green', 'lightblue', 'gray', 'brown', 'orange', 'purple', 'yellow', 'pink', 'cyan']
+    colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
+    plot.colors = {mat: color for mat, color in zip(materials, colors)}
+
+    plot.color_by = 'material'
+    plot.basis = plane
+    plot.filename = "plot_" + plane + ".png"
+    plots = openmc.Plots([plot])
+    plots.export_to_xml()
+    openmc.plot_geometry()
+
+    img = Image.open("plot_" + plane + ".png")
+    plt.imshow(img)
+    plt.title("OpenMC Geometry Plot - " + plane.upper() + " Plane")
+    plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
+    plt.xticks(np.linspace(0, img.size[0], num=7), np.linspace(np.min(X_VALUES), np.max(X_VALUES), num=7, dtype=int))
+    plt.yticks(np.linspace(0, img.size[1], num=7), np.linspace(np.min(Y_VALUES), np.max(Y_VALUES), num=7, dtype=int))
+    plt.xlabel("X (cm)")
+    plt.ylabel("Y (cm)")
+    plt.legend()
+    plt.show()
