@@ -1,4 +1,3 @@
-
 import openmc
 import os 
 import json
@@ -20,9 +19,8 @@ from src.utils.pre_processing.pre_processing import remove_previous_results, par
 from src.utils.post_preocessing.post_processing import load_mesh_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-materials = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
+material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
 
-material = openmc.Materials((FUEL_MATERIAL, GRAPHITE_MATERIAL, AIR_MATERIAL))
 
 r_pin = openmc.ZCylinder(r=0.3)
 fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin)
@@ -73,11 +71,11 @@ air_cell_side = openmc.Cell(fill=AIR_MATERIAL, region=air_region_side)
 
 geometry = openmc.Geometry([main_cell, air_cell_above, air_cell_below, air_cell_side])
 
-plot_geometry(materials = materials, plane="xy", width=12, height=12)
+plot_geometry(materials = material, plane="xy", width=12, height=12)
 
-plot_geometry(materials = materials, plane="xz", width=12, height=12)
+plot_geometry(materials = material, plane="xz", width=12, height=12)
 
-plot_geometry(materials = materials, plane="yz", width=70, height=70)
+plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()

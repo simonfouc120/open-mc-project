@@ -65,12 +65,12 @@ def plot_geometry(materials:list, plane:str="xy",
 
     plot.color_by = 'material'
     plot.basis = plane
-    plot.filename = "plot_" + plane + ".png"
+    plot.filename = "plot_openmc_" + plane + ".png"
     plots = openmc.Plots([plot])
     plots.export_to_xml()
     openmc.plot_geometry()
 
-    img = Image.open("plot_" + plane + ".png")
+    img = Image.open(plot.filename)
     plt.imshow(img)
     plt.title("OpenMC Geometry Plot - " + plane.upper() + " Plane")
     plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
@@ -86,6 +86,8 @@ def plot_geometry(materials:list, plane:str="xy",
     plt.ylabel("Y (cm)")
     plt.gca().invert_yaxis()
     plt.legend()
+    plt.savefig("plot_" + plane + ".png", dpi=300, bbox_inches='tight')
+    plt.tight_layout()
     plt.show()
 
 
