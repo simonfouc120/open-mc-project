@@ -17,3 +17,8 @@ __pycache__
 
 # ignore every files in lib/cross_sections
 lib/cross_sections/*
+
+# dont ignore plots with xy xz and yz views
+plot_xy.png
+plot_xz.png
+plot_yz.png
