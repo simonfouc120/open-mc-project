@@ -12,98 +12,116 @@ import openmc.universe
 
 CWD = Path(__file__).parent.resolve()
 
-project_root = Path(__file__).resolve().parents[3]  # remonte de src/studies/simulation_cs_137
+project_root = Path(__file__).resolve().parents[3]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, URANIUM_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped
+from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 materials = openmc.Materials([FUEL_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL])
 
-fuel = openmc.Material(name='fuel')
-fuel.add_nuclide('U235', 1.0)
-fuel.set_density('g/cm3', 10.0)
-
-
-water = openmc.Material(name='water')
-water.add_nuclide('H1', 2.0)
-water.add_nuclide('O16', 1.0)
-water.set_density('g/cm3', 1.0)
-
-mats = openmc.Materials((FUEL_MATERIAL, GRAPHITE_MATERIAL))
-mats.export_to_xml()
+material = openmc.Materials((FUEL_MATERIAL, GRAPHITE_MATERIAL, AIR_MATERIAL))
 
 r_pin = openmc.ZCylinder(r=0.3)
 fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin)
-water_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_pin)
-pin_universe = openmc.Universe(cells=(fuel_cell, water_cell))
+graphite_cell_2 = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_pin)
+pin_universe = openmc.Universe(cells=(fuel_cell, graphite_cell_2))
 
 r_big_pin = openmc.ZCylinder(r=0.5)
 fuel2_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_big_pin)
-water2_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_big_pin)
-big_pin_universe = openmc.Universe(cells=(fuel2_cell, water2_cell))
+graphite_cell_2 = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_big_pin)
+big_pin_universe = openmc.Universe(cells=(fuel2_cell, graphite_cell_2))
 
-all_water_cell = openmc.Cell(fill=GRAPHITE_MATERIAL)
-outer_universe = openmc.Universe(cells=(all_water_cell,))
+all_graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL)
+outer_universe = openmc.Universe(cells=(all_graphite_cell,))
 
 lat = openmc.HexLattice()
-
 lat.center = (0., 0.)
-lat.pitch = (1.25,)
+lat.pitch = (1.25,)   # pitch en cm
 lat.outer = outer_universe
 
-outer_ring = [big_pin_universe] + [pin_universe]*11
-middle_ring = [big_pin_universe] + [pin_universe]*5
-inner_ring = [big_pin_universe]
-lat.universes = [outer_ring, middle_ring, inner_ring]
+lat.universes = [
+    [pin_universe] * 18,    # 1st ring
+    [pin_universe] * 12,    # 2nd ring
+    [big_pin_universe] * 6, # 3rd ring
+    [big_pin_universe]      # 4th ring
+]
 
-outer_surface = openmc.ZCylinder(r=4.0, boundary_type='vacuum')
-main_cell = openmc.Cell(fill=lat, region=-outer_surface)
-geom = openmc.Geometry([main_cell])
-geom.export_to_xml()
+outer_surface = openmc.ZCylinder(r=4.5)
+height_top = openmc.ZPlane(z0=30.0)
+height_bottom = openmc.ZPlane(z0=-30.0)
+main_cell = openmc.Cell(
+    fill=lat,
+    region=(-outer_surface & -height_top & +height_bottom)
+)
 
-plot = openmc.Plot()
+outer_sphere = openmc.Sphere(r=100.0, boundary_type='vacuum')
 
-WIDTH = 10  # cm
-HEIGHT = 10  # cm
+# Air region above the cylinder
+air_region_above = -outer_sphere & -height_top
+air_cell_above = openmc.Cell(fill=AIR_MATERIAL, region=air_region_above)
 
-plot.origin = (0, 0, 0)
-plot.width = (WIDTH, HEIGHT)
-plot.pixels = (600, 600)
+# Air region below the cylinder
+air_region_below = -outer_sphere & +height_bottom
+air_cell_below = openmc.Cell(fill=AIR_MATERIAL, region=air_region_below)
 
-X_VALUES = np.linspace(-WIDTH//2, WIDTH//2, 600)
-Y_VALUES = np.linspace(-HEIGHT//2, HEIGHT//2, 600)
+# Air region surrounding the cylinder (radially outside)
+air_region_side = -outer_sphere & +outer_surface & -height_top & +height_bottom
+air_cell_side = openmc.Cell(fill=AIR_MATERIAL, region=air_region_side)
 
-X, Y = np.meshgrid(X_VALUES, Y_VALUES)
+geometry = openmc.Geometry([main_cell, air_cell_above, air_cell_below, air_cell_side])
 
-# Define the colors for each material
-default_colors = ['red', 'green', 'lightblue', 'gray', 'brown', 'orange', 'purple', 'yellow', 'pink', 'cyan']
-# Extend colors if needed
-colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
-plot.colors = {mat: color for mat, color in zip(materials, colors)}
+plot_geometry(materials = materials, plane="xy")
 
-plot.color_by = 'material'
-plot.basis = 'xy'
-plot.filename = "plot_xy.png"
-plots = openmc.Plots([plot])
-plots.export_to_xml()
-openmc.plot_geometry()
+plot_geometry(materials = materials, plane="xz")
 
-img = Image.open("plot_xy.png")
-plt.figure(figsize=(8, 6))
-plt.imshow(img)
-plt.title("OpenMC Geometry Plot - XY Plane")
-plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
-plt.xticks(np.linspace(0, img.size[0], num=7), np.linspace(np.min(X_VALUES), np.max(X_VALUES), num=7, dtype=int))
-plt.yticks(np.linspace(0, img.size[1], num=7), np.linspace(np.min(Y_VALUES), np.max(Y_VALUES), num=7, dtype=int))
-plt.xlabel("X (cm)")
-plt.ylabel("Y (cm)")
+plot_geometry(materials = materials, plane="yz", width=70, height=70)
 
-# Add color/material legend at the right of the figure
-import matplotlib.patches as mpatches
-legend_patches = [mpatches.Patch(color=color, label=mat.name if hasattr(mat, 'name') else str(mat)) for mat, color in zip(materials, colors)]
-plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+ 
+# Calcul de criticité simple 
+settings = openmc.Settings()
+batches_number= 50
+settings.batches = batches_number
+settings.inactive = 20
+settings.particles = 10000
+settings.source = openmc.Source()
+settings.source.space = openmc.stats.Point((0, 0, 0))
+settings.source.particle = 'neutron'
+settings.source.angle = openmc.stats.Isotropic()
 
-plt.tight_layout()
-plt.show()
+
+# tally pour le flux dans le détecteur
+tally = openmc.Tally(name="flux_tally")
+tally.scores = ['flux']
+tally.filters = [openmc.CellFilter(main_cell)]
+tallies = openmc.Tallies([tally])
+# tallies.append(tally)
+
+tallies.append(mesh_tally(particule_type='neutron', bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0)))
+
+geometry.export_to_xml()
+material.export_to_xml()
+settings.export_to_xml()
+tallies.export_to_xml()
+
+
+# Run the simulation
+
+remove_previous_results(batches_number=batches_number)
+openmc.run()
+
+
+# Load the statepoint file
+statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
+# Get the tally results
+tally = statepoint_file.get_tally(name="flux_tally")
+# Get the mean flux value
+mean_flux = tally.mean.flatten()
+# Get the standard deviation of the flux
+std_flux = tally.std_dev.flatten()
+# Print the results
+print(f"Mean flux: {mean_flux}")
+print(f"Standard deviation of flux: {std_flux}")
+
+
