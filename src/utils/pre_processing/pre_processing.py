@@ -89,8 +89,8 @@ def plot_geometry(materials:list, plane:str="xy",
     plt.show()
 
 
-
-def mesh_tally(particule_type='photon', bin_number=400, lower_left=(-50.0, -50.0), upper_right=(50.0, 50.0)):
+def mesh_tally(name_mesh_tally = "flux_mesh", particule_type='neutrons', 
+               bin_number=400, lower_left=(-50.0, -50.0), upper_right=(50.0, 50.0)):
     # Mesh tally de dose 
     mesh = openmc.RegularMesh()
     mesh.dimension = [bin_number, bin_number]  # XY
@@ -98,7 +98,7 @@ def mesh_tally(particule_type='photon', bin_number=400, lower_left=(-50.0, -50.0
     mesh.upper_right = upper_right
 
     mesh_filter = openmc.MeshFilter(mesh)
-    mesh_tally = openmc.Tally(name='flux_mesh')
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
     particle_filter = openmc.ParticleFilter([particule_type])
     mesh_tally.filters = [mesh_filter, particle_filter]
     mesh_tally.scores = ['flux']

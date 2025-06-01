@@ -115,4 +115,9 @@ beryllium.add_element("Be", 1.0)
 beryllium.set_density("g/cm3", 1.85)
 BERYLLIUM_MATERIAL = beryllium
 
-
+# STEEL 
+steel = openmc.Material(name="Steel")
+steel.add_element("Fe", 0.98)
+steel.add_element("C", 0.02)
+steel.set_density("g/cm3", 7.85)
+STEEL_MATERIAL = steel
