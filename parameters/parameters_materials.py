@@ -121,6 +121,13 @@ water.add_element("O", 1.0)
 water.set_density("g/cm3", 1.0)
 WATER_MATERIAL = water
 
+# WATER HEAVY MATERIALS ##
+heavy_water = openmc.Material(name="Heavy Water")
+heavy_water.add_element("D", 2.0)
+heavy_water.add_element("O", 1.0)
+heavy_water.set_density("g/cm3", 1.11)
+HEAVY_WATER_MATERIAL = heavy_water
+
 # BORON MATERIALS ##
 boron = openmc.Material(name="Boron")
 boron.add_element("B", 1.0)
