@@ -211,3 +211,105 @@ def mesh_tally_yz(
     mesh_tally.filters = [mesh_filter, particle_filter]
     mesh_tally.scores = ['flux']
     return mesh_tally
+
+
+def dammage_energy_mesh_xy(
+    name_mesh_tally="dammage_energy_mesh",
+    bin_number=400,
+    lower_left=(-50.0, -50.0),
+    upper_right=(50.0, 50.0),
+    z_value:float = 0.0,
+    z_thickness:float = 1.0
+    )-> object:
+    """
+    Create a mesh tally for damage energy in the XY plane at a specified Z value.
+
+    Parameters:
+        name_mesh_tally (str): Name of the tally.
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (x, y).
+        upper_right (tuple): Upper right corner of the mesh (x, y).
+        z_value (float): Z coordinate of the mesh center.
+        z_thickness (float): Thickness of the mesh in the Z direction.
+
+    Returns:
+        openmc.Tally: The mesh tally object.
+    """
+    mesh = openmc.RegularMesh()
+    mesh.dimension = [bin_number, bin_number, 1]
+    mesh.lower_left = (lower_left[0], lower_left[1], z_value - z_thickness / 2)
+    mesh.upper_right = (upper_right[0], upper_right[1], z_value + z_thickness / 2)
+
+    mesh_filter = openmc.MeshFilter(mesh)
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
+    mesh_tally.filters = [mesh_filter]
+    mesh_tally.scores = ['damage-energy']
+    return mesh_tally
+
+
+def dammage_energy_mesh_yz(
+    name_mesh_tally="dammage_energy_mesh",
+    bin_number=400,
+    lower_left=(-50.0, -50.0),
+    upper_right=(50.0, 50.0),
+    x_value:float = 0.0,
+    x_thickness:float = 1.0
+    )-> object:
+    """
+    Create a mesh tally for damage energy in the YZ plane at a specified X value.
+
+    Parameters:
+        name_mesh_tally (str): Name of the tally.
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (y, z).
+        upper_right (tuple): Upper right corner of the mesh (y, z).
+        x_value (float): X coordinate of the mesh center.
+        x_thickness (float): Thickness of the mesh in the X direction.
+
+    Returns:
+        openmc.Tally: The mesh tally object.
+    """
+    mesh = openmc.RegularMesh()
+    mesh.dimension = [1, bin_number, bin_number]
+    mesh.lower_left = (x_value - x_thickness / 2, lower_left[0], lower_left[1])
+    mesh.upper_right = (x_value + x_thickness / 2, upper_right[0], upper_right[1])
+
+    mesh_filter = openmc.MeshFilter(mesh)
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
+    mesh_tally.filters = [mesh_filter]
+    mesh_tally.scores = ['damage-energy']
+    return mesh_tally
+
+
+def dammage_energy_mesh_xz(
+    name_mesh_tally="dammage_energy_mesh",
+    bin_number=400,
+    lower_left=(-50.0, -50.0),
+    upper_right=(50.0, 50.0),
+    y_value:float = 0.0,
+    y_thickness:float = 1.0
+    )-> object:
+    """
+    Create a mesh tally for damage energy in the XZ plane at a specified Y value.
+
+    Parameters:
+        name_mesh_tally (str): Name of the tally.
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (x, z).
+        upper_right (tuple): Upper right corner of the mesh (x, z).
+        y_value (float): Y coordinate of the mesh center.
+        y_thickness (float): Thickness of the mesh in the Y direction.
+
+    Returns:
+        openmc.Tally: The mesh tally object.
+    """
+    mesh = openmc.RegularMesh()
+    mesh.dimension = [bin_number, 1, bin_number]
+    mesh.lower_left = (lower_left[0], y_value - y_thickness / 2, lower_left[1])
+    mesh.upper_right = (upper_right[0], y_value + y_thickness / 2, upper_right[1])
+
+    mesh_filter = openmc.MeshFilter(mesh)
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
+    mesh_tally.filters = [mesh_filter]
+    mesh_tally.scores = ['damage-energy']
+    return mesh_tally
