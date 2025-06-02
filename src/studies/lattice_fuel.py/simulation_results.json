@@ -1,11 +1,24 @@
 {
-  "mean_flux": [
-    10.797600994253367
-  ],
-  "std_flux": [
-    0.011100340881210395
-  ],
-  "fission_rate": 0.03377225597693953,
-  "nu_fission_rate": 0.0900297143696068,
-  "nu_bar": 2.665789174139896
+  "mean_flux": {
+    "value": [
+      10.776235641037061
+    ],
+    "units": "neutrons/cm^2/source particle"
+  },
+  "fission_rate": {
+    "value": 0.033667758572344116,
+    "units": "fissions/source particle"
+  },
+  "fission_rate_per_second": {
+    "value": 1.5259914945758656e+17,
+    "units": "fissions/s (for 5 MW reactor)"
+  },
+  "nu_fission_rate": {
+    "value": 0.08974654392698829,
+    "units": "neutrons produced by fission/source particle"
+  },
+  "nu_bar": {
+    "value": 2.6656524738391485,
+    "units": "dimensionless (average neutrons per fission)"
+  }
 }

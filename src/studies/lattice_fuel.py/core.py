@@ -87,7 +87,7 @@ plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 60
 settings.batches = batches_number
 settings.inactive = 20
 settings.particles = 10000
@@ -153,7 +153,6 @@ statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 tally = statepoint_file.get_tally(name="flux_tally")
 mean_flux = tally.mean.flatten().tolist()
 std_flux = tally.std_dev.flatten().tolist()
-
 # Get fission rate and nu-bar
 fission_tally_result = statepoint_file.get_tally(name="fission_rate_tally")
 nu_fission_tally_result = statepoint_file.get_tally(name="nu_fission_rate_tally")
@@ -161,13 +160,46 @@ nu_fission_tally_result = statepoint_file.get_tally(name="nu_fission_rate_tally"
 fission_rate = float(fission_tally_result.mean.flatten()[0])
 nu_fission_rate = float(nu_fission_tally_result.mean.flatten()[0])
 nu_bar = nu_fission_rate / fission_rate if fission_rate != 0 else float('nan')
+# Estimate fissions per second (fission/s) for a 5 MW reactor
+
+reactor_power = 5e6  # 5 MW in Watts
+
+# Energy released per fission depends on isotope composition
+# 19.75% U-235, 80.25% U-238 (by atom fraction)
+# Typical energy per fission: U-235 = 202.5 MeV, U-238 = 205.0 MeV
+
+fraction_u235 = 0.1975
+fraction_u238 = 1.0 - fraction_u235
+
+energy_u235 = 202.5e6 * 1.60218e-19  # J
+energy_u238 = 205.0e6 * 1.60218e-19  # J
+
+# Weighted average energy per fission
+energy_per_fission = fraction_u235 * energy_u235 + fraction_u238 * energy_u238
+
+fissions_per_second = reactor_power / energy_per_fission
 
 results = {
-    "mean_flux": mean_flux,
-    "std_flux": std_flux,
-    "fission_rate": fission_rate,
-    "nu_fission_rate": nu_fission_rate,
-    "nu_bar": nu_bar
+    "mean_flux": {
+        "value": mean_flux,
+        "units": "neutrons/cm^2/source particle"
+    },
+    "fission_rate": {
+        "value": fission_rate,
+        "units": "fissions/source particle"
+    },
+    "fission_rate_per_second": {
+        "value": fissions_per_second,
+        "units": "fissions/s (for 5 MW reactor)"
+    },
+    "nu_fission_rate": {
+        "value": nu_fission_rate,
+        "units": "neutrons produced by fission/source particle"
+    },
+    "nu_bar": {
+        "value": nu_bar,
+        "units": "dimensionless (average neutrons per fission)"
+    }
 }
 
 with open(CWD / "simulation_results.json", "w") as f:
