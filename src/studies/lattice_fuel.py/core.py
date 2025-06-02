@@ -15,12 +15,11 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally
+from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally_xy, mesh_tally_yz
 from src.utils.post_preocessing.post_processing import load_mesh_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
-
 
 r_pin = openmc.ZCylinder(r=0.3)
 fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin)
@@ -48,38 +47,45 @@ lat.universes = [
 ]
 
 outer_surface = openmc.ZCylinder(r=5.5)
-height_top = openmc.ZPlane(z0=30.0)
-height_bottom = openmc.ZPlane(z0=-30.0)
+steel_outer_surface = openmc.ZCylinder(r=6.5)  # 1 cm thickness around graphite
+height_top_active_part = openmc.ZPlane(z0=30.0)
+height_bottom_active_part = openmc.ZPlane(z0=-30.0)
+
+# Main cell: lattice inside graphite cylinder
 main_cell = openmc.Cell(
     fill=lat,
-    region=(-outer_surface & -height_top & +height_bottom)
+    region=(-outer_surface & -height_top_active_part & +height_bottom_active_part)
 )
+
+# Steel shell cell: between graphite and steel cylinder
+steel_shell_region = (+outer_surface & -steel_outer_surface & -height_top_active_part & +height_bottom_active_part)
+steel_shell_cell = openmc.Cell(fill=STEEL_MATERIAL, region=steel_shell_region)
 
 outer_sphere = openmc.Sphere(r=100.0, boundary_type='vacuum')
 
 # Air region above the cylinder
-air_region_above = -outer_sphere & -height_top
+air_region_above = -outer_sphere & -height_top_active_part
 air_cell_above = openmc.Cell(fill=AIR_MATERIAL, region=air_region_above)
 
 # Air region below the cylinder
-air_region_below = -outer_sphere & +height_bottom
+air_region_below = -outer_sphere & +height_bottom_active_part
 air_cell_below = openmc.Cell(fill=AIR_MATERIAL, region=air_region_below)
 
-# Air region surrounding the cylinder (radially outside)
-air_region_side = -outer_sphere & +outer_surface & -height_top & +height_bottom
+# Air region surrounding the steel cylinder (radially outside)
+air_region_side = -outer_sphere & +steel_outer_surface & -height_top_active_part & +height_bottom_active_part
 air_cell_side = openmc.Cell(fill=AIR_MATERIAL, region=air_region_side)
 
-geometry = openmc.Geometry([main_cell, air_cell_above, air_cell_below, air_cell_side])
+geometry = openmc.Geometry([main_cell, steel_shell_cell, air_cell_above, air_cell_below, air_cell_side])
 
-plot_geometry(materials = material, plane="xy", width=12, height=12)
+plot_geometry(materials = material, plane="xy", width=15, height=15)
 
-plot_geometry(materials = material, plane="xz", width=12, height=12)
+plot_geometry(materials = material, plane="xz", width=15, height=15)
 
 plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 500
 settings.batches = batches_number
 settings.inactive = 20
 settings.particles = 10000
@@ -93,14 +99,37 @@ settings.source.angle = openmc.stats.Isotropic()
 tally = openmc.Tally(name="flux_tally")
 tally.scores = ['flux']
 tally.filters = [openmc.CellFilter(main_cell)]
-tallies = openmc.Tallies([tally])
+
+# Tally for fission rate
+fission_tally = openmc.Tally(name="fission_rate_tally")
+fission_tally.scores = ['fission']
+fission_tally.filters = [openmc.CellFilter(main_cell)]
+
+# Tally for nu-fission (nu * fission rate)
+nu_fission_tally = openmc.Tally(name="nu_fission_rate_tally")
+nu_fission_tally.scores = ['nu-fission']
+nu_fission_tally.filters = [openmc.CellFilter(main_cell)]
+
+tallies = openmc.Tallies([tally, fission_tally, nu_fission_tally])
 
 # Mesh tally for neutron flux in a specific region
-mesh_tally_neutron = mesh_tally(name_mesh_tally = "flux_mesh_neutrons", particule_type='neutron', bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0))
-tallies.append(mesh_tally_neutron)
+mesh_tally_neutron_xy = mesh_tally_xy(name_mesh_tally = "flux_mesh_neutrons_xy", particule_type='neutron', 
+                                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                                      z_thickness= 4.0, z_value=0.0)
+tallies.append(mesh_tally_neutron_xy)
 
-mesh_tally_photon = mesh_tally(name_mesh_tally = "flux_mesh_photons", particule_type='photon', bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0))
-tallies.append(mesh_tally_photon)
+mesh_tally_photon_xy = mesh_tally_xy(name_mesh_tally = "flux_mesh_photons_xy", particule_type='photon', 
+                                     bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                                     z_thickness= 4.0, z_value=0.0)
+tallies.append(mesh_tally_photon_xy)
+
+mesh_tally_neutron_yz = mesh_tally_yz(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', 
+                                      bin_number=1000, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0))
+tallies.append(mesh_tally_neutron_yz)
+
+mesh_tally_photon_yz = mesh_tally_yz(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', 
+                                     bin_number=1000, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0))
+tallies.append(mesh_tally_photon_yz)
 
 
 geometry.export_to_xml()
@@ -115,15 +144,37 @@ openmc.run()
 # Load the statepoint file
 statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 tally = statepoint_file.get_tally(name="flux_tally")
-mean_flux = tally.mean.flatten()
-std_flux = tally.std_dev.flatten()
-print(f"Mean flux: {mean_flux}")
-print(f"Standard deviation of flux: {std_flux}")
+mean_flux = tally.mean.flatten().tolist()
+std_flux = tally.std_dev.flatten().tolist()
 
+# Get fission rate and nu-bar
+fission_tally_result = statepoint_file.get_tally(name="fission_rate_tally")
+nu_fission_tally_result = statepoint_file.get_tally(name="nu_fission_rate_tally")
+
+fission_rate = float(fission_tally_result.mean.flatten()[0])
+nu_fission_rate = float(nu_fission_tally_result.mean.flatten()[0])
+nu_bar = nu_fission_rate / fission_rate if fission_rate != 0 else float('nan')
+
+results = {
+    "mean_flux": mean_flux,
+    "std_flux": std_flux,
+    "fission_rate": fission_rate,
+    "nu_fission_rate": nu_fission_rate,
+    "nu_bar": nu_bar
+}
+
+with open(CWD / "simulation_results.json", "w") as f:
+    json.dump(results, f, indent=2)
 
 ### mesh tallty ####
-# Récupérer le tally du maillage
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons")
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_xy")
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons")
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_xy")
+
+
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", bin_number=1000,
+                lower_left=(-40.0, -40.0), upper_right=(40.0, 40.0), zoom_x=(-40, 40), zoom_y=(-40, 40), plane="yz")
+
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz", bin_number=1000,
+                lower_left=(-40.0, -40.0), upper_right=(40.0, 40.0), zoom_x=(-40, 40), zoom_y=(-40, 40), plane="yz")
