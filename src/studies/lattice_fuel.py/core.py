@@ -15,23 +15,31 @@ CWD = Path(__file__).parent.resolve()
 project_root = Path(__file__).resolve().parents[3]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
-from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL
+from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, parallelepiped, plot_geometry, mesh_tally_xy, mesh_tally_yz, 
                                                      dammage_energy_mesh_xy, dammage_energy_mesh_yz)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
+material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL])
+material.export_to_xml()
 
-r_pin = openmc.ZCylinder(r=0.3)
-fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin)
-graphite_cell_2 = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_pin)
-pin_universe = openmc.Universe(cells=(fuel_cell, graphite_cell_2))
 
-r_big_pin = openmc.ZCylinder(r=0.5)
-fuel2_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_big_pin)
-graphite_cell_2 = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_big_pin)
-big_pin_universe = openmc.Universe(cells=(fuel2_cell, graphite_cell_2))
+
+r_pin_fuel = openmc.ZCylinder(r=0.35)
+pin_fuel_fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin_fuel)
+graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_pin_fuel)
+pin_universe = openmc.Universe(cells=(pin_fuel_fuel_cell, graphite_cell))
+
+r_big_pin_fuel = openmc.ZCylinder(r=0.55)
+big_pin_fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_big_pin_fuel)
+graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_big_pin_fuel)
+big_pin_universe = openmc.Universe(cells=(big_pin_fuel_cell, graphite_cell))
+
+pin_helium_cell = openmc.ZCylinder(r=0.1, boundary_type='vacuum')
+helium_cell = openmc.Cell(fill=HELIUM_MATERIAL, region=-pin_helium_cell)
+graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+pin_helium_cell)
+pin_helium_universe = openmc.Universe(cells=(helium_cell, graphite_cell))
 
 all_graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL)
 outer_universe = openmc.Universe(cells=(all_graphite_cell,))
@@ -42,14 +50,15 @@ lat.pitch = (1.25,)   # pitch en cm
 lat.outer = outer_universe
 
 lat.universes = [
-    [big_pin_universe] * 18,    # 1st ring
-    [pin_universe] * 12,    # 2nd ring
-    [big_pin_universe] * 6, # 3rd ring
-    [big_pin_universe]      # 4th ring
-]
+    [pin_helium_universe] * 24, # 5th ring
+    [big_pin_universe] * 18,    # 4th ring    
+    [pin_universe] * 12,        # 3rd ring
+    [big_pin_universe] * 6,     # 2nd ring
+    [big_pin_universe]          # 1st ring
+]   
 
-outer_surface = openmc.ZCylinder(r=5.5)
-steel_outer_surface = openmc.ZCylinder(r=6.5)  # 1 cm thickness around graphite
+outer_surface = openmc.ZCylinder(r=6.5)
+steel_outer_surface = openmc.ZCylinder(r=7.5)  # 1 cm thickness around graphite
 height_top_active_part = openmc.ZPlane(z0=30.0)
 height_bottom_active_part = openmc.ZPlane(z0=-30.0)
 
@@ -79,15 +88,17 @@ air_cell_side = openmc.Cell(fill=AIR_MATERIAL, region=air_region_side)
 
 geometry = openmc.Geometry([main_cell, steel_shell_cell, air_cell_above, air_cell_below, air_cell_side])
 
-plot_geometry(materials = material, plane="xy", width=15, height=15)
+geometry.export_to_xml()
 
-plot_geometry(materials = material, plane="xz", width=15, height=15)
+plot_geometry(materials = material, plane="xy", width=16, height=16)
+
+plot_geometry(materials = material, plane="xz", width=16, height=16)
 
 plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 60
+batches_number= 350
 settings.batches = batches_number
 settings.inactive = 20
 settings.particles = 10000
@@ -139,10 +150,9 @@ tallies.append(dammage_energy_tally_xy)
 dommage_energy_tally_yz = dammage_energy_mesh_yz(name_mesh_tally="dammage_energy_mesh_yz", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), x_value=0.0, x_thickness=1.0)
 tallies.append(dommage_energy_tally_yz)
 
-geometry.export_to_xml()
-material.export_to_xml()
 settings.export_to_xml()
 tallies.export_to_xml()
+
 
 # Run the simulation
 remove_previous_results(batches_number=batches_number)
