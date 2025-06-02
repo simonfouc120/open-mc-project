@@ -2,6 +2,24 @@ import openmc
 import numpy as np
 import openmc
 
+
+
+displacement_threshold_energy = {
+    'O': 20.0,
+    'Si': 25.0,
+    'Ca': 40.0,
+    'Al': 25.0,
+    'Fe': 40.0,
+    'Mg': 25.0,
+    'Na': 20.0,
+    'K': 25.0,
+    'U': 90.0,
+    'C': 30.0,
+    'Zr': 45.0,
+    'Ni': 40.0,
+    'Pb': 25.0
+}
+
 # Création des matériaux
 
 ## GAS MATERIALS ##

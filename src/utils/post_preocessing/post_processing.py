@@ -62,3 +62,50 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
     plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
 
+def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str = "dammage_energy_mesh", 
+                                bin_number:int=500, lower_left:tuple=(-10.0, -10.0), 
+                                upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
+                                zoom_y:tuple=(-10.0, 10.0), plane:str = "xy"):
+    """
+    Load and plot the damage energy mesh tally from the statepoint file.
+
+    Parameters:
+    - cwd: Path or directory where the mesh tally image will be saved.
+    - statepoint_file: The OpenMC statepoint file object containing the tally data.
+    - name_mesh_tally: Name of the tally (default is "dammage_energy_mesh").
+    - bin_number: Number of bins for the mesh tally in each dimension (default is 500).
+    - lower_left: Tuple specifying the lower left corner of the mesh (default is (-10.0, -10.0)).
+    - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
+    - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
+    - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+    
+    This function extracts the damage energy mesh tally from the statepoint file,
+    reshapes the data, and plots it using matplotlib with a logarithmic color scale.
+    The resulting plot is saved as a PNG file in the specified directory and displayed.
+    """
+    dpa_result = statepoint_file.get_tally(name=name_mesh_tally)
+
+    dpa_data = dpa_result.get_slice(scores=['damage-energy']).mean.ravel()
+    dpa_data.shape = (500, 500)
+
+    plt.figure(figsize=(8, 6))
+    plt.imshow(dpa_data, norm=LogNorm(), extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], origin='lower', cmap='plasma')
+    plt.title('Dammage energy Map')
+    if plane == "xy":
+        plt.title('Carte de l\'énergie de dommage XY (échelle log)')
+        plt.xlabel('X [cm]')
+        plt.ylabel('Y [cm]')    
+    elif plane == "xz":
+        plt.title('Carte de l\'énergie de dommage XZ (échelle log)')
+        plt.xlabel('X [cm]')
+        plt.ylabel('Z [cm]')
+    elif plane == "yz":
+        plt.title('Carte de l\'énergie de dommage YZ (échelle log)')
+        plt.xlabel('Y [cm]')
+        plt.ylabel('Z [cm]')
+    else:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+    plt.savefig(cwd / f"{name_mesh_tally}.png")
+    plt.colorbar(label='eV/p-source')
+    plt.tight_layout()
+    plt.show()

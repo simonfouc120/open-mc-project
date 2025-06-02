@@ -7,6 +7,7 @@ from pathlib import Path
 import sys 
 from PIL import Image
 import numpy as np
+import openmc.tally_derivative
 import openmc.universe
 
 CWD = Path(__file__).parent.resolve()
@@ -15,8 +16,9 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally_xy, mesh_tally_yz
-from src.utils.post_preocessing.post_processing import load_mesh_tally
+from src.utils.pre_processing.pre_processing import (remove_previous_results, parallelepiped, plot_geometry, mesh_tally_xy, mesh_tally_yz, 
+                                                     dammage_energy_mesh_xy, dammage_energy_mesh_yz)
+from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
@@ -85,7 +87,7 @@ plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 500
+batches_number= 100
 settings.batches = batches_number
 settings.inactive = 20
 settings.particles = 10000
@@ -131,6 +133,11 @@ mesh_tally_photon_yz = mesh_tally_yz(name_mesh_tally = "flux_mesh_photons_yz", p
                                      bin_number=1000, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0))
 tallies.append(mesh_tally_photon_yz)
 
+dammage_energy_tally_xy = dammage_energy_mesh_xy(name_mesh_tally="dammage_energy_mesh_xy", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), z_value=0.0, z_thickness=4.0)
+tallies.append(dammage_energy_tally_xy)
+
+dommage_energy_tally_yz = dammage_energy_mesh_yz(name_mesh_tally="dammage_energy_mesh_yz", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), x_value=0.0, x_thickness=1.0)
+tallies.append(dommage_energy_tally_yz)
 
 geometry.export_to_xml()
 material.export_to_xml()
@@ -172,9 +179,16 @@ load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="f
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_xy")
 
-
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", bin_number=1000,
                 lower_left=(-40.0, -40.0), upper_right=(40.0, 40.0), zoom_x=(-40, 40), zoom_y=(-40, 40), plane="yz")
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz", bin_number=1000,
                 lower_left=(-40.0, -40.0), upper_right=(40.0, 40.0), zoom_x=(-40, 40), zoom_y=(-40, 40), plane="yz")
+
+load_dammage_energy_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="dammage_energy_mesh_xy",
+                         bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), 
+                         zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="xy")
+
+load_dammage_energy_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="dammage_energy_mesh_yz",
+                         bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), 
+                         zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="yz")
