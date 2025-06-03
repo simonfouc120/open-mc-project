@@ -313,3 +313,47 @@ def dammage_energy_mesh_xz(
     mesh_tally.filters = [mesh_filter]
     mesh_tally.scores = ['damage-energy']
     return mesh_tally
+
+
+
+def mesh_tally_dose_xy(
+    name_mesh_tally="flux_mesh",
+    particule_type='neutrons',
+    bin_number=400,
+    lower_left=(-50.0, -50.0),
+    upper_right=(50.0, 50.0),
+    z_value:float = 0.0,
+    z_thickness:float = 1.0
+    )-> object:
+    """
+    Create a mesh tally in the XY plane at a specified Z value.
+
+    Parameters:
+        name_mesh_tally (str): Name of the tally.
+        particule_type (str): Particle type.
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (x, y).
+        upper_right (tuple): Upper right corner of the mesh (x, y).
+        z_value (float): Z coordinate of the mesh center.
+        z_thickness (float): Thickness of the mesh in the Z direction.
+
+    Returns:
+        openmc.Tally: The mesh tally object.
+    """
+    mesh = openmc.RegularMesh()
+    energy_bins_n, dose_coeffs_n = openmc.data.dose_coefficients(particle="neutron", geometry="ISO")
+    energy_bins_p, dose_coeffs_p = openmc.data.dose_coefficients(particle="photon", geometry="ISO")
+
+    energy_function_filter_n = openmc.EnergyFunctionFilter(energy_bins_n, dose_coeffs_n)
+    energy_function_filter_p = openmc.EnergyFunctionFilter(energy_bins_p, dose_coeffs_p)
+
+    mesh.dimension = [bin_number, bin_number, 1]
+    mesh.lower_left = (lower_left[0], lower_left[1], z_value - z_thickness / 2)
+    mesh.upper_right = (upper_right[0], upper_right[1], z_value + z_thickness / 2)
+
+    mesh_filter = openmc.MeshFilter(mesh)
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
+    particle_filter = openmc.ParticleFilter([particule_type])
+    mesh_tally.filters = [mesh_filter, particle_filter, energy_function_filter_n]
+    mesh_tally.scores = ['flux']
+    return mesh_tally
