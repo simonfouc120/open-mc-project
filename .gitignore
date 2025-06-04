@@ -22,3 +22,7 @@ lib/cross_sections/*
 plot_xy.png
 plot_xz.png
 plot_yz.png
+
+
+# tracks_file
+tracks.h5

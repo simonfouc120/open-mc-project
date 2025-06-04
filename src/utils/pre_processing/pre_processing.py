@@ -44,7 +44,8 @@ def plot_geometry(materials:list, plane:str="xy",
                   width: float = 10.0, height: float = 10.0, 
                   origin: tuple = (0, 0, 0), 
                   pixels: tuple = (600, 600), 
-                  dpi: int = 300):
+                  dpi: int = 300,
+                  color_by: str = 'material'):
     """
     Plots the OpenMC geometry in a plane.
     """
@@ -64,7 +65,7 @@ def plot_geometry(materials:list, plane:str="xy",
     colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
     plot.colors = {mat: color for mat, color in zip(materials, colors)}
 
-    plot.color_by = 'material'
+    plot.color_by = color_by
     plot.basis = plane
     plot.filename = "plot_openmc_" + plane + ".png"
     plots = openmc.Plots([plot])
@@ -77,11 +78,11 @@ def plot_geometry(materials:list, plane:str="xy",
     plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.xticks(
         np.linspace(0, img.size[0], num=7),
-        [f"{x:.1f}" for x in np.linspace(np.min(X_VALUES), np.max(X_VALUES), num=7)]
+        [f"{x:.2f}" for x in np.linspace(np.min(X_VALUES), np.max(X_VALUES), num=7)]
     )
     plt.yticks(
         np.linspace(0, img.size[1], num=7),
-        [f"{y:.1f}" for y in np.linspace(np.min(Y_VALUES), np.max(Y_VALUES), num=7)]
+        [f"{y:.2f}" for y in np.linspace(np.min(Y_VALUES), np.max(Y_VALUES), num=7)]
     )
     if plane == "xy":
         plt.xlabel("X (cm)")
