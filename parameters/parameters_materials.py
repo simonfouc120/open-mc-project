@@ -146,3 +146,12 @@ steel.add_element("Fe", 0.98)
 steel.add_element("C", 0.02)
 steel.set_density("g/cm3", 7.85)
 STEEL_MATERIAL = steel
+
+
+# VOID MATERIALS ##
+void = openmc.Material(name="Void")
+void.add_element("N", 0.78)
+void.add_element("O", 0.21)
+void.add_element("Ar", 0.01)
+void.set_density("g/cm3", 1E-10)  # Very low density to represent a void
+VOID_MATERIAL = void
