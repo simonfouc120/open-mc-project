@@ -4,21 +4,25 @@ import sys
 import os 
 import numpy as np
 
+CELL_SIZE = 0.08 # cm
+LENGTH_DETECTOR = 1.48 # cm
+
+
+
 CWD = Path.cwd().resolve()
 project_root = Path.cwd().parents[3]
 sys.path.append(str(project_root))
-from parameters.parameters_materials import AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, CDTE_MATERIAL
+from parameters.parameters_materials import AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, CDTE_MATERIAL, VOID_MATERIAL
 
-material = openmc.Materials([AIR_MATERIAL, CDTE_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL])
+material = openmc.Materials([AIR_MATERIAL, CDTE_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, VOID_MATERIAL])
 
 from src.utils.pre_processing.pre_processing import plot_geometry, parallelepiped
 
 material.export_to_xml()
-
 MATERIAL = material
 
 # === Paramètres géométriques ===
-pixel_size = 0.8 * 0.1      # 0.8 mm → cm
+pixel_size = CELL_SIZE  #  cm
 pixel_thickness = 2.0 * 0.1 # 2 mm → cm (en x)
 frame_thickness = 1.0 * 0.1 # 1 mm → cm
 
@@ -70,7 +74,7 @@ for i in range(n_y):
 # === Sphère d'air autour ===
 bounding_sphere = openmc.Sphere(r=100.0, boundary_type='vacuum')  # rayon en cm
 air_region = -bounding_sphere & ~cadre_region
-air_cell = openmc.Cell(region=air_region, fill=AIR_MATERIAL)
+air_cell = openmc.Cell(region=air_region, fill=VOID_MATERIAL)
 
 # === Assemblage final ===
 root_universe = openmc.Universe(cells=[cadre_cell, air_cell] + [pixel_cell for pixel_cell in pixel_cells])
