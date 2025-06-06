@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import openmc
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from pathlib import Path
 import sys
@@ -15,6 +16,13 @@ def num_pixel(x_coord, y_coord) :
     y_pix = np.int32((y_coord + LENGTH_DETECTOR/2) / (LENGTH_DETECTOR/16))
     return x_pix, y_pix
 
+def in_camera(x_coord, y_coord) : 
+    """
+    Check if the coordinates are in the camera area
+    """
+    return -LENGTH_DETECTOR/2 <= x_coord <= LENGTH_DETECTOR/2 and -LENGTH_DETECTOR/2 <= y_coord <= LENGTH_DETECTOR/2
+
+
 tracks_data = {}
 
 tracks = openmc.Tracks('tracks.h5')
@@ -23,34 +31,56 @@ tracks = openmc.Tracks('tracks.h5')
 
 energy_change_positions = []
 energy_loss_values = []
+mult = []
+
+xs = []
+ys = []
+zs = []
+history_number = []
+
 for i in range(len(tracks)) : 
+    if i % 10000 == 0:
+        print(f"Processing track {i}/{len(tracks)}")
     states = tracks[i].particle_tracks[0].states
     # On cherche les indices où l'énergie change
     E = states['E']
     energy_change_indices = np.where(np.diff(E) != 0)[0] + 1 # car diff décale d'un cran
     energy_loss = 0.0
-    # if True in (np.diff(E) != 0):
-    #     print(np.diff(E) != 0)
-    #     print(states)
-    for idx in energy_change_indices:
-        pos = states['r'][idx]
-        # save in an arrat the position of the energy change
-        # get the energy loss in the cell 
-        energy_loss += np.abs(E[idx] - E[idx-1])
-        energy_change_positions.append(pos)
-        # print(f"Changement d'énergie à x={pos['x']}, y={pos['y']}, z={pos['z']} (E={E[idx]})")
-    energy_loss_values.append(energy_loss)
+    mult_value = 0
+    if len(energy_change_indices) != 0:
+        for idx in energy_change_indices:
+            history_number.append(i)
+
+            pos = states['r'][idx]
+            # save in an arrat the position of the energy change
+            # get the energy loss in the cell 
+            energy_loss += np.abs(E[idx] - E[idx-1])
+            mult_value += 1
+            xs.append(pos['x'])
+            ys.append(pos['y'])
+            zs.append(pos['z'])
+            # print(f"Changement d'énergie à x={pos['x']}, y={pos['y']}, z={pos['z']} (E={E[idx]})")
+            mult.append(len(energy_change_indices))
+        # Add the energy loss value to the list, repeated x times (x = last value of mult)
+        for _ in range((mult[-1])):
+          energy_loss_values.append(energy_loss)
+    else:   
+        pass
+
+# Convertir les listes en tableaux numpy
+energy_change_positions = np.array(energy_change_positions)
+xs = np.array(xs)
+ys = np.array(ys)
+zs = np.array(zs)
+mult = np.array(mult)
+history_number = np.array(history_number)
 
 energy_loss_values = np.array(energy_loss_values)
 non_null_energy_loss = energy_loss_values[energy_loss_values != 0]
 
 
 # plot the energy change positions
-import matplotlib.pyplot as plt
-# Extraire x, y, z
-xs = [pos['x'] for pos in energy_change_positions]
-ys = [pos['y'] for pos in energy_change_positions]
-zs = [pos['z'] for pos in energy_change_positions]
+
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -61,8 +91,8 @@ ax.set_zlabel('z (cm)')
 ax.set_title('Positions des changements d\'énergie')
 plt.show()
 
-PIXELS_X = [num_pixel(pos['y'], pos['z'])[0] for pos in energy_change_positions]
-PIXELS_Y = [num_pixel(pos['y'], pos['z'])[1] for pos in energy_change_positions]
+PIXELS_X = num_pixel(ys, zs)[0]
+PIXELS_Y = num_pixel(ys, zs)[1]
 
 # Afficher les pixels sous la forme d'un histogramme 2D
 plt.figure(figsize=(8, 6))
@@ -71,8 +101,9 @@ plt.colorbar(label='Nombre de changements d\'énergie')
 plt.xlabel('Pixel X')
 plt.ylabel('Pixel Y')
 plt.title('Distribution des changements d\'énergie dans les pixels')
-plt.grid(False)
 plt.show()
+
+
 
 plt.figure(figsize=(8, 6))
 plt.hist(non_null_energy_loss/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
