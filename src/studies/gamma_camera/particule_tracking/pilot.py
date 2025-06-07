@@ -28,16 +28,21 @@ source.angle = openmc.stats.Isotropic()  # Isotropic emission
 source.energy = openmc.stats.Discrete([661_700], [1.0])  # Énergie du photon de 662 keV pour Cs137
 source_strength = 1e6  # Source strength in photons per second
 source.strength = source_strength  # Set the source strength
+source.angle = openmc.stats.PolarAzimuthal(
+    mu=openmc.stats.Uniform(a=np.cos(np.radians(30)), b=1.0),  # cône de 30°
+    phi=openmc.stats.Uniform(0.0, 2*np.pi)
+)
+source.angle.reference_uvw = (-1.0, 0.0, 0.0)  # orienté vers -x
 
 settings = openmc.Settings()
-batches_number = 100
+batches_number = 40
 settings.batches = batches_number
 settings.particles = 10**5
 settings.source = source
 settings.photon_transport = True 
 settings.run_mode = "fixed source"
 settings.verbose = True
-settings.max_tracks = 500000
+settings.max_tracks = 1000000
 settings.export_to_xml()
 
 openmc.run(tracks=True)
