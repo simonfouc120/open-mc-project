@@ -76,11 +76,14 @@ mult = np.array(mult)
 history_number = np.array(history_number)
 
 energy_loss_values = np.array(energy_loss_values)
-non_null_energy_loss = energy_loss_values[energy_loss_values != 0]
+# non_null_energy_loss = energy_loss_values[energy_loss_values != 0]
+energy_loss_values_mult_1 = energy_loss_values[mult == 1]
+energy_loss_values_mult_2 = energy_loss_values[mult == 2]
 
+# prendre une valeur sur deux de energy_loss_values_mult_2
+energy_loss_values_mult_2 = energy_loss_values_mult_2[::2]
 
 # plot the energy change positions
-
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -103,10 +106,8 @@ plt.ylabel('Pixel Y')
 plt.title('Distribution des changements d\'énergie dans les pixels')
 plt.show()
 
-
-
 plt.figure(figsize=(8, 6))
-plt.hist(non_null_energy_loss/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
+plt.hist(energy_loss_values/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
 plt.yscale("log")
 plt.xlabel("Perte d'énergie [MeV]")
 plt.ylabel("Nombre d'événements")
@@ -115,6 +116,25 @@ plt.grid(axis='y', linestyle='--', alpha=0.6)
 plt.tight_layout()
 plt.show()
 
+plt.figure(figsize=(8, 6))
+plt.hist(energy_loss_values_mult_1/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
+plt.yscale("log")
+plt.xlabel("Perte d'énergie [MeV]")
+plt.ylabel("Nombre d'événements")
+plt.title("Distribution des pertes d'énergie par événement")
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(8, 6))
+plt.hist(energy_loss_values_mult_2/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
+plt.yscale("log")
+plt.xlabel("Perte d'énergie [MeV]")
+plt.ylabel("Nombre d'événements")
+plt.title("Distribution des pertes d'énergie par événement")
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
 
 # TODO : faire filtre pour éviter anneau
 # TODO : faire spectre simple 
@@ -124,3 +144,5 @@ plt.show()
 # TODO : faire spectre des triples
 
 # TODO : faire note book avec les résultats
+
+
