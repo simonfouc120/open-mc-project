@@ -6,7 +6,7 @@ import numpy as np
 
 CELL_SIZE = 0.08 # cm
 LENGTH_DETECTOR = 1.48 # cm
-
+DETECTOR_THICKNESS = 0.2 # cm
 
 
 CWD = Path.cwd().resolve()
@@ -23,7 +23,7 @@ MATERIAL = material
 
 # === Paramètres géométriques ===
 pixel_size = CELL_SIZE  #  cm
-pixel_thickness = 2.0 * 0.1 # 2 mm → cm (en x)
+pixel_thickness = DETECTOR_THICKNESS # cm
 frame_thickness = 1.0 * 0.1 # 1 mm → cm
 
 n_y = 16  # Nombre de pixels selon y
