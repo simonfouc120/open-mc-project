@@ -38,11 +38,12 @@ mult = []
 xs = []
 ys = []
 zs = []
+x_pixel = []
+y_pixel = []
 history_number = []
 
 for i in range(len(tracks)) : 
-    if i % 10000 == 0:
-        print(f"Processing track {i}/{len(tracks)}")
+
     states = tracks[i].particle_tracks[0].states
     # On cherche les indices où l'énergie change
     E = states['E']
@@ -57,10 +58,15 @@ for i in range(len(tracks)) :
             # save in an arrat the position of the energy change
             # get the energy loss in the cell 
             energy_loss += np.abs(E[idx] - E[idx-1])
-            mult_value += 1
             xs.append(pos['x'])
             ys.append(pos['y'])
             zs.append(pos['z'])
+            # récupère les coordonnées des pixels pour chaque énergie déposée
+            x_pixel.append(num_pixel(ys[-1], zs[-1])[0])
+            y_pixel.append(num_pixel(ys[-1], zs[-1])[1])
+            # if x_pixel[i]
+            mult_value += 1
+
             # print(f"Changement d'énergie à x={pos['x']}, y={pos['y']}, z={pos['z']} (E={E[idx]})")
             mult.append(len(energy_change_indices))
             energy_loss_values.append(np.abs(E[idx] - E[idx-1]))
@@ -69,6 +75,8 @@ for i in range(len(tracks)) :
           energy_loss_values_tot.append(energy_loss)
     else:   
         pass
+    if i % 10000 == 0:
+        print(f"Processing track {i}/{len(tracks)}")
 
 # Convertir les listes en tableaux numpy
 energy_change_positions = np.array(energy_change_positions)
@@ -135,7 +143,7 @@ plt.savefig("histo_pixel.png")
 plt.show()
 
 plt.figure(figsize=(8, 6))
-plt.hist(energy_loss_values_tot/1e6, bins=45, color='mediumseagreen', edgecolor='black', alpha=0.8)
+plt.hist(energy_loss_values_tot/1e6, bins=100, color='mediumseagreen', edgecolor='black', alpha=0.8)
 plt.yscale("log")
 plt.xlabel("Energie [MeV]")
 plt.ylabel("Nombre de coups")
@@ -146,7 +154,7 @@ plt.savefig("spectrum_energy.png")
 plt.show()
 
 plt.figure(figsize=(8, 6))
-bins = np.linspace(0, 1, 51)  # 50 bins between 0 and 1 MeV
+bins = np.linspace(0, 1, 101)  # 50 bins between 0 and 1 MeV
 plt.hist(energy_loss_values_tot_mult_1/1e6, bins=bins, color='mediumseagreen', edgecolor='black', alpha=0.8, label='Multiplicité 1', histtype='stepfilled')
 plt.hist(energy_loss_values_tot_mult_2/1e6, bins=bins, color='royalblue', edgecolor='black', alpha=0.6, label='Multiplicité 2', histtype='stepfilled')
 plt.hist(energy_loss_values_tot_mult_3/1e6, bins=bins, color='orange', edgecolor='black', alpha=0.5, label='Multiplicité 3', histtype='stepfilled')
