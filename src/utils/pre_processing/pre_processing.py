@@ -56,8 +56,8 @@ def plot_geometry(materials:list, plane:str="xy",
     plot.width = (width, height)
     plot.pixels = pixels
 
-    X_VALUES = np.linspace(-width//2, width//2, pixels[0])
-    Y_VALUES = np.linspace(-height//2, height//2, pixels[1])
+    X_VALUES = np.linspace(origin[0] - width/2, origin[0] + width/2, pixels[0])
+    Y_VALUES = np.linspace(origin[1] - height/2, origin[1] + height/2, pixels[1])
 
     X, Y = np.meshgrid(X_VALUES, Y_VALUES)
 
@@ -82,7 +82,7 @@ def plot_geometry(materials:list, plane:str="xy",
     )
     plt.yticks(
         np.linspace(0, img.size[1], num=7),
-        [f"{y:.2f}" for y in np.linspace(np.min(Y_VALUES), np.max(Y_VALUES), num=7)]
+        [f"{y:.2f}" for y in np.linspace(np.max(Y_VALUES), np.min(Y_VALUES), num=7)]
     )
     if plane == "xy":
         plt.xlabel("X (cm)")
@@ -96,7 +96,7 @@ def plot_geometry(materials:list, plane:str="xy",
     else:
         raise ValueError("plane must be 'xy', 'xz', or 'yz'")
     
-    plt.gca().invert_yaxis()
+    # plt.gca().invert_yaxis()
     plt.legend()
     plt.savefig("plot_" + plane + ".png", dpi=dpi, bbox_inches='tight')
     # remove the openmc plot file
