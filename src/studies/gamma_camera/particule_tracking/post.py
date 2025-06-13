@@ -9,7 +9,7 @@ CWD = Path.cwd().resolve()
 project_root = Path.cwd().parents[3]
 sys.path.append(str(project_root))
 
-from src.studies.gamma_camera.model.model_gamma_camera import CELL_SIZE, LENGTH_DETECTOR, DETECTOR_THICKNESS
+from src.models.model_gamma_camera import CELL_SIZE, LENGTH_DETECTOR, DETECTOR_THICKNESS
 from matplotlib.colors import LogNorm
 
 def num_pixel(x_coord, y_coord) : 
