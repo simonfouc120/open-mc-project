@@ -15,7 +15,7 @@ def print_calculation_finished():
 def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_tally", 
                     bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                     upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
-                    zoom_y:tuple=(-10.0, 10.0), plane:str = "xy",):
+                    zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True):
     """
     Load and plot the mesh tally from the statepoint file.
 
@@ -59,13 +59,14 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
     plt.xlim(zoom_x[0], zoom_x[1])
     plt.ylim(zoom_y[0], zoom_y[1])
     name_mesh_tally_saving = name_mesh_tally + ".png"
-    plt.savefig(cwd / name_mesh_tally_saving)
+    if saving_figure:
+        plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
 
 def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str = "dammage_energy_mesh", 
                                 bin_number:int=500, lower_left:tuple=(-10.0, -10.0), 
                                 upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
-                                zoom_y:tuple=(-10.0, 10.0), plane:str = "xy"):
+                                zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True):
     """
     Load and plot the damage energy mesh tally from the statepoint file.
 
@@ -105,7 +106,8 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
         plt.ylabel('Z [cm]')
     else:
         raise ValueError("plane must be 'xy', 'xz', or 'yz'")
-    plt.savefig(cwd / f"{name_mesh_tally}.png")
+    if saving_figure:
+        plt.savefig(cwd / f"{name_mesh_tally}.png")
     plt.colorbar(label='eV/p-source')
     plt.tight_layout()
     plt.show()
@@ -115,7 +117,7 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
                         n_per_second:int=1, particule_type:str='neutrons',
                         bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                         upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
-                        zoom_y:tuple=(-10.0, 10.0), plane:str = "xy"):
+                        zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True):
     """
     Load and plot the dose mesh tally from the statepoint file.
 
@@ -164,5 +166,6 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     plt.xlim(zoom_x[0], zoom_x[1])
     plt.ylim(zoom_y[0], zoom_y[1])
     name_mesh_tally_saving = name_mesh_tally + ".png"
-    plt.savefig(cwd / name_mesh_tally_saving)
+    if saving_figure:
+        plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
