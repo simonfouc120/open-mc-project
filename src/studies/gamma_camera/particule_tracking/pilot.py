@@ -8,7 +8,7 @@ CWD = Path.cwd().resolve()
 project_root = Path.cwd().parents[3]
 sys.path.append(str(project_root))
 
-from src.studies.gamma_camera.model.model_gamma_camera import MATERIAL, GEOMETRY, PIXEL_CELLS
+from src.models.model_gamma_camera import MATERIAL, GEOMETRY, PIXEL_CELLS
 from src.utils.pre_processing.pre_processing import mesh_tally_yz
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
