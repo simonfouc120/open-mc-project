@@ -48,7 +48,8 @@ def plot_geometry(
     origin: tuple = (0, 0, 0),
     pixels: tuple = (600, 600),
     dpi: int = 300,
-    color_by: str = 'material'
+    color_by: str = 'material',
+    saving_figure: bool = True
 ):
     """
     Plots the OpenMC geometry in a specified plane.
@@ -105,7 +106,8 @@ def plot_geometry(
     )
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig(f"plot_{plane}.png", dpi=dpi, bbox_inches='tight')
+    if saving_figure:
+        plt.savefig(f"plot_{plane}.png", dpi=dpi, bbox_inches='tight')
     os.remove(plot.filename)
     plt.tight_layout()
     plt.show()
