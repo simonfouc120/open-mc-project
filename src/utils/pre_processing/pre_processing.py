@@ -40,66 +40,72 @@ def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax, surface_id_start=10):
     return region
 
 
-def plot_geometry(materials:list, plane:str="xy", 
-                  width: float = 10.0, height: float = 10.0, 
-                  origin: tuple = (0, 0, 0), 
-                  pixels: tuple = (600, 600), 
-                  dpi: int = 300,
-                  color_by: str = 'material'):
+def plot_geometry(
+    materials: list,
+    plane: str = "xy",
+    width: float = 10.0,
+    height: float = 10.0,
+    origin: tuple = (0, 0, 0),
+    pixels: tuple = (600, 600),
+    dpi: int = 300,
+    color_by: str = 'material'
+):
     """
-    Plots the OpenMC geometry in a plane.
+    Plots the OpenMC geometry in a specified plane.
     """
-
+    # Set up plot object
     plot = openmc.Plot()
-
     plot.origin = origin
     plot.width = (width, height)
     plot.pixels = pixels
+    plot.color_by = color_by
+    plot.basis = plane
+    plot.filename = f"plot_openmc_{plane}.png"
 
-    X_VALUES = np.linspace(origin[0] - width/2, origin[0] + width/2, pixels[0])
-    Y_VALUES = np.linspace(origin[1] - height/2, origin[1] + height/2, pixels[1])
-
-    X, Y = np.meshgrid(X_VALUES, Y_VALUES)
-
-    default_colors = ['red', 'green', 'lightblue', 'gray', 'brown', 'orange', 'purple', 'yellow', 'pink', 'cyan']
+    # Assign colors to materials
+    default_colors = [
+        'red', 'green', 'lightblue', 'gray', 'brown',
+        'orange', 'purple', 'yellow', 'pink', 'cyan'
+    ]
     colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
     plot.colors = {mat: color for mat, color in zip(materials, colors)}
 
-    plot.color_by = color_by
-    plot.basis = plane
-    plot.filename = "plot_openmc_" + plane + ".png"
-    plots = openmc.Plots([plot])
-    plots.export_to_xml()
+    # Plane basis and axis values
+    if plane == "xy":
+        x_vals = np.linspace(origin[0] - width / 2, origin[0] + width / 2, pixels[0])
+        y_vals = np.linspace(origin[1] - height / 2, origin[1] + height / 2, pixels[1])
+        xlabel, ylabel = "X (cm)", "Y (cm)"
+    elif plane == "xz":
+        x_vals = np.linspace(origin[0] - width / 2, origin[0] + width / 2, pixels[0])
+        y_vals = np.linspace(origin[2] - height / 2, origin[2] + height / 2, pixels[1])
+        xlabel, ylabel = "X (cm)", "Z (cm)"
+    elif plane == "yz":
+        x_vals = np.linspace(origin[1] - width / 2, origin[1] + width / 2, pixels[0])
+        y_vals = np.linspace(origin[2] - height / 2, origin[2] + height / 2, pixels[1])
+        xlabel, ylabel = "Y (cm)", "Z (cm)"
+    else:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+    # Export and plot geometry
+    openmc.Plots([plot]).export_to_xml()
     openmc.plot_geometry()
 
+    # Load and display image
     img = Image.open(plot.filename)
     plt.imshow(img)
-    plt.title("OpenMC Geometry Plot - " + plane.upper() + " Plane")
+    plt.title(f"OpenMC Geometry Plot - {plane.upper()} Plane")
     plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.xticks(
         np.linspace(0, img.size[0], num=7),
-        [f"{x:.2f}" for x in np.linspace(np.min(X_VALUES), np.max(X_VALUES), num=7)]
+        [f"{x:.2f}" for x in np.linspace(np.min(x_vals), np.max(x_vals), num=7)]
     )
     plt.yticks(
         np.linspace(0, img.size[1], num=7),
-        [f"{y:.2f}" for y in np.linspace(np.max(Y_VALUES), np.min(Y_VALUES), num=7)]
+        [f"{y:.2f}" for y in np.linspace(np.max(y_vals), np.min(y_vals), num=7)]
     )
-    if plane == "xy":
-        plt.xlabel("X (cm)")
-        plt.ylabel("Y (cm)")
-    elif plane == "xz":
-        plt.xlabel("X (cm)")
-        plt.ylabel("Z (cm)")
-    elif plane == "yz":
-        plt.xlabel("Y (cm)")
-        plt.ylabel("Z (cm)")
-    else:
-        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
-    
-    # plt.gca().invert_yaxis()
-    plt.legend()
-    plt.savefig("plot_" + plane + ".png", dpi=dpi, bbox_inches='tight')
-    # remove the openmc plot file
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.savefig(f"plot_{plane}.png", dpi=dpi, bbox_inches='tight')
     os.remove(plot.filename)
     plt.tight_layout()
     plt.show()
