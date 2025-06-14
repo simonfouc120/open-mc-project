@@ -42,15 +42,15 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
             norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  
     plt.colorbar(label='Flux [a.u.] (log scale)')
     if plane == "xy":
-        plt.title('Carte de flux XY (échelle log)')
+        plt.title('Flux map XY (log scale)')
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')
     elif plane == "xz":
-        plt.title('Carte de flux XZ (échelle log)')
+        plt.title('Flux map XY (log scale)')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title('Carte de flux YZ (échelle log)')
+        plt.title('Flux map XY (log scale)')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
@@ -93,15 +93,15 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
     plt.imshow(dpa_data, norm=LogNorm(), extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], origin='lower', cmap='plasma')
     plt.title('Dammage energy Map')
     if plane == "xy":
-        plt.title('Carte de l\'énergie de dommage XY (échelle log)')
+        plt.title('Damage energy map XY (log scale)')
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')    
     elif plane == "xz":
-        plt.title('Carte de l\'énergie de dommage XZ (échelle log)')
+        plt.title('Damage energy map XY (log scale)')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title('Carte de l\'énergie de dommage YZ (échelle log)')
+        plt.title('Damage energy map XY (log scale)')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
@@ -149,15 +149,15 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     plt.colorbar(label='Dose [μSv/h] (log scale)')
     
     if plane == "xy":
-        plt.title(f'Carte de dose {particule_type} XY')
+        plt.title(f'Dose {particule_type} cartography XY')
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')
     elif plane == "xz":
-        plt.title(f'Carte de dose {particule_type} XZ')
+        plt.title(f'Dose {particule_type} cartography XY')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title(f'Carte de dose {particule_type} YZ')
+        plt.title(f'Dose {particule_type} cartography XY')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
