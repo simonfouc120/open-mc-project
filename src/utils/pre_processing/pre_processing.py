@@ -327,7 +327,7 @@ def dammage_energy_mesh_xz(
 
 def mesh_tally_dose_xy(
     name_mesh_tally="flux_mesh",
-    particule_type='neutrons',
+    particule_type='neutron',
     bin_number=400,
     lower_left=(-50.0, -50.0),
     upper_right=(50.0, 50.0),
@@ -350,11 +350,14 @@ def mesh_tally_dose_xy(
         openmc.Tally: The mesh tally object.
     """
     mesh = openmc.RegularMesh()
-    energy_bins_n, dose_coeffs_n = openmc.data.dose_coefficients(particle="neutron", geometry="ISO")
-    energy_bins_p, dose_coeffs_p = openmc.data.dose_coefficients(particle="photon", geometry="ISO")
-
-    energy_function_filter_n = openmc.EnergyFunctionFilter(energy_bins_n, dose_coeffs_n)
-    energy_function_filter_p = openmc.EnergyFunctionFilter(energy_bins_p, dose_coeffs_p)
+    if particule_type == 'neutron':
+        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry="ISO")
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
+    elif particule_type == 'photon':
+        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="photon", geometry="ISO")
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
+    else:
+        raise ValueError("particule_type must be 'neutron' or 'photon'")
 
     mesh.dimension = [bin_number, bin_number, 1]
     mesh.lower_left = (lower_left[0], lower_left[1], z_value - z_thickness / 2)
@@ -363,6 +366,6 @@ def mesh_tally_dose_xy(
     mesh_filter = openmc.MeshFilter(mesh)
     mesh_tally = openmc.Tally(name=name_mesh_tally)
     particle_filter = openmc.ParticleFilter([particule_type])
-    mesh_tally.filters = [mesh_filter, particle_filter, energy_function_filter_n]
+    mesh_tally.filters = [mesh_filter, particle_filter, energy_function_filter]
     mesh_tally.scores = ['flux']
     return mesh_tally
