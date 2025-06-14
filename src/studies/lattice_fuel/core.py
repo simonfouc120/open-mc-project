@@ -15,8 +15,8 @@ sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, parallelepiped, plot_geometry, mesh_tally_xy, mesh_tally_yz, 
-                                                     dammage_energy_mesh_xy, dammage_energy_mesh_yz)
-from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally
+                                                     dammage_energy_mesh_xy, dammage_energy_mesh_yz, mesh_tally_dose_xy)
+from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_hexagon_lattice_fuel import GEOMETRY, MATERIALS, MAIN_CELL
@@ -37,10 +37,10 @@ plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 350
+batches_number= 300
 settings.batches = batches_number
 settings.inactive = 20
-settings.particles = 10000
+settings.particles = 20000
 settings.source = openmc.Source()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
@@ -88,6 +88,16 @@ tallies.append(dammage_energy_tally_xy)
 
 dommage_energy_tally_yz = dammage_energy_mesh_yz(name_mesh_tally="dammage_energy_mesh_yz", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), x_value=0.0, x_thickness=1.0)
 tallies.append(dommage_energy_tally_yz)
+
+mesh_tally_neutron_xy_dose = mesh_tally_dose_xy(name_mesh_tally = "flux_mesh_neutrons_xy_dose", particule_type='neutron', 
+                                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                                      z_thickness= 4.0, z_value=0.0)
+tallies.append(mesh_tally_neutron_xy_dose)
+
+mesh_tally_photon_xy_dose = mesh_tally_dose_xy(name_mesh_tally = "flux_mesh_photons_xy_dose", particule_type='photon',
+                                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                                      z_thickness= 4.0, z_value=0.0)
+tallies.append(mesh_tally_photon_xy_dose)
 
 settings.export_to_xml()
 tallies.export_to_xml()
@@ -178,3 +188,13 @@ load_dammage_energy_tally(cwd = CWD, statepoint_file = statepoint_file, name_mes
 load_dammage_energy_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="dammage_energy_mesh_yz",
                          bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), 
                          zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="yz")
+
+load_mesh_tally_dose(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_xy_dose",
+                     n_per_second=neutrons_emitted_per_second, particule_type='neutron',
+                     bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                     zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="xy")
+
+load_mesh_tally_dose(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_xy_dose",
+                     n_per_second=neutrons_emitted_per_second, particule_type='photon',
+                     bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
+                     zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="xy")
