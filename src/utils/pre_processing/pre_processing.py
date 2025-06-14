@@ -328,6 +328,7 @@ def dammage_energy_mesh_xz(
 def mesh_tally_dose_xy(
     name_mesh_tally="flux_mesh",
     particule_type='neutron',
+    irradiation_geometry='ISO',
     bin_number=400,
     lower_left=(-50.0, -50.0),
     upper_right=(50.0, 50.0),
@@ -335,11 +336,13 @@ def mesh_tally_dose_xy(
     z_thickness:float = 1.0
     )-> object:
     """
-    Create a mesh tally in the XY plane at a specified Z value.
+    Create a mesh tally for dose in the XY plane at a specified Z value.
+    Data source is IRCP 116.
 
     Parameters:
         name_mesh_tally (str): Name of the tally.
-        particule_type (str): Particle type.
+        particule_type (str): Particle type ('neutron' or 'photon').
+        irradiation_geometry (str): Irradiation geometry for dose coefficients ('AP', 'PA', 'LLAT', 'RLAT', 'ROT', 'ISO').
         bin_number (int): Number of bins in each direction.
         lower_left (tuple): Lower left corner of the mesh (x, y).
         upper_right (tuple): Upper right corner of the mesh (x, y).
@@ -351,10 +354,10 @@ def mesh_tally_dose_xy(
     """
     mesh = openmc.RegularMesh()
     if particule_type == 'neutron':
-        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry="ISO")
+        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry=irradiation_geometry)
         energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
     elif particule_type == 'photon':
-        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="photon", geometry="ISO")
+        energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="photon", geometry=irradiation_geometry)
         energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
     else:
         raise ValueError("particule_type must be 'neutron' or 'photon'")
