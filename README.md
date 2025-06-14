@@ -1,4 +1,4 @@
-# open-mc-project
+# Work on OpenMC with Python API
 
 **open-mc-project** is a modular Python project for simulating nuclear reactor physics using [OpenMC](https://openmc.org/). It provides tools for modeling reactor geometries, defining materials, running criticality calculations, and analyzing results with custom utilities for pre- and post-processing. The project is organized for extensibility and reproducibility, supporting studies such as fission rate analysis and gamma camera simulations.
 
