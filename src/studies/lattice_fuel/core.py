@@ -37,10 +37,10 @@ plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 90
+batches_number= 500
 settings.batches = batches_number
 settings.inactive = 20
-settings.particles = 20000
+settings.particles = 50000
 settings.source = openmc.Source()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
@@ -100,21 +100,16 @@ tallies.append(dammage_energy_tally_yz)
 # dommage_energy_tally_yz = dammage_energy_mesh_yz(name_mesh_tally="dammage_energy_mesh_yz", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), x_value=0.0, x_thickness=1.0)
 # tallies.append(dommage_energy_tally_yz)
 
-mesh_tally_neutron_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_neutrons_xy_dose", particule_type='neutron',
-                                                   plane="xy", 
-                                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
-                                      thickness= 4.0, coord_value=0.0)
+mesh_tally_neutron_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_neutrons_xy_dose", particule_type='neutron', plane="xy", 
+                                                    bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), thickness= 4.0, coord_value=0.0)
 tallies.append(mesh_tally_neutron_xy_dose)
 
-mesh_tally_photon_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy_dose", particule_type='photon',
-                                                  plane="xy",
-                                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
-                                      thickness= 4.0, coord_value=0.0)
+mesh_tally_photon_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy_dose", particule_type='photon', plane="xy", 
+                                                  bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), thickness= 4.0, coord_value=0.0)
 tallies.append(mesh_tally_photon_xy_dose)
 
 settings.export_to_xml()
 tallies.export_to_xml()
-
 
 # Run the simulation
 remove_previous_results(batches_number=batches_number)
