@@ -12,7 +12,7 @@ def print_calculation_finished():
     print("######################################################")
 
 
-def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_tally", 
+def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_tally", particule_type:str='neutron',
                     bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                     upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
                     zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True):
@@ -42,15 +42,15 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
             norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  
     plt.colorbar(label='Flux [a.u.] (log scale)')
     if plane == "xy":
-        plt.title('Flux map XY (log scale)')
+        plt.title(f"Flux map XY {particule_type} (log scale)")
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')
     elif plane == "xz":
-        plt.title('Flux map XY (log scale)')
+        plt.title(f'Flux map XY {particule_type} (log scale)')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title('Flux map XY (log scale)')
+        plt.title(f'Flux map XY {particule_type} (log scale)')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:

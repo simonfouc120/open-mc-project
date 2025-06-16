@@ -372,3 +372,133 @@ def mesh_tally_dose_xy(
     mesh_tally.filters = [mesh_filter, particle_filter, energy_function_filter]
     mesh_tally.scores = ['flux']
     return mesh_tally
+
+
+
+def mesh_tally_plane(
+    plane: str = "xy",
+    name_mesh_tally: str = "flux_mesh",
+    particule_type: str = 'neutrons',
+    bin_number: int = 400,
+    lower_left = (-50.0, -50.0),
+    upper_right = (50.0, 50.0),
+    coord_value: float = 0.0,
+    thickness: float = 1.0,
+    score: str = 'flux'
+) -> object:
+    """
+    Create a mesh tally in the specified plane at a given coordinate value.
+
+    Parameters:
+        plane (str): Plane to create the mesh tally in ('xy', 'xz', or 'yz').
+        name_mesh_tally (str): Name of the tally.
+        particule_type (str): Particle type.
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (2D).
+        upper_right (tuple): Upper right corner of the mesh (2D).
+        coord_value (float): Coordinate value for the orthogonal axis.
+        thickness (float): Thickness along the orthogonal axis.
+        score (str): Tally score (e.g., 'flux', 'current', 'fission', etc.).
+
+    Returns:
+        openmc.Tally: The mesh tally object.
+    """
+    mesh = openmc.RegularMesh()
+    if plane == "xy":
+        mesh.dimension = [bin_number, bin_number, 1]
+        mesh.lower_left = (lower_left[0], lower_left[1], coord_value - thickness / 2)
+        mesh.upper_right = (upper_right[0], upper_right[1], coord_value + thickness / 2)
+    elif plane == "xz":
+        mesh.dimension = [bin_number, 1, bin_number]
+        mesh.lower_left = (lower_left[0], coord_value - thickness / 2, lower_left[1])
+        mesh.upper_right = (upper_right[0], coord_value + thickness / 2, upper_right[1])
+    elif plane == "yz":
+        mesh.dimension = [1, bin_number, bin_number]
+        mesh.lower_left = (coord_value - thickness / 2, lower_left[0], lower_left[1])
+        mesh.upper_right = (coord_value + thickness / 2, upper_right[0], upper_right[1])
+    else:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+    mesh_filter = openmc.MeshFilter(mesh)
+    mesh_tally = openmc.Tally(name=name_mesh_tally)
+    if particule_type != 'all':
+            particle_filter = openmc.ParticleFilter([particule_type])
+            mesh_tally.filters = [mesh_filter, particle_filter]
+    else:
+        mesh_tally.filters = [mesh_filter]
+    mesh_tally.scores = [score]
+    return mesh_tally
+
+# def plot_geometry_bw(
+#     materials: list,
+#     plane: str = "xy",
+#     width: float = 10.0,
+#     height: float = 10.0,
+#     origin: tuple = (0, 0, 0),
+#     pixels: tuple = (600, 600),
+#     dpi: int = 300,
+#     color_by: str = 'material',
+#     saving_figure: bool = True
+# ):
+#     """
+#     Plots the OpenMC geometry in a specified plane.
+#     """
+#     # Set up plot object
+#     plot = openmc.Plot()
+#     plot.origin = origin
+#     plot.width = (width, height)
+#     plot.pixels = pixels
+#     plot.color_by = color_by
+#     plot.basis = plane
+#     plot.filename = f"plot_openmc_{plane}.png"
+#     plot.overlap_color = "black"  # Set overlap color for better visibility
+    
+#     # Assign colors to materials
+#     default_colors = [
+#         "white", "white", "white", "white", "white",
+#         "white", "white", "white", "white", "white"
+#     ]
+#     colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
+#     plot.colors = {mat: color for mat, color in zip(materials, colors)}
+
+#     # Plane basis and axis values
+#     if plane == "xy":
+#         x_vals = np.linspace(origin[0] - width / 2, origin[0] + width / 2, pixels[0])
+#         y_vals = np.linspace(origin[1] - height / 2, origin[1] + height / 2, pixels[1])
+#         xlabel, ylabel = "X (cm)", "Y (cm)"
+#     elif plane == "xz":
+#         x_vals = np.linspace(origin[0] - width / 2, origin[0] + width / 2, pixels[0])
+#         y_vals = np.linspace(origin[2] - height / 2, origin[2] + height / 2, pixels[1])
+#         xlabel, ylabel = "X (cm)", "Z (cm)"
+#     elif plane == "yz":
+#         x_vals = np.linspace(origin[1] - width / 2, origin[1] + width / 2, pixels[0])
+#         y_vals = np.linspace(origin[2] - height / 2, origin[2] + height / 2, pixels[1])
+#         xlabel, ylabel = "Y (cm)", "Z (cm)"
+#     else:
+#         raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+#     # Export and plot geometry
+#     openmc.Plots([plot]).export_to_xml()
+#     openmc.plot_geometry()
+
+#     # Load and display image
+#     img = Image.open(plot.filename)
+#     plt.imshow(img)
+#     plt.title(f"OpenMC Geometry Plot - {plane.upper()} Plane")
+#     plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
+#     plt.xticks(
+#         np.linspace(0, img.size[0], num=7),
+#         [f"{x:.2f}" for x in np.linspace(np.min(x_vals), np.max(x_vals), num=7)]
+#     )
+#     plt.yticks(
+#         np.linspace(0, img.size[1], num=7),
+#         [f"{y:.2f}" for y in np.linspace(np.max(y_vals), np.min(y_vals), num=7)]
+#     )
+#     plt.xlabel(xlabel)
+#     plt.ylabel(ylabel)
+#     if saving_figure:
+#         print(f"Saving figure as plot_{plane}.png")
+#         # plt.savefig(f"plot_{plane}.png", dpi=dpi, bbox_inches='tight')
+#     os.remove(plot.filename)
+#     plt.tight_layout()
+#     plt.show()
