@@ -42,15 +42,15 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
             norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  
     plt.colorbar(label='Flux [a.u.] (log scale)')
     if plane == "xy":
-        plt.title(f"Flux map XY {particule_type} (log scale)")
+        plt.title(f"Flux map XY {particule_type}")
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')
     elif plane == "xz":
-        plt.title(f'Flux map XY {particule_type} (log scale)')
+        plt.title(f'Flux map XY {particule_type}')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title(f'Flux map XY {particule_type} (log scale)')
+        plt.title(f'Flux map XY {particule_type}')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
@@ -93,15 +93,15 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
     plt.imshow(dpa_data, norm=LogNorm(), extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], origin='lower', cmap='plasma')
     plt.title('Dammage energy Map')
     if plane == "xy":
-        plt.title('Damage energy map XY (log scale)')
+        plt.title('Damage energy map XY')
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')    
     elif plane == "xz":
-        plt.title('Damage energy map XY (log scale)')
+        plt.title('Damage energy map XY')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title('Damage energy map XY (log scale)')
+        plt.title('Damage energy map XY')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
