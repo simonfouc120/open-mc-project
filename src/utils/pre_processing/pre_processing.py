@@ -324,35 +324,51 @@ def dammage_energy_mesh_xz(
     return mesh_tally
 
 
-
-def mesh_tally_dose_xy(
-    name_mesh_tally="flux_mesh",
-    particule_type='neutron',
-    irradiation_geometry='ISO',
-    bin_number=400,
-    lower_left=(-50.0, -50.0),
-    upper_right=(50.0, 50.0),
-    z_value:float = 0.0,
-    z_thickness:float = 1.0
-    )-> object:
+def mesh_tally_dose_plane(
+    plane: str = "xy",
+    name_mesh_tally: str = "dose_mesh",
+    particule_type: str = 'neutron',
+    irradiation_geometry: str = 'ISO',
+    bin_number: int = 400,
+    lower_left = (-50.0, -50.0),
+    upper_right = (50.0, 50.0),
+    coord_value: float = 0.0,
+    thickness: float = 1.0
+) -> object:
     """
-    Create a mesh tally for dose in the XY plane at a specified Z value.
-    Data source is IRCP 116.
+    Create a mesh tally for dose in the specified plane at a given coordinate value.
+    Data source is ICRP 116.
 
     Parameters:
+        plane (str): Plane to create the mesh tally in ('xy', 'xz', or 'yz').
         name_mesh_tally (str): Name of the tally.
         particule_type (str): Particle type ('neutron' or 'photon').
         irradiation_geometry (str): Irradiation geometry for dose coefficients ('AP', 'PA', 'LLAT', 'RLAT', 'ROT', 'ISO').
         bin_number (int): Number of bins in each direction.
-        lower_left (tuple): Lower left corner of the mesh (x, y).
-        upper_right (tuple): Upper right corner of the mesh (x, y).
-        z_value (float): Z coordinate of the mesh center.
-        z_thickness (float): Thickness of the mesh in the Z direction.
+        lower_left (tuple): Lower left corner of the mesh (2D).
+        upper_right (tuple): Upper right corner of the mesh (2D).
+        coord_value (float): Coordinate value for the orthogonal axis.
+        thickness (float): Thickness along the orthogonal axis.
 
     Returns:
         openmc.Tally: The mesh tally object.
     """
     mesh = openmc.RegularMesh()
+    if plane == "xy":
+        mesh.dimension = [bin_number, bin_number, 1]
+        mesh.lower_left = (lower_left[0], lower_left[1], coord_value - thickness / 2)
+        mesh.upper_right = (upper_right[0], upper_right[1], coord_value + thickness / 2)
+    elif plane == "xz":
+        mesh.dimension = [bin_number, 1, bin_number]
+        mesh.lower_left = (lower_left[0], coord_value - thickness / 2, lower_left[1])
+        mesh.upper_right = (upper_right[0], coord_value + thickness / 2, upper_right[1])
+    elif plane == "yz":
+        mesh.dimension = [1, bin_number, bin_number]
+        mesh.lower_left = (coord_value - thickness / 2, lower_left[0], lower_left[1])
+        mesh.upper_right = (coord_value + thickness / 2, upper_right[0], upper_right[1])
+    else:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
     if particule_type == 'neutron':
         energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry=irradiation_geometry)
         energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
@@ -361,10 +377,6 @@ def mesh_tally_dose_xy(
         energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
     else:
         raise ValueError("particule_type must be 'neutron' or 'photon'")
-
-    mesh.dimension = [bin_number, bin_number, 1]
-    mesh.lower_left = (lower_left[0], lower_left[1], z_value - z_thickness / 2)
-    mesh.upper_right = (upper_right[0], upper_right[1], z_value + z_thickness / 2)
 
     mesh_filter = openmc.MeshFilter(mesh)
     mesh_tally = openmc.Tally(name=name_mesh_tally)

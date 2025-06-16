@@ -15,7 +15,7 @@ sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, parallelepiped, plot_geometry, mesh_tally_plane,
-                                                     dammage_energy_mesh_xy, dammage_energy_mesh_yz, mesh_tally_dose_xy)
+                                                     dammage_energy_mesh_xy, dammage_energy_mesh_yz, mesh_tally_dose_plane)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
@@ -100,14 +100,16 @@ tallies.append(dammage_energy_tally_yz)
 # dommage_energy_tally_yz = dammage_energy_mesh_yz(name_mesh_tally="dammage_energy_mesh_yz", bin_number=500, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0), x_value=0.0, x_thickness=1.0)
 # tallies.append(dommage_energy_tally_yz)
 
-mesh_tally_neutron_xy_dose = mesh_tally_dose_xy(name_mesh_tally = "flux_mesh_neutrons_xy_dose", particule_type='neutron', 
+mesh_tally_neutron_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_neutrons_xy_dose", particule_type='neutron',
+                                                   plane="xy", 
                                       bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
-                                      z_thickness= 4.0, z_value=0.0)
+                                      thickness= 4.0, coord_value=0.0)
 tallies.append(mesh_tally_neutron_xy_dose)
 
-mesh_tally_photon_xy_dose = mesh_tally_dose_xy(name_mesh_tally = "flux_mesh_photons_xy_dose", particule_type='photon',
+mesh_tally_photon_xy_dose = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy_dose", particule_type='photon',
+                                                  plane="xy",
                                       bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
-                                      z_thickness= 4.0, z_value=0.0)
+                                      thickness= 4.0, coord_value=0.0)
 tallies.append(mesh_tally_photon_xy_dose)
 
 settings.export_to_xml()
