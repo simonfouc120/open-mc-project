@@ -66,7 +66,9 @@ def plot_geometry(
     # Assign colors to materials
     default_colors = [
         'red', 'green', 'lightblue', 'gray', 'brown',
-        'orange', 'purple', 'yellow', 'pink', 'cyan'
+        'orange', 'purple', 'yellow', 'pink', "darkgray",
+        'magenta' , "black" , "darkgreen" , "darkblue", 
+        "darkred", "cyan"
     ]
     colors = (default_colors * ((len(materials) + len(default_colors) - 1) // len(default_colors)))[:len(materials)]
     plot.colors = {mat: color for mat, color in zip(materials, colors)}
