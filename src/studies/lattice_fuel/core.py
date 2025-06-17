@@ -37,7 +37,7 @@ plot_geometry(materials = material, plane="yz", width=70, height=70)
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 500
+batches_number= 1500
 settings.batches = batches_number
 settings.inactive = 20
 settings.particles = 50000

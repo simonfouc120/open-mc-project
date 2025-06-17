@@ -20,7 +20,7 @@ big_pin_fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_big_pin_fuel)
 graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+r_big_pin_fuel)
 big_pin_universe = openmc.Universe(cells=(big_pin_fuel_cell, graphite_cell))
 
-pin_helium_cell = openmc.ZCylinder(r=0.1, boundary_type='vacuum')
+pin_helium_cell = openmc.ZCylinder(r=0.1)
 helium_cell = openmc.Cell(fill=HELIUM_MATERIAL, region=-pin_helium_cell)
 graphite_cell = openmc.Cell(fill=GRAPHITE_MATERIAL, region=+pin_helium_cell)
 pin_helium_universe = openmc.Universe(cells=(helium_cell, graphite_cell))
