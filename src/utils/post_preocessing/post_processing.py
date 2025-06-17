@@ -169,3 +169,19 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
+
+
+def gaussian_energy_broadening(E, a:float=1000., b:float=4., c:float=0.0002):
+    """
+    Apply Gaussian energy broadening to a given energy value E.
+    Parameters:
+    - E: Energy value to be broadened.
+    - a: Coefficient for the Gaussian broadening (default is 1000).
+    - b: Coefficient for the Gaussian broadening (default is 4).
+    - c: Coefficient for the Gaussian broadening (default is 0.0002
+    Returns:
+
+    - A new energy value with Gaussian broadening applied.
+    """
+    sigma = (a + b * (E + c * E**2)**0.5) / (2 * (2 * np.log(2))**0.5)
+    return np.random.normal(loc=E, scale=sigma)
