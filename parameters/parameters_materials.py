@@ -147,6 +147,18 @@ steel.add_element("C", 0.02)
 steel.set_density("g/cm3", 7.85)
 STEEL_MATERIAL = steel
 
+# BORATED STEEL MATERIALS ##
+borated_steel = openmc.Material(name="Borated Steel")
+borated_steel.add_element("Fe", 0.95)
+borated_steel.add_element("B", 0.05)
+borated_steel.set_density("g/cm3", 7.85)
+BORATED_STEEL_MATERIAL = borated_steel
+
+# TENTALUM MATERIALS ##
+tantalum = openmc.Material(name="Tantalum")
+tantalum.add_element("Ta", 1.0)
+tantalum.set_density("g/cm3", 16.65)
+TANTALUM_MATERIAL = tantalum
 
 # VOID MATERIALS ##
 void = openmc.Material(name="Void")
