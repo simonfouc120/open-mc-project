@@ -25,13 +25,12 @@ MODEL.export_to_xml()
 material = MODEL.materials
 graphite_cell = GRAPHITE_CELL
 
-# Calcul de criticité simple 
 settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 100000
-settings.source = openmc.FileSource('surface_source.4.h5')
+settings.particles = 1000000 # try more
+settings.source = openmc.FileSource('surface_source.43.h5')
 settings.photon_transport = True
 
 
@@ -59,11 +58,20 @@ mesh_tally_neutron_xy = mesh_tally_plane(name_mesh_tally="flux_mesh_neutrons_xy"
                                       thickness=10.0, coord_value=0.0)
 tallies.append(mesh_tally_neutron_xy)
 
+mesh_tally_photon_xy = mesh_tally_plane(name_mesh_tally="flux_mesh_photons_xy", particule_type='photon', plane="xy",
+                                      bin_number=600, lower_left=(-200.0, -200.0), upper_right=(200.0, 200.0),
+                                      thickness=10.0, coord_value=0.0)
+tallies.append(mesh_tally_photon_xy)
+
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 tallies.append(mesh_tally_neutron_yz)
 
+mesh_tally_photon_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', plane="yz",
+                                      bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+                                      thickness= 10.0, coord_value=0.0)
+tallies.append(mesh_tally_photon_yz)
 
 settings.export_to_xml()
 tallies.export_to_xml()
@@ -147,4 +155,11 @@ load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="f
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
+                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+
+
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_xy",particule_type="photon", bin_number=600,
+                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz",particule_type="photon", bin_number=800,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
