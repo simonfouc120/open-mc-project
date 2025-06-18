@@ -27,9 +27,9 @@ graphite_cell = GRAPHITE_CELL
 
 # Calcul de criticité simple 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 300
 settings.batches = batches_number
-settings.inactive = 2
+settings.inactive = 20
 settings.particles = 50000
 settings.source = openmc.Source()
 settings.source.space = openmc.stats.Point((0, 0, 0))
@@ -37,9 +37,8 @@ settings.source.particle = 'neutron'
 settings.photon_transport = True
 settings.surf_source_write = {
     'cell': 11,
-    'max_source_files': 5, 
-    'max_particles' : 100000,  # Nombre de particules par fichier
-
+    'max_source_files': 3, 
+    'max_particles' : 1000000,  # Nombre de particules par fichier
 }
 # tally pour le flux dans le détecteur
 tally = openmc.Tally(name="flux_tally")
@@ -63,6 +62,7 @@ tallies.export_to_xml()
 remove_surface_source_files()
 remove_previous_results(batches_number=batches_number)
 start_time = time.time()
+os.environ["OMP_NUM_THREADS"] = "4"
 openmc.run(threads=4)
 end_time = time.time()
 calculation_time = end_time - start_time
