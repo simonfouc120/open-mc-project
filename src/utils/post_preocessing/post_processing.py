@@ -46,11 +46,11 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')
     elif plane == "xz":
-        plt.title(f'Flux map XY {particule_type}')
+        plt.title(f'Flux map XZ {particule_type}')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title(f'Flux map XY {particule_type}')
+        plt.title(f'Flux map YZ {particule_type}')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
@@ -97,11 +97,11 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
         plt.xlabel('X [cm]')
         plt.ylabel('Y [cm]')    
     elif plane == "xz":
-        plt.title('Damage energy map XY')
+        plt.title('Damage energy map XZ')
         plt.xlabel('X [cm]')
         plt.ylabel('Z [cm]')
     elif plane == "yz":
-        plt.title('Damage energy map XY')
+        plt.title('Damage energy map YZ')
         plt.xlabel('Y [cm]')
         plt.ylabel('Z [cm]')
     else:
