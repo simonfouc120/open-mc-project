@@ -26,3 +26,6 @@ plot_yz.png
 
 # tracks_file
 tracks.h5
+
+# Source files
+surface_source*

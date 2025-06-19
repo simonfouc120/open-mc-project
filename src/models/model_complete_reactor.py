@@ -32,8 +32,8 @@ material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL,
 FUEL_MATERIAL.temperature = 900 # K
 HELIUM_MATERIAL.temperature = 900 # K
 
-AIR_MATERIAL.temperature = 350 # K
-CONCRETE_MATERIAL.temperature = 350 # K
+AIR_MATERIAL.temperature = 600 # K
+CONCRETE_MATERIAL.temperature = 600 # K
 
 r_pin_fuel = openmc.ZCylinder(r=1.)
 pin_fuel_fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-r_pin_fuel)
@@ -88,6 +88,7 @@ graphite_lattice.universes = [
 ] 
 
 graphite_assembly_cell = openmc.Cell(
+    name="graphite_assembly_cell",
     fill=graphite_lattice,
     region=(-openmc.model.HexagonalPrism(edge_length=194.0, orientation='y', origin=(0.0, 0.0))
  & -height_top_active_part & +height_bottom_active_part)
@@ -134,33 +135,35 @@ concrete_cell = openmc.Cell(
     & ~light_water_cell.region & ~light_water_liner_cell.region)
 )
 
-outer_sphere = openmc.Sphere(r=1000.0, boundary_type='vacuum')
-
-air_region = -outer_sphere & ~steel_liner_cell.region & ~light_water_cell.region & ~concrete_cell.region
-air_cell = openmc.Cell(fill=AIR_MATERIAL, region=air_region)
-
-
-model = openmc.Model(
-    geometry=openmc.Geometry(
-        [graphite_assembly_cell, beryllium_above_assembly_cell, beryllium_below_assembly_cell, steel_liner_cell, 
-         light_water_cell, light_water_liner_cell, air_cell]
-    ),
-    settings=openmc.Settings(),
-    materials=material
+sphere_calculation = openmc.Cell(
+    fill = AIR_MATERIAL,
+    region=-(openmc.Sphere(x0=0.0, y0=400.0, z0=-300.0, r=10.0)) 
 )
 
-geometry = openmc.Geometry([steel_liner_cell, graphite_assembly_cell, 
+outer_sphere = openmc.Sphere(r=1000.0, boundary_type='vacuum')
+
+air_region = -outer_sphere & ~steel_liner_cell.region & ~light_water_cell.region & ~concrete_cell.region & ~sphere_calculation.region
+air_cell = openmc.Cell(fill=AIR_MATERIAL, region=air_region)
+
+geometry = openmc.Geometry([steel_liner_cell, graphite_assembly_cell, sphere_calculation,
                             beryllium_above_assembly_cell, beryllium_below_assembly_cell,
                             light_water_cell, light_water_liner_cell, concrete_cell, air_cell])
 
 model = openmc.Model(
         geometry=openmc.Geometry(
             [graphite_assembly_cell, beryllium_above_assembly_cell, beryllium_below_assembly_cell, steel_liner_cell, 
-             light_water_cell, light_water_liner_cell, air_cell]
+             light_water_cell, light_water_liner_cell, concrete_cell, sphere_calculation, air_cell]
         ),
         settings=openmc.Settings(),
         materials=material
 )
 MODEL = model
+GRAPHITE_CELL = graphite_assembly_cell
 
-plot_geometry(materials = material, plane="yz", width=900, height=900, dpi = 900)
+# Export the model to XML files
+model.export_to_xml()
+# plot_geometry(materials = material, plane="yz", width=900, height=900, dpi = 900)
+
+plot_geometry(materials = material, plane="yz", width=1000, height=1000, dpi = 900, color_by='cell')
+
+plot_geometry(materials = material, plane="xy", origin=(0, 0, -300), width=1000, height=1000, dpi = 900, color_by='cell')
