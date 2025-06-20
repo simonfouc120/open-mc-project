@@ -29,3 +29,6 @@ tracks.h5
 
 # Source files
 surface_source*
+
+# weight windows
+weight_windows.h5
