@@ -54,10 +54,6 @@ nu_fission_tally = openmc.Tally(name="nu_fission_rate_tally")
 nu_fission_tally.scores = ['nu-fission']
 nu_fission_tally.filters = [openmc.CellFilter(graphite_cell)]
 
-# # tally for Keff
-# keff_tally = openmc.Tally(name="keff_tally")
-# keff_tally.scores = ['k-effective']
-# keff_tally.filters = [openmc.CellFilter(graphite_cell)]
 
 tallies = openmc.Tallies([tally, fission_tally, nu_fission_tally])
 

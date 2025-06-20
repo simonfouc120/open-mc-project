@@ -159,11 +159,6 @@ model = openmc.Model(
 )
 MODEL = model
 GRAPHITE_CELL = graphite_assembly_cell
-
+CALCULATION_CELL = sphere_calculation
 # Export the model to XML files
 model.export_to_xml()
-# plot_geometry(materials = material, plane="yz", width=900, height=900, dpi = 900)
-
-plot_geometry(materials = material, plane="yz", width=1000, height=1000, dpi = 900, color_by='cell')
-
-plot_geometry(materials = material, plane="xy", origin=(0, 0, -300), width=1000, height=1000, dpi = 900, color_by='cell')
