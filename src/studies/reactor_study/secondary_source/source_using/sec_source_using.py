@@ -19,21 +19,18 @@ from src.utils.pre_processing.pre_processing import (remove_previous_results, me
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL
+from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
 
 MODEL.export_to_xml()
 material = MODEL.materials
 graphite_cell = GRAPHITE_CELL
 
-nps = 6000000  # Number of particles per batch
-batches_number= 100
-
-
-
 settings = openmc.Settings()
+batches_number= 1
 settings.batches = batches_number
-settings.particles = int(nps/batches_number) 
-settings.source = openmc.FileSource('surface_source.600.h5')
+settings.inactive = 0
+settings.particles = 40000000 # try more
+settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
 # Mesh tally for neutron flux in a specific region
@@ -41,30 +38,33 @@ settings.photon_transport = True
 mesh_tally_neutron_xy = mesh_tally_plane(name_mesh_tally="flux_mesh_neutrons_xy", particule_type='neutron', plane="xy",
                                       bin_number=600, lower_left=(-200.0, -200.0), upper_right=(200.0, 200.0),
                                       thickness=10.0, coord_value=0.0)
-tallies = openmc.Tallies([mesh_tally_neutron_xy])
 
 mesh_tally_photon_xy = mesh_tally_plane(name_mesh_tally="flux_mesh_photons_xy", particule_type='photon', plane="xy",
                                       bin_number=600, lower_left=(-200.0, -200.0), upper_right=(200.0, 200.0),
                                       thickness=10.0, coord_value=0.0)
-tallies.append(mesh_tally_photon_xy)
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
-tallies.append(mesh_tally_neutron_yz)
 
 mesh_tally_photon_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', plane="yz",
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
-tallies.append(mesh_tally_photon_yz)
+
+# Ajouter un tally de flux de neutrons sur la cellule CALCULATION_CELL
+flux_tally_neutron = openmc.Tally(name="flux_tally_neutron")
+flux_tally_neutron.scores = ['flux']
+flux_tally_neutron.filters = [openmc.CellFilter(CALCULATION_CELL)]
+
+tallies = openmc.Tallies([mesh_tally_neutron_xy, mesh_tally_neutron_yz, mesh_tally_photon_xy, mesh_tally_photon_yz, flux_tally_neutron])
 
 settings.export_to_xml()
 tallies.export_to_xml()
 
 remove_previous_results(batches_number=batches_number)
 start_time = time.time()
+os.environ["OMP_NUM_THREADS"] = "4"
 openmc.run(threads=4)
-os.environ["OMP_NUM_THREADS"] = "2"
 end_time = time.time()
 calculation_time = end_time - start_time
 

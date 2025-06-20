@@ -1,12 +1,12 @@
 {
   "mean_flux": {
     "value": [
-      510.4512015002209
+      510.6484942337263
     ],
     "units": "neutrons/cm^2/source particle"
   },
   "fission_rate": {
-    "value": 0.686274243496788,
+    "value": 0.6858158050389677,
     "units": "fissions/source particle"
   },
   "fission_rate_per_second": {
@@ -14,20 +14,20 @@
     "units": "fissions/s (for 5 MW reactor)"
   },
   "nu_fission_rate": {
-    "value": 1.6744964610286717,
+    "value": 1.6733476399885294,
     "units": "neutrons produced by fission/source particle"
   },
   "nu_bar": {
-    "value": 2.439981504327736,
+    "value": 2.439937411319138,
     "units": "dimensionless (average neutrons per fission)"
   },
   "neutrons_emitted_per_second": {
-    "value": 3.7233910225265504e+17,
+    "value": 3.7233237369704595e+17,
     "units": "neutrons/s (for 5 MW reactor)"
   },
   "keff": {
-    "mean": 1.6724936224464293,
-    "std_dev": 0.001736705186868894,
+    "mean": 1.6737868832531826,
+    "std_dev": 0.00016793966530086725,
     "units": "dimensionless (effective multiplication factor)"
   }
 }
