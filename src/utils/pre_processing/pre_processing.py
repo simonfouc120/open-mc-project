@@ -57,6 +57,7 @@ def plot_geometry(
     pixels: tuple = (600, 600),
     dpi: int = 300,
     color_by: str = 'material',
+    prefix: str = "plot",
     saving_figure: bool = True
 ):
     """
@@ -117,7 +118,7 @@ def plot_geometry(
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if saving_figure:
-        plt.savefig(f"plot_{plane}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{prefix}_{plane}.png", dpi=dpi, bbox_inches='tight')
     os.remove(plot.filename)
     plt.tight_layout()
     plt.show()
