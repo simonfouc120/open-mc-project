@@ -27,10 +27,10 @@ graphite_cell = GRAPHITE_CELL
 geometry = MODEL.geometry
 
 settings = openmc.Settings()
-batches_number= 4
+batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 100000 # try more
+settings.particles = 4000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -63,13 +63,10 @@ tallies.export_to_xml()
 remove_previous_results(batches_number=batches_number)
 start_time = time.time()
 os.environ["OMP_NUM_THREADS"] = "4"
-ww_statepoint_filename = openmc.run()
-
 openmc.run(threads=4)
 end_time = time.time()
 calculation_time = end_time - start_time
 
-# Save calculation time to a JSON file
 output_json = CWD / "calculation_time.json"
 with open(output_json, "w") as f:
     json.dump({"calculation_time_seconds": calculation_time}, f)

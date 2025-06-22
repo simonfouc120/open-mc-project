@@ -8,6 +8,7 @@ from pathlib import Path
 import sys 
 from PIL import Image
 import numpy as np
+from copy import deepcopy
 
 CWD = Path(__file__).parent.resolve()
 
@@ -15,22 +16,26 @@ project_root = Path(__file__).resolve().parents[6]
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
-from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane)
+from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane, reducing_density)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
 
+materials = MODEL.materials
+for index,material in enumerate(materials):
+    materials[index] = reducing_density(material, 10)  
+
+MODEL.materials = materials
 MODEL.export_to_xml()
-material = MODEL.materials
-graphite_cell = GRAPHITE_CELL
+
 geometry = MODEL.geometry
 
 settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 8000000 # try more
+settings.particles = 10000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -78,7 +83,6 @@ statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 
 # Load the neutron flux tally
 flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
-
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
