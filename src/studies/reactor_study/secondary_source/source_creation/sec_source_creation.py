@@ -11,7 +11,7 @@ import numpy as np
 
 CWD = Path(__file__).parent.resolve()
 
-project_root = Path(__file__).resolve().parents[4]  
+project_root = Path(__file__).resolve().parents[5]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from src.utils.pre_processing.pre_processing import (remove_previous_results, remove_surface_source_files, estimate_fissions_and_neutrons)
