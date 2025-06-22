@@ -11,7 +11,7 @@ import numpy as np
 
 CWD = Path(__file__).parent.resolve()
 
-project_root = Path(__file__).resolve().parents[5]  
+project_root = Path(__file__).resolve().parents[6]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
@@ -27,24 +27,24 @@ graphite_cell = GRAPHITE_CELL
 geometry = MODEL.geometry
 
 settings = openmc.Settings()
-batches_number= 1
+batches_number= 4
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 400000 # try more
+settings.particles = 100000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
+#load and use the weight window wwg_creation.h5
 mesh = openmc.RegularMesh().from_domain(geometry)
+mesh.id = 999
 mesh.dimension = (100, 100, 100)
 mesh.lower_left = (-500.0, -500.0, -500.0)
 mesh.upper_right = (500.0, 500.0, 500.0)
-wwg = openmc.WeightWindowGenerator(
-    mesh=mesh,  # this is the mesh that covers the geometry
-    energy_bounds=np.linspace(0.0, 15e6, 10),  # 10 energy bins from 0 to 15 MeV
-    particle_type='neutron',  # we are interested in photons
-)
-settings.max_history_splits = 1_000  # limit the number of splits to avoid too many histories
-settings.weight_window_generators = wwg
+
+meshes = {mesh.id: mesh}
+
+ww = openmc.hdf5_to_wws("weight_windows.h5")  
+settings.weight_windows = ww
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
@@ -82,4 +82,5 @@ flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
 
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
-                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True)
+

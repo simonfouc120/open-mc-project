@@ -11,7 +11,7 @@ import numpy as np
 
 CWD = Path(__file__).parent.resolve()
 
-project_root = Path(__file__).resolve().parents[5]  
+project_root = Path(__file__).resolve().parents[6]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
@@ -30,21 +30,21 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 400000 # try more
+settings.particles = 8000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
-#load and use the weight window wwg_creation.h5
 mesh = openmc.RegularMesh().from_domain(geometry)
-mesh.id = 999
 mesh.dimension = (100, 100, 100)
 mesh.lower_left = (-500.0, -500.0, -500.0)
 mesh.upper_right = (500.0, 500.0, 500.0)
-
-meshes = {mesh.id: mesh}
-
-ww = openmc.hdf5_to_wws("weight_windows.h5")  
-settings.weight_windows = ww
+wwg_neutron = openmc.WeightWindowGenerator(
+    mesh=mesh,  
+    energy_bounds=np.linspace(0.0, 15e6, 10),  # 10 energy bins from 0 to 15 MeV
+    particle_type='neutron', 
+)
+settings.max_history_splits = 1_000  # limit the number of splits to avoid too many histories
+settings.weight_window_generators = wwg_neutron
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
@@ -62,7 +62,6 @@ tallies.export_to_xml()
 
 remove_previous_results(batches_number=batches_number)
 start_time = time.time()
-os.environ["OMP_NUM_THREADS"] = "4"
 ww_statepoint_filename = openmc.run()
 
 openmc.run(threads=4)
