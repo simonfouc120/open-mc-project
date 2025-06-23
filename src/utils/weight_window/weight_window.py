@@ -7,7 +7,7 @@ from matplotlib.colors import LogNorm
 
 
 
-def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0, plane:str='xy'):
+def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0, plane:str='xy', saving_fig:bool=False):
     """
     Plot the weight window bounds for a given energy index.
     
@@ -30,4 +30,6 @@ def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0, pla
         plt.ylabel('Z')
     plt.colorbar(label='Weight Window Lower Bound')
     plt.title(f'Weight Window Lower Bounds at Energy Index {energy_index}')
+    if saving_fig:
+        plt.savefig(f'weight_window_{plane}.png', dpi=300)
     plt.show()

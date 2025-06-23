@@ -18,6 +18,7 @@ from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane, reducing_density)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
+from src.utils.weight_window.weight_window import plot_weight_window
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
@@ -40,7 +41,7 @@ settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
 mesh = openmc.RegularMesh().from_domain(geometry)
-mesh.dimension = (100, 100, 100)
+mesh.dimension = (30, 30, 30)
 mesh.lower_left = (-500.0, -500.0, -500.0)
 mesh.upper_right = (500.0, 500.0, 500.0)
 wwg_neutron = openmc.WeightWindowGenerator(
@@ -86,3 +87,7 @@ flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+
+ww = openmc.hdf5_to_wws("weight_windows.h5")  
+
+plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz")

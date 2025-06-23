@@ -30,18 +30,9 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 4000000 # try more
+settings.particles = 8000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
-
-#load and use the weight window wwg_creation.h5
-mesh = openmc.RegularMesh().from_domain(geometry)
-mesh.id = 999
-mesh.dimension = (100, 100, 100)
-mesh.lower_left = (-500.0, -500.0, -500.0)
-mesh.upper_right = (500.0, 500.0, 500.0)
-
-meshes = {mesh.id: mesh}
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 settings.weight_windows = ww
