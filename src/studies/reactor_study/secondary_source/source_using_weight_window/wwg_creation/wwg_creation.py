@@ -25,7 +25,7 @@ from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_
 
 materials = MODEL.materials
 for index,material in enumerate(materials):
-    materials[index] = reducing_density(material, 10)  
+    materials[index] = reducing_density(material, 2)  
 
 MODEL.materials = materials
 MODEL.export_to_xml()
@@ -36,12 +36,12 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 10000000 # try more
+settings.particles = 60000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
 mesh = openmc.RegularMesh().from_domain(geometry)
-mesh.dimension = (30, 30, 30)
+mesh.dimension = (25, 25, 25)
 mesh.lower_left = (-500.0, -500.0, -500.0)
 mesh.upper_right = (500.0, 500.0, 500.0)
 
@@ -63,20 +63,24 @@ mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_y
                                       plane="yz", bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
+mesh_tally_photon_yz = deepcopy(mesh_tally_neutron_yz)
+mesh_tally_photon_yz.name = "flux_mesh_photons_yz"
+mesh_tally_photon_yz.particle_type = 'photon'
+mesh_tally_photon_yz.id += 1  # Ensure unique ID for the photon tally
+
+
 # Neutron flux tally on the CALCULATION_CELL
 flux_tally_neutron = openmc.Tally(name="flux_tally_neutron")
 flux_tally_neutron.scores = ['flux']
 flux_tally_neutron.filters = [openmc.ParticleFilter("neutron"), openmc.CellFilter(CALCULATION_CELL)]
 
-tallies = openmc.Tallies([flux_tally_neutron, mesh_tally_neutron_yz])
+tallies = openmc.Tallies([flux_tally_neutron, mesh_tally_neutron_yz, mesh_tally_photon_yz])
 
 settings.export_to_xml()
 tallies.export_to_xml()
 
 remove_previous_results(batches_number=batches_number)
 start_time = time.time()
-ww_statepoint_filename = openmc.run()
-
 openmc.run(threads=4)
 end_time = time.time()
 calculation_time = end_time - start_time
@@ -97,6 +101,13 @@ load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file,
                 bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), 
                 zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
 
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, 
+                name_mesh_tally="flux_mesh_photons_yz", particule_type="photon", 
+                bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), 
+                zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 
-plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz")
+plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
+
+plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')

@@ -8,6 +8,7 @@ from pathlib import Path
 import sys 
 from PIL import Image
 import numpy as np
+from copy import deepcopy
 
 CWD = Path(__file__).parent.resolve()
 
@@ -30,7 +31,7 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 8000000 # try more
+settings.particles = 40000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -41,12 +42,16 @@ mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_y
                                       bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
+mesh_tally_photon_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', plane="yz",
+                                      bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+                                      thickness= 10.0, coord_value=0.0)
+
 # Neutron flux tally on the CALCULATION_CELL
 flux_tally_neutron = openmc.Tally(name="flux_tally_neutron")
 flux_tally_neutron.scores = ['flux']
 flux_tally_neutron.filters = [openmc.ParticleFilter("neutron"), openmc.CellFilter(CALCULATION_CELL)]
 
-tallies = openmc.Tallies([flux_tally_neutron, mesh_tally_neutron_yz])
+tallies = openmc.Tallies([flux_tally_neutron, mesh_tally_neutron_yz, mesh_tally_photon_yz])
 
 settings.export_to_xml()
 tallies.export_to_xml()
@@ -69,6 +74,8 @@ statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
 
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", particule_type="neutron", bin_number=800,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True)
 
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz", particule_type="photon", bin_number=800,
+                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True)
