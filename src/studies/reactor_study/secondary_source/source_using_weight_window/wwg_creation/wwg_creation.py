@@ -44,16 +44,23 @@ mesh = openmc.RegularMesh().from_domain(geometry)
 mesh.dimension = (30, 30, 30)
 mesh.lower_left = (-500.0, -500.0, -500.0)
 mesh.upper_right = (500.0, 500.0, 500.0)
+
+energy_bounds = np.linspace(0.0, 15e6, 10)  # 10 energy bins from 0 to 15 MeV
+
 wwg_neutron = openmc.WeightWindowGenerator(
     mesh=mesh,  
-    energy_bounds=np.linspace(0.0, 15e6, 10),  # 10 energy bins from 0 to 15 MeV
+    energy_bounds=energy_bounds,
     particle_type='neutron', 
 )
-settings.max_history_splits = 1_000  # limit the number of splits to avoid too many histories
-settings.weight_window_generators = wwg_neutron
 
-mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
-                                      bin_number=800, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+wwg_photon = deepcopy(wwg_neutron)
+wwg_photon.particle_type = 'photon'
+
+settings.max_history_splits = 1_000  
+settings.weight_window_generators = [wwg_neutron, wwg_photon]
+
+mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', 
+                                      plane="yz", bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
 # Neutron flux tally on the CALCULATION_CELL
@@ -85,8 +92,10 @@ statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 # Load the neutron flux tally
 flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz",particule_type="neutron", bin_number=800,
-                lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, 
+                name_mesh_tally="flux_mesh_neutrons_yz", particule_type="neutron", 
+                bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), 
+                zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=False)
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 
