@@ -36,7 +36,7 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 60000000 # try more
+settings.particles = 70000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -63,10 +63,10 @@ mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_y
                                       plane="yz", bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
-mesh_tally_photon_yz = deepcopy(mesh_tally_neutron_yz)
-mesh_tally_photon_yz.name = "flux_mesh_photons_yz"
-mesh_tally_photon_yz.particle_type = 'photon'
-mesh_tally_photon_yz.id += 1  # Ensure unique ID for the photon tally
+
+mesh_tally_photon_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', 
+                                      plane="yz", bin_number=500, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+                                      thickness= 10.0, coord_value=0.0) 
 
 
 # Neutron flux tally on the CALCULATION_CELL
