@@ -31,7 +31,7 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 40000000 # try more
+settings.particles = 40000000 # try more. # 60000000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
