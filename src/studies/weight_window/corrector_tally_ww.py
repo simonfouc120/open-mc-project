@@ -30,7 +30,7 @@ im = ax.imshow(
     cmap='plasma',
     norm=LogNorm(vmin=importance_map[importance_map > 0].min(), vmax=importance_map.max())
 )
-ax.set_title("Carte d'importance centrée sur la cible (50, 0, 0)")
+ax.set_title(f"Carte d'importance centrée sur la cible ({target[0]}, {target[1]}, {target[2]}) cm")
 ax.set_xlabel("x (cm)")
 ax.set_ylabel("y (cm)")
 fig.colorbar(im, ax=ax, label="Importance (1 / distance)")

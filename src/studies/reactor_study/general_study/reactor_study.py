@@ -11,7 +11,7 @@ import numpy as np
 
 CWD = Path(__file__).parent.resolve()
 
-project_root = Path(__file__).resolve().parents[3]  
+project_root = Path(__file__).resolve().parents[4]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
