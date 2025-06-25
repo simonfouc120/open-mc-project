@@ -99,6 +99,7 @@ LEAD_MATERIAL = lead
 # GRAPHITE FUEL MATERIALS ##
 graphite = openmc.Material(name="Graphite")
 graphite.add_element("C", 1.0)
+graphite.add_s_alpha_beta('c_Graphite')
 graphite.set_density("g/cm3", 1.7)
 GRAPHITE_MATERIAL = graphite
 

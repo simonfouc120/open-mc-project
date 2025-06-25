@@ -23,20 +23,28 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
 
-materials = MODEL.materials
+rr_model = deepcopy(MODEL)
+
+materials = rr_model.materials
 for index,material in enumerate(materials):
-    materials[index] = reducing_density(material, 10)  
+    materials[index] = reducing_density(material, 2)  
 
-MODEL.materials = materials
-MODEL.export_to_xml()
+rr_model.materials = materials
+rr_model.convert_to_multigroup(
+    method="stochastic_slab",
+    overwrite_mgxs_library=True,
+    nparticles=2000,
+)
+rr_model.convert_to_random_ray()
+rr_model.export_to_xml()
 
-geometry = MODEL.geometry
+geometry = rr_model.geometry
 
 settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 10000000 # try more
+settings.particles = 50000000 # try more
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -51,7 +59,7 @@ wwg_neutron = openmc.WeightWindowGenerator(
     mesh=mesh,  
     energy_bounds=energy_bounds,
     particle_type='neutron', 
-    method="magic"
+    method="fw_cadis"
 )
 
 wwg_photon = deepcopy(wwg_neutron)

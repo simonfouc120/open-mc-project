@@ -17,9 +17,10 @@ importance_map = np.zeros((nx, ny, nz))
 # Calcul de l'importance : inverse de la distance à la cible
 for i, x in enumerate(x_vals):
     for j, y in enumerate(y_vals):
-        pos = np.array([x, y, 0.0])
-        dist = np.linalg.norm(pos - target)
-        importance_map[i, j] = (1.0 / (dist + 1.0))*10
+        for k, z in enumerate(z_vals):
+            pos = np.array([x, y, z])
+            dist = np.linalg.norm(pos - target)
+            importance_map[i, j, k] = ((dist + 1.0))/1000
 
 # Affichage avec matplotlib et échelle logarithmique
 fig, ax = plt.subplots(figsize=(8, 6))
@@ -33,6 +34,6 @@ im = ax.imshow(
 ax.set_title(f"Carte d'importance centrée sur la cible ({target[0]}, {target[1]}, {target[2]}) cm")
 ax.set_xlabel("x (cm)")
 ax.set_ylabel("y (cm)")
-fig.colorbar(im, ax=ax, label="Importance (1 / distance)")
+fig.colorbar(im, ax=ax, label="Importance (distance)")
 plt.tight_layout()
 plt.show()
