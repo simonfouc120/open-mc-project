@@ -29,6 +29,7 @@ flux_array = []
 fission_rate_array = []
 nu_fission_rate_array= []
 keff_array = []
+calculation_times = [] 
 temperature = [450 ,600, 750, 900, 1050, 1200, 1350 ,1500]  # K
 
 for temp in temperature:
@@ -88,6 +89,7 @@ for temp in temperature:
     openmc.run()
     end_time = time.time()  
     calculation_time = end_time - start_time
+    calculation_times.append(calculation_time)  
 
     output_json = CWD / "calculation_time.json"
     with open(output_json, "w") as f:
@@ -114,13 +116,18 @@ for temp in temperature:
     keff_tuple = (keff_results.nominal_value, keff_results.std_dev)
     keff_array.append(keff_tuple)
 
+total_calculation_time = sum(calculation_times)
+
+
 # Save results to a JSON file
 results = {
     "flux": flux_array,
     "fission_rate": fission_rate_array,
     "nu_fission_rate": nu_fission_rate_array,
     "keff": keff_array,
-    "temperature": temperature
+    "temperature": temperature,
+    "calculation_times": calculation_times,  # Add per-simulation times
+    "total_calculation_time": total_calculation_time  # Add total time
 }
 output_json = CWD / "sensitivity_temperature_results.json"
 with open(output_json, "w") as f:
