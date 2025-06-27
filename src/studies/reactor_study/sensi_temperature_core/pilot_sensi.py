@@ -30,7 +30,7 @@ fission_rate_array = []
 nu_fission_rate_array= []
 keff_array = []
 calculation_times = [] 
-temperature = [450 ,600, 750, 900, 1050, 1200, 1350 ,1500]  # K
+temperature = np.arange(350+275, 650+275, 25) # K
 
 for temp in temperature:
     for index, mat in enumerate(material):
