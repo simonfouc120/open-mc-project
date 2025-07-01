@@ -190,7 +190,7 @@ def mesh_tally_dose_plane(
 def mesh_tally_plane(
     plane: str = "xy",
     name_mesh_tally: str = "flux_mesh",
-    particule_type: str = 'neutrons',
+    particule_type: str = 'neutron',
     bin_number: int = 400,
     lower_left = (-50.0, -50.0),
     upper_right = (50.0, 50.0),

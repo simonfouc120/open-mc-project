@@ -14,6 +14,7 @@ CWD = Path(__file__).parent.resolve()
 project_root = Path(__file__).resolve().parents[5]  
 sys.path.append(str(project_root))
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
+from parameters.parameters_reactor import POWER
 from src.utils.pre_processing.pre_processing import (remove_previous_results, remove_surface_source_files, estimate_fissions_and_neutrons)
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
@@ -89,7 +90,7 @@ nu_fission_rate = float(nu_fission_tally_result.mean.flatten()[0])
 nu_bar = nu_fission_rate / fission_rate if fission_rate != 0 else float('nan')
 # Estimate fissions per second (fission/s) for a 5 MW reactor
 
-reactor_power = 5e6  # 5 MW in Watts
+reactor_power = POWER  # Thermical Watts 
 
 
 keff = {"mean": statepoint_file.keff._nominal_value,
