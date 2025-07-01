@@ -103,11 +103,21 @@ graphite.add_s_alpha_beta('c_Graphite')
 graphite.set_density("g/cm3", 1.7)
 GRAPHITE_MATERIAL = graphite
 
+
+# simple fuel
 fuel = openmc.Material(name="Fuel")
 fuel.add_nuclide("U235", 0.1975)
 fuel.add_nuclide("U238", 0.8025)
 fuel.set_density("g/cm3", 10.0)
 FUEL_MATERIAL = fuel
+
+# fuel UO2 material with 19.75% U-235 and 80.25% U-238
+fuel_uo2 = openmc.Material(name="UO2 Fuel")
+fuel_uo2.add_nuclide("U235", 0.1975)
+fuel_uo2.add_nuclide("U238", 0.8025)
+fuel_uo2.add_element("O", 2.0)
+fuel_uo2.set_density("g/cm3", 10.0)
+FUEL_UO2_MATERIAL = fuel_uo2
 
 # URANIUM NATURAL ##
 uranium = openmc.Material(name="Uranium")
