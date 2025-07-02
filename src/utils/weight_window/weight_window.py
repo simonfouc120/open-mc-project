@@ -34,3 +34,36 @@ def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0,
     if saving_fig:
         plt.savefig(f'weight_window_{plane}_{particle_type}.png', dpi=300)
     plt.show()
+
+
+def correction_ww_tally(nx:int=25, ny:int=25, nz:int=25, 
+                           lower_left=np.array([-500.0, -500.0, -500]), 
+                           upper_right=np.array([500.0, 500.0, 500]), 
+                           target=np.array([50.0, 0.0, 0.0])):
+    """
+    Compute a 3D importance map based on the inverse distance to a target.
+
+    Parameters:
+    - nx, ny, nz: Number of grid points in x, y, z directions
+    - lower_left: Lower left corner of the grid (numpy array)
+    - upper_right: Upper right corner of the grid (numpy array)
+    - target: Target position (numpy array)
+
+    Returns:
+    - importance_map: 3D numpy array of importance values
+    - x_vals, y_vals, z_vals: 1D numpy arrays of grid coordinates
+    """
+    x_vals = np.linspace(lower_left[0], upper_right[0], nx)
+    y_vals = np.linspace(lower_left[1], upper_right[1], ny)
+    z_vals = np.linspace(lower_left[2], upper_right[2], nz)
+
+    importance_map = np.zeros((nx, ny, nz))
+
+    for i, x in enumerate(x_vals):
+        for j, y in enumerate(y_vals):
+            for k, z in enumerate(z_vals):
+                pos = ([x, y, z])
+                dist = np.linalg.norm(pos - target)
+                importance_map[i, j, k] = (dist + 1.0) / 1000
+
+    return np.asarray(importance_map), x_vals, y_vals, z_vals
