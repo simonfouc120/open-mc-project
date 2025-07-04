@@ -84,13 +84,17 @@ def apply_correction_ww(ww, correction_weight_window):
     return ww
 
 
-def create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0])):
+def create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0]),
+                                          nx:int=25, ny:int=25, nz:int=25, 
+                                          lower_left=np.array([-500.0, -500.0, -500]), 
+                                          upper_right=np.array([500.0, 500.0, 500])):
     """
     Create a correction weight window tally and apply it to the weight windows.
     
     Parameters:
     - target: Target position for the correction
     """
-    correction_weight_window = create_correction_ww_tally(target=target)
+    correction_weight_window = create_correction_ww_tally(target=target, nx=nx, ny=ny, nz=nz,
+                                                           lower_left=lower_left, upper_right=upper_right)
     ww = apply_correction_ww(ww, correction_weight_window)
     return ww
