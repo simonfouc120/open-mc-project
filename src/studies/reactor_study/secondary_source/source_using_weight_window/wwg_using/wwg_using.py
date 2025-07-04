@@ -18,6 +18,7 @@ from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
+from src.utils.weight_window.weight_window import plot_weight_window, correction_ww_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
@@ -36,6 +37,9 @@ settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
+
+correction_ww_ = correction_ww_tally(target=np.array([0.0, 400.0, -300.0]))[0]
+
 settings.weight_windows = ww
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",

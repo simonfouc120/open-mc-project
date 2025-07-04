@@ -36,7 +36,7 @@ def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0,
     plt.show()
 
 
-def correction_ww_tally(nx:int=25, ny:int=25, nz:int=25, 
+def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25, 
                            lower_left=np.array([-500.0, -500.0, -500]), 
                            upper_right=np.array([500.0, 500.0, 500]), 
                            target=np.array([50.0, 0.0, 0.0])):
@@ -66,4 +66,31 @@ def correction_ww_tally(nx:int=25, ny:int=25, nz:int=25,
                 dist = np.linalg.norm(pos - target)
                 importance_map[i, j, k] = (dist + 1.0) / 1000
 
-    return np.asarray(importance_map), x_vals, y_vals, z_vals
+    return np.asarray(importance_map)
+
+
+def apply_correction_ww(ww, correction_weight_window):
+    """
+    Apply the correction to each weight window generator.
+    
+    Parameters:
+    - ww: List of WeightWindowGenerator objects
+    - correction_weight_window: Correction factor to apply
+    """
+    for wwg in ww:
+        for energy_index in range(wwg.lower_ww_bounds.shape[-1]):
+            wwg.lower_ww_bounds[..., energy_index] *= correction_weight_window
+            wwg.upper_ww_bounds[..., energy_index] *= correction_weight_window
+    return ww
+
+
+def create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0])):
+    """
+    Create a correction weight window tally and apply it to the weight windows.
+    
+    Parameters:
+    - target: Target position for the correction
+    """
+    correction_weight_window = create_correction_ww_tally(target=target)
+    ww = apply_correction_ww(ww, correction_weight_window)
+    return ww
