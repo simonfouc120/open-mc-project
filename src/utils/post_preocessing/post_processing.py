@@ -14,7 +14,7 @@ def print_calculation_finished():
 
 def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_tally", particule_type:str='neutron',
                     bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
-                    upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
+                    upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), plot_error:bool=False,
                     zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True):
     """
     Load and plot the mesh tally from the statepoint file.
@@ -35,29 +35,81 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
     """
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
-    plt.imshow(flux_data, 
-            origin='lower', 
-            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], 
+    flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
+
+    if plot_error:
+        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+
+        # Plot flux_data
+        im0 = axs[0].imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
             cmap='plasma',
-            norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  
-    plt.colorbar(label='Flux [a.u.] (log scale)')
-    if plane == "xy":
-        plt.title(f"Flux map XY {particule_type}")
-        plt.xlabel('X [cm]')
-        plt.ylabel('Y [cm]')
-    elif plane == "xz":
-        plt.title(f'Flux map XZ {particule_type}')
-        plt.xlabel('X [cm]')
-        plt.ylabel('Z [cm]')
-    elif plane == "yz":
-        plt.title(f'Flux map YZ {particule_type}')
-        plt.xlabel('Y [cm]')
-        plt.ylabel('Z [cm]')
-    else:
-        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
+        )
+        axs[0].set_title(f"Flux map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            axs[0].set_xlabel('X [cm]')
+            axs[0].set_ylabel('Y [cm]')
+        elif plane == "xz":
+            axs[0].set_xlabel('X [cm]')
+            axs[0].set_ylabel('Z [cm]')
+        elif plane == "yz":
+            axs[0].set_xlabel('Y [cm]')
+            axs[0].set_ylabel('Z [cm]')
+        else:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+        axs[0].set_xlim(zoom_x[0], zoom_x[1])
+        axs[0].set_ylim(zoom_y[0], zoom_y[1])
+        fig.colorbar(im0, ax=axs[0], label="Flux [p/p-source] (log scale)")
+
+        # Plot flux_error
+        im1 = axs[1].imshow(
+            flux_error,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
+            cmap='plasma')
+        axs[1].set_title(f"Flux error map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            axs[1].set_xlabel('X [cm]')
+            axs[1].set_ylabel('Y [cm]')
+        elif plane == "xz":
+            axs[1].set_xlabel('X [cm]')
+            axs[1].set_ylabel('Z [cm]')
+        elif plane == "yz":
+            axs[1].set_xlabel('Y [cm]')
+            axs[1].set_ylabel('Z [cm]')
+        axs[1].set_xlim(zoom_x[0], zoom_x[1])
+        axs[1].set_ylim(zoom_y[0], zoom_y[1])
+        fig.colorbar(im1, ax=axs[1], label="Flux error")
+
+    else: 
+        plt.figure(figsize=(8, 6))
+        im0 = plt.imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
+            cmap='plasma',
+            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
+        )
+        plt.title(f"Flux map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            plt.xlabel('X [cm]')
+            plt.ylabel('Y [cm]')
+        elif plane == "xz":
+            plt.xlabel('X [cm]')
+            plt.ylabel('Z [cm]')
+        elif plane == "yz":
+            plt.xlabel('Y [cm]')
+            plt.ylabel('Z [cm]')
+        else:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+        plt.xlim(zoom_x[0], zoom_x[1])
+        plt.ylim(zoom_y[0], zoom_y[1])
+        plt.colorbar(im0, label="Flux [p/p-source] (log scale)")
+
     plt.tight_layout()
-    plt.xlim(zoom_x[0], zoom_x[1])
-    plt.ylim(zoom_y[0], zoom_y[1])
     name_mesh_tally_saving = name_mesh_tally + ".png"
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
