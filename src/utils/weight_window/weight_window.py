@@ -64,7 +64,7 @@ def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25,
             for k, z in enumerate(z_vals):
                 pos = ([x, y, z])
                 dist = np.linalg.norm(pos - target)
-                importance_map[i, j, k] = (dist + 1.0) / 1000
+                importance_map[i, j, k] = (dist + 50.0) / 1e5
 
     return np.asarray(importance_map)
 
