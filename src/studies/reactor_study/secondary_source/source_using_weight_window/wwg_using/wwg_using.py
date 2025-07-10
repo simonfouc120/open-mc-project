@@ -32,7 +32,7 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 500000 # 60000000
+settings.particles = 100000 # 60000000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 
@@ -40,8 +40,8 @@ ww = openmc.hdf5_to_wws("weight_windows.h5")
 
 ww_corrected = create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0]), nx=30, ny=30, nz=30,)
 
-plot_weight_window(weight_window=ww_corrected[0], index_coord=15, energy_index=0, saving_fig=False, plane="yz", particle_type='neutron')
-plot_weight_window(weight_window=ww_corrected[1], index_coord=15, energy_index=0, saving_fig=False, plane="yz", particle_type='photon')
+plot_weight_window(weight_window=ww_corrected[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
+plot_weight_window(weight_window=ww_corrected[1], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')
 
 settings.weight_windows = ww_corrected
 
@@ -58,7 +58,12 @@ flux_tally_neutron = openmc.Tally(name="flux_tally_neutron")
 flux_tally_neutron.scores = ['flux']
 flux_tally_neutron.filters = [openmc.ParticleFilter("neutron"), openmc.CellFilter(CALCULATION_CELL)]
 
-tallies = openmc.Tallies([flux_tally_neutron, mesh_tally_neutron_yz, mesh_tally_photon_yz])
+
+flux_tally_photon = openmc.Tally(name="flux_tally_photon")
+flux_tally_photon.scores = ['flux']
+flux_tally_photon.filters = [openmc.ParticleFilter("photon"), openmc.CellFilter(CALCULATION_CELL)]
+
+tallies = openmc.Tallies([flux_tally_neutron, flux_tally_photon,mesh_tally_neutron_yz, mesh_tally_photon_yz])
 
 settings.export_to_xml()
 tallies.export_to_xml()
@@ -79,7 +84,9 @@ statepoint_file = openmc.StatePoint(f'statepoint.{batches_number}.h5')
 
 # Load the neutron flux tally
 flux_tally_neutron = statepoint_file.get_tally(name="flux_tally_neutron")
-
+print(f"Neutron flux tally: {flux_tally_neutron.mean[0][0][0]} particles/cm^2/p-source")
+flux_tally_photon = statepoint_file.get_tally(name="flux_tally_photon")
+print(f"Photon flux tally: {flux_tally_photon.mean[0][0][0]} particles/cm^2/p-source")
 
 load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", particule_type="neutron", bin_number=200,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True, plot_error=False)
