@@ -42,7 +42,7 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
     batches_number= 1
     settings.batches = batches_number
     settings.inactive = 0
-    settings.particles = 100000 # try more
+    settings.particles = 1000000 # try more
     settings.source = openmc.FileSource('surface_source.h5')
     settings.photon_transport = True
 

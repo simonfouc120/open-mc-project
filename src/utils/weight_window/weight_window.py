@@ -98,3 +98,22 @@ def create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0
                                                            lower_left=lower_left, upper_right=upper_right)
     ww = apply_correction_ww(ww, correction_weight_window)
     return ww
+
+
+def get_ww_size(weight_windows:list, particule_type:str = "neutron") -> tuple:
+    """
+    Get the size of the weight window for a given particle type.
+
+    Parameters:
+    weight_windows (list): List of weight window objects.
+    particule_type (str): Particle type to filter (default: "neutron").
+
+    Returns:
+    tuple: Size of the weight window for the specified particle type.
+    """
+    for wwg in ww:
+        if wwg.particle_type == particule_type:
+            particle_type = wwg.particle_type
+            size = wwg.lower_ww_bounds.shape[:-1]
+            ww_sizes = size
+    return ww_sizes
