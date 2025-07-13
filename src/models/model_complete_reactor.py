@@ -14,7 +14,7 @@ CWD = Path(__file__).parent.resolve()
 project_root = Path(__file__).resolve().parents[2]  
 sys.path.append(str(project_root))
 
-from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
+from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
 from parameters.parameters_materials import (FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, 
                                              CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, 
                                              WATER_MATERIAL, HEAVY_WATER_MATERIAL, BERYLLIUM_MATERIAL, 
@@ -162,3 +162,6 @@ GRAPHITE_CELL = graphite_assembly_cell
 CALCULATION_CELL = sphere_calculation
 # Export the model to XML files
 model.export_to_xml()
+
+# Plot the geometry
+plot_geometry(materials = material, plane="yz", saving_figure=True, dpi=500, height=800, width=800,)
