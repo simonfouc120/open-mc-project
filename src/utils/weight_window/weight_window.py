@@ -111,7 +111,7 @@ def get_ww_size(weight_windows:list, particule_type:str = "neutron") -> tuple:
     Returns:
     tuple: Size of the weight window for the specified particle type.
     """
-    for wwg in ww:
+    for wwg in weight_windows:
         if wwg.particle_type == particule_type:
             particle_type = wwg.particle_type
             size = wwg.lower_ww_bounds.shape[:-1]
