@@ -15,13 +15,14 @@ ww = openmc.hdf5_to_wws("weight_windows.h5")
 
 def get_ww_size(weight_windows:list, particule_type:str = "neutron") -> tuple:
     """
-    Get the size of the weight window in each energy group and for each particle type.
-    
+    Get the size of the weight window for a given particle type.
+
     Parameters:
-    ww (list): List of weight windows for different particle types.
-    
+    weight_windows (list): List of weight window objects.
+    particule_type (str): Particle type to filter (default: "neutron").
+
     Returns:
-    dict: Dictionary with particle types as keys and their respective weight window sizes as values.
+    tuple: Size of the weight window for the specified particle type.
     """
     for wwg in ww:
         if wwg.particle_type == particule_type:

@@ -18,7 +18,7 @@ from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane, reducing_density)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
-from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally
+from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally, get_ww_size, remove_zeros_from_ww
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
@@ -48,7 +48,9 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
 
     if itteration_number != 0:
         ww = openmc.hdf5_to_wws("weight_windows.h5")  
-        ww_corrected = create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0]), nx=25, ny=25, nz=25,)
+        size = get_ww_size(ww)
+        ww_with_zeros_removed = remove_zeros_from_ww(weight_windows=ww)
+        ww_corrected = create_and_apply_correction_ww_tally(ww=ww_with_zeros_removed, target=np.array([0.0, 400.0, -300.0]), nx=size[0], ny=size[1], nz=size[2])
         settings.weight_windows = ww_corrected
     else:
         pass
@@ -58,7 +60,7 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
     mesh.lower_left = (-500.0, -500.0, -500.0)
     mesh.upper_right = (500.0, 500.0, 500.0)
 
-    energy_bounds = np.linspace(0.0, 15e6, 10)  # 10 energy bins from 0 to 15 MeV
+    energy_bounds = np.linspace(0.0, 15e6, 10) 
 
     wwg_neutron = openmc.WeightWindowGenerator(
         mesh=mesh,  
