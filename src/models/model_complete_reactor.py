@@ -164,4 +164,6 @@ CALCULATION_CELL = sphere_calculation
 model.export_to_xml()
 
 # Plot the geometry
-plot_geometry(materials = material, plane="yz", saving_figure=True, dpi=500, height=800, width=800,)
+plot_geometry(materials = material, plane="yz", saving_figure=True, dpi=500, height=800, width=800)
+
+plot_geometry(materials = material, plane="xy", saving_figure=True, dpi=500, height=400, width=400)

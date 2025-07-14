@@ -83,7 +83,6 @@ def apply_correction_ww(ww, correction_weight_window):
             wwg.upper_ww_bounds[..., energy_index] *= correction_weight_window
     return ww
 
-
 def create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0]),
                                           nx:int=25, ny:int=25, nz:int=25, 
                                           lower_left=np.array([-500.0, -500.0, -500]), 
@@ -117,3 +116,29 @@ def get_ww_size(weight_windows:list, particule_type:str = "neutron") -> tuple:
             size = wwg.lower_ww_bounds.shape[:-1]
             ww_sizes = size
     return ww_sizes
+
+
+
+def remove_zeros_from_ww(weight_windows:list) -> list:
+    """
+    Remove zeros from the weight window arrays by replacing them with the minimum nonzero value
+    in each energy group slice.
+
+    Parameters:
+        weight_windows (list): List of weight window objects.
+
+    Returns:
+        list: List of weight window objects with zeros replaced by the minimum nonzero value.
+    """
+    for wwg in weight_windows:
+        for index_energy in range(wwg.lower_ww_bounds.shape[-1]):
+            current_slice = wwg.lower_ww_bounds[:, :, :, index_energy]
+            min_nonzero = np.min(current_slice[current_slice > 0])
+            current_slice[current_slice <= 0] = min_nonzero
+            wwg.lower_ww_bounds[:, :, :, index_energy] = current_slice
+
+            current_slice_upper = wwg.upper_ww_bounds[:, :, :, index_energy]
+            min_nonzero_upper = np.min(current_slice_upper[current_slice_upper > 0])
+            current_slice_upper[current_slice_upper <= 0] = min_nonzero_upper
+            wwg.upper_ww_bounds[:, :, :, index_energy] = current_slice_upper
+    return weight_windows
