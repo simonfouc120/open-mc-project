@@ -10,6 +10,7 @@ from PIL import Image
 import numpy as np
 from copy import deepcopy
 
+
 CWD = Path(__file__).parent.resolve()
 
 project_root = Path(__file__).resolve().parents[7]  
@@ -24,6 +25,8 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
 
 divide_factor_list = [10, 8, 6, 4, 2]
+divide_factor_list = [10, 8, 6, 4]
+
 start_time = time.time()
 
 for itteration_number, divide_factor in enumerate(divide_factor_list):
@@ -42,7 +45,7 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
     batches_number= 1
     settings.batches = batches_number
     settings.inactive = 0
-    settings.particles = 1000000 # try more
+    settings.particles = 100000 # try more
     settings.source = openmc.FileSource('surface_source.h5')
     settings.photon_transport = True
 
@@ -60,7 +63,7 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
     mesh.lower_left = (-500.0, -500.0, -500.0)
     mesh.upper_right = (500.0, 500.0, 500.0)
 
-    energy_bounds = np.linspace(0.0, 15e6, 10) 
+    energy_bounds = np.linspace(0.0, 15e6, 2) 
 
     wwg_neutron = openmc.WeightWindowGenerator(
         mesh=mesh,  
@@ -78,6 +81,8 @@ for itteration_number, divide_factor in enumerate(divide_factor_list):
     settings.export_to_xml()
 
     remove_previous_results(batches_number=batches_number)
+    
+    time.sleep(1)
     openmc.run()
 
 end_time = time.time()

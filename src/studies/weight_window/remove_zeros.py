@@ -27,18 +27,14 @@ def remove_zeros_from_ww(weight_windows:list) -> list:
     for wwg in weight_windows:
         for index_energy in range(wwg.lower_ww_bounds.shape[-1]):
             current_slice = wwg.lower_ww_bounds[:, :, :, index_energy]
-            positive_values = current_slice[current_slice > 0]
-            if positive_values.size > 0:
-                min_nonzero = np.min(positive_values)
-                current_slice[current_slice <= 0] = min_nonzero
-                wwg.lower_ww_bounds[:, :, :, index_energy] = current_slice
-            # Repeat for upper bounds
+            min_nonzero = np.min(current_slice[current_slice > 0])
+            current_slice[current_slice <= 0] = min_nonzero
+            wwg.lower_ww_bounds[:, :, :, index_energy] = current_slice
+
             current_slice_upper = wwg.upper_ww_bounds[:, :, :, index_energy]
-            positive_values_upper = current_slice_upper[current_slice_upper > 0]
-            if positive_values_upper.size > 0:
-                min_nonzero_upper = np.min(positive_values_upper)
-                current_slice_upper[current_slice_upper <= 0] = min_nonzero_upper
-                wwg.upper_ww_bounds[:, :, :, index_energy] = current_slice_upper
+            min_nonzero_upper = np.min(current_slice_upper[current_slice_upper > 0])
+            current_slice_upper[current_slice_upper <= 0] = min_nonzero_upper
+            wwg.upper_ww_bounds[:, :, :, index_energy] = current_slice_upper
     return weight_windows
 
 ww_with_zeros_removed = remove_zeros_from_ww(weight_windows=ww)
