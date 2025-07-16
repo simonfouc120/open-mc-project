@@ -18,7 +18,7 @@ from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
-from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally, apply_correction_ww
+from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally, apply_correction_ww, get_ww_size
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
@@ -35,10 +35,11 @@ settings.inactive = 0
 settings.particles = 1000000 # 60000000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
-settings.max_history_splits = 1_000  
+settings.max_history_splits = 10_000  
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
-correction_factor_matrix = np.ones(shape=(25, 25, 25)) * 1e4
+shape_ww = get_ww_size(weight_windows=ww)
+correction_factor_matrix = np.ones(shape=shape_ww) * 1e4
 ww_corrected = apply_correction_ww(ww=ww, correction_weight_window=correction_factor_matrix)
 
 plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
@@ -47,11 +48,11 @@ plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_f
 settings.weight_windows = ww
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
-                                      bin_number=200, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+                                      bin_number=400, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
 mesh_tally_photon_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_yz", particule_type='photon', plane="yz",
-                                      bin_number=200, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
+                                      bin_number=400, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
                                       thickness= 10.0, coord_value=0.0)
 
 # Neutron flux tally on the CALCULATION_CELL
