@@ -18,7 +18,7 @@ from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, WATER_MATERIAL
 from src.utils.pre_processing.pre_processing import (remove_previous_results, mesh_tally_plane)
 from src.utils.post_preocessing.post_processing import load_mesh_tally, load_dammage_energy_tally, load_mesh_tally_dose
-from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally
+from src.utils.weight_window.weight_window import plot_weight_window, create_and_apply_correction_ww_tally, apply_correction_ww
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 from src.models.model_complete_reactor import MODEL, GRAPHITE_CELL, CALCULATION_CELL
@@ -32,18 +32,19 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 100000 # 60000000
+settings.particles = 1000000 # 60000000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
+settings.max_history_splits = 1_000  
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
+correction_factor_matrix = np.ones(shape=(25, 25, 25)) * 1e4
+ww_corrected = apply_correction_ww(ww=ww, correction_weight_window=correction_factor_matrix)
 
-ww_corrected = create_and_apply_correction_ww_tally(ww, target=np.array([0.0, 400.0, -300.0]), nx=30, ny=30, nz=30,)
+plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
+plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')
 
-plot_weight_window(weight_window=ww_corrected[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
-plot_weight_window(weight_window=ww_corrected[1], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')
-
-settings.weight_windows = ww_corrected
+settings.weight_windows = ww
 
 mesh_tally_neutron_yz = mesh_tally_plane(name_mesh_tally = "flux_mesh_neutrons_yz", particule_type='neutron', plane="yz",
                                       bin_number=200, lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0),
