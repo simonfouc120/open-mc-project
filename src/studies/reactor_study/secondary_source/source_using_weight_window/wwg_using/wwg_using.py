@@ -32,10 +32,10 @@ settings = openmc.Settings()
 batches_number= 1
 settings.batches = batches_number
 settings.inactive = 0
-settings.particles = 1000000 # 60000000
+settings.particles = 4000000 # 60000000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
-settings.max_history_splits = 10_000  
+settings.max_history_splits = 1_000  
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 shape_ww = get_ww_size(weight_windows=ww)
@@ -90,8 +90,8 @@ print(f"Neutron flux tally: {flux_tally_neutron.mean[0][0][0]} particles/cm^2/p-
 flux_tally_photon = statepoint_file.get_tally(name="flux_tally_photon")
 print(f"Photon flux tally: {flux_tally_photon.mean[0][0][0]} particles/cm^2/p-source")
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", particule_type="neutron", bin_number=200,
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_yz", particule_type="neutron", bin_number=400,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True, plot_error=False)
 
-load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz", particule_type="photon", bin_number=200,
+load_mesh_tally(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_yz", particule_type="photon", bin_number=400,
                 lower_left=(-450.0, -450.0), upper_right=(450.0, 450.0), zoom_x=(-450, 450), zoom_y=(-450, 450), plane="yz", saving_figure=True, plot_error=False)
