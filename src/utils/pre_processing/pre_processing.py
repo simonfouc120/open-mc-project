@@ -138,6 +138,7 @@ def mesh_tally_dose_plane(
     """
     Create a mesh tally for dose in the specified plane at a given coordinate value.
     Data source is ICRP 116.
+    The unit of the mesh tally is in pSv/cm^2/s.
 
     Parameters:
         plane (str): Plane to create the mesh tally in ('xy', 'xz', or 'yz').
@@ -171,10 +172,10 @@ def mesh_tally_dose_plane(
 
     if particule_type == 'neutron':
         energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry=irradiation_geometry)
-        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation_method='cubic')
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation='cubic')
     elif particule_type == 'photon':
         energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="photon", geometry=irradiation_geometry)
-        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation_method='cubic')
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation='cubic')
     else:
         raise ValueError("particule_type must be 'neutron' or 'photon'")
 
@@ -184,7 +185,6 @@ def mesh_tally_dose_plane(
     mesh_tally.filters = [mesh_filter, particle_filter, energy_function_filter]
     mesh_tally.scores = ['flux']
     return mesh_tally
-
 
 
 def mesh_tally_plane(
@@ -240,6 +240,44 @@ def mesh_tally_plane(
         mesh_tally.filters = [mesh_filter]
     mesh_tally.scores = [score]
     return mesh_tally
+
+def get_mesh_volumes(plane: str = "xy", bin_number: int = 400,
+                    lower_left = (-50.0, -50.0),
+                    upper_right = (50.0, 50.0),
+                    coord_value: float = 0.0,
+                    thickness: float = 1.0,):
+    """
+    Get the volumes of the mesh bins in the specified plane.
+
+    Parameters:
+        plane (str): Plane to create the mesh in ('xy', 'xz', or 'yz').
+        bin_number (int): Number of bins in each direction.
+        lower_left (tuple): Lower left corner of the mesh (2D).
+        upper_right (tuple): Upper right corner of the mesh (2D).
+        coord_value (float): Coordinate value for the orthogonal axis.
+        thickness (float): Thickness along the orthogonal axis.
+
+    Returns:
+        np.ndarray: Array of volumes for each mesh bin.
+    """
+    mesh = openmc.RegularMesh()
+    if plane == "xy":
+        mesh.dimension = [bin_number, bin_number, 1]
+        mesh.lower_left = (lower_left[0], lower_left[1], coord_value - thickness / 2)
+        mesh.upper_right = (upper_right[0], upper_right[1], coord_value + thickness / 2)
+    elif plane == "xz":
+        mesh.dimension = [bin_number, 1, bin_number]
+        mesh.lower_left = (lower_left[0], coord_value - thickness / 2, lower_left[1])
+        mesh.upper_right = (upper_right[0], coord_value + thickness / 2, upper_right[1])
+    elif plane == "yz":
+        mesh.dimension = [1, bin_number, bin_number]
+        mesh.lower_left = (coord_value - thickness / 2, lower_left[0], lower_left[1])
+        mesh.upper_right = (coord_value + thickness / 2, upper_right[0], upper_right[1])
+    else:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+    
+    return mesh.volumes[0][0][0]
+
 
 def estimate_fissions_and_neutrons(reactor_power:float, nu_bar:float, 
                                    fraction_u235:float=0.1975, fraction_u238:float=None):
