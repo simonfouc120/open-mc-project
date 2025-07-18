@@ -171,10 +171,10 @@ def mesh_tally_dose_plane(
 
     if particule_type == 'neutron':
         energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="neutron", geometry=irradiation_geometry)
-        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation_method='cubic')
     elif particule_type == 'photon':
         energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle="photon", geometry=irradiation_geometry)
-        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
+        energy_function_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation_method='cubic')
     else:
         raise ValueError("particule_type must be 'neutron' or 'photon'")
 
