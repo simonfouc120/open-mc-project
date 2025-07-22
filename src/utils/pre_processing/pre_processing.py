@@ -302,7 +302,7 @@ def reducing_density(material: openmc.Material, factor: int = 10):
     material.set_density("g/cm3", material.density/factor)
     return material
 
-class volume_cell:
+class Volume_cell:
     def __init__(self, cell, surface_type=None):
         self.cell = cell
         self.surface_type = surface_type
