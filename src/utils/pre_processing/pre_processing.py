@@ -301,3 +301,37 @@ def reducing_density(material: openmc.Material, factor: int = 10):
     """
     material.set_density("g/cm3", material.density/factor)
     return material
+
+class volume_cell:
+    def __init__(self, cell, surface_type=None):
+        self.cell = cell
+        self.surface_type = surface_type
+
+    def get_volume(self):
+        # If the cell's region is a sphere, calculate its volume
+        if hasattr(self.cell.region, 'surface') and getattr(self.cell.region.surface, 'type', None) == 'sphere':
+            r = self.cell.region.surface.r  # radius in cm
+            return (4/3) * np.pi * r**3  # volume in cm^3
+        # Otherwise, try to use OpenMC's volume property if available
+        if hasattr(self.cell, 'volume') and self.cell.volume is not None:
+            return self.cell.volume
+        return None
+
+    def get_surface_area(self):
+        # If the cell's region is a sphere, calculate its surface area
+        if hasattr(self.cell.region, 'surface') and getattr(self.cell.region.surface, 'type', None) == 'sphere':
+            r = self.cell.region.surface.r  # radius in cm
+            return 4 * np.pi * r**2  # surface area in cm^2
+        # Otherwise, try to use OpenMC's surface_area property if available
+        if hasattr(self.cell, 'surface_area') and self.cell.surface_area is not None:
+            return self.cell.surface_area
+        return None
+
+    def get_center(self):
+        # If the cell's region is a sphere, get its center coordinates
+        if hasattr(self.cell.region, 'surface') and getattr(self.cell.region.surface, 'type', None) == 'sphere':
+            x0 = getattr(self.cell.region.surface, 'x0', 0.0)
+            y0 = getattr(self.cell.region.surface, 'y0', 0.0)
+            z0 = getattr(self.cell.region.surface, 'z0', 0.0)
+            return (x0, y0, z0)
+        return None
