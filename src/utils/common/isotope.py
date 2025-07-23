@@ -18,4 +18,7 @@ class Isotope:
     def mass(self, activity):
         return activity / self.massic_activity
     
+    def activity_over_time(self, mass, time):
+        return self.activity(mass) * np.exp(-self.decay_constant * time)
+    
     
