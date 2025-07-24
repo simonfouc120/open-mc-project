@@ -167,7 +167,7 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
 
 
 def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
-                        n_per_second:int=1, particule_type:str='neutrons',
+                        particles_per_second:int=1, particule_type:str='neutrons',
                         bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                         upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
                         zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True, 
@@ -191,7 +191,7 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     """
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
-    flux_data = flux_data * n_per_second  # Convert to dose rate (assuming n_per_second is the number of particles per second)
+    flux_data = flux_data * particles_per_second  # Convert to dose rate (assuming n_per_second is the number of particles per second)
     flux_data = flux_data * 1e-6 / 3600  # Convert from pSv/s to µSv/h
     flux_data = flux_data / mesh_bin_volume  
     

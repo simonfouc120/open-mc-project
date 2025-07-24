@@ -199,11 +199,11 @@ load_dammage_energy_tally(cwd = CWD, statepoint_file = statepoint_file, name_mes
                          zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="yz")
 
 load_mesh_tally_dose(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_neutrons_xy_dose",
-                     n_per_second=neutrons_emitted_per_second, particule_type='neutron',
+                     particles_per_second=neutrons_emitted_per_second, particule_type='neutron',
                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
                      zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="xy")
 
 load_mesh_tally_dose(cwd = CWD, statepoint_file = statepoint_file, name_mesh_tally="flux_mesh_photons_xy_dose",
-                     n_per_second=neutrons_emitted_per_second, particule_type='photon',
+                     particles_per_second=neutrons_emitted_per_second, particule_type='photon',
                      bin_number=400, lower_left=(-10.0, -10.0), upper_right=(10.0, 10.0),
                      zoom_x=(-10, 10), zoom_y=(-10.0, 10.0), plane="xy")
