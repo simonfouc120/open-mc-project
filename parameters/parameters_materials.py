@@ -18,7 +18,7 @@ displacement_threshold_energy = {
     'Zr': 45.0,
     'Ni': 40.0,
     'Pb': 25.0
-}
+} # à vérif
 
 # Création des matériaux
 
@@ -142,6 +142,12 @@ boron = openmc.Material(name="Boron")
 boron.add_element("B", 1.0)
 boron.set_density("g/cm3", 2.34)
 BORON_MATERIAL = boron
+
+b4c = openmc.Material(name="Boron Carbide (B4C)")
+b4c.add_element("B", 4.0)
+b4c.add_element("C", 1.0)
+b4c.set_density("g/cm3", 2.52)
+B4C_MATERIAL = b4c
 
 # BERYLLIUM MATERIALS ##
 beryllium = openmc.Material(name="Beryllium")
