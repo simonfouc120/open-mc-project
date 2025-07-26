@@ -37,10 +37,9 @@ def load_mesh_tally(cwd, statepoint_file: object, name_mesh_tally:str = "flux_me
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
     flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
-
+    flux_error = flux_error / flux_data
     if plot_error:
         fig, axs = plt.subplots(1, 2, figsize=(14, 6))
-
         # Plot flux_data
         im0 = axs[0].imshow(
             flux_data,
