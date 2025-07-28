@@ -174,7 +174,8 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
                         bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                         upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
                         zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True, 
-                        mesh_bin_volume:float=1.0, plot_error:bool=False, radiological_area: bool = False):
+                        mesh_bin_volume:float=1.0, plot_error:bool=False, radiological_area: bool = False,
+                        suffix_saving: str = ""):
     """
     Load and plot the dose mesh tally from the statepoint file.
 
@@ -285,7 +286,7 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
         plt.colorbar(im0, label="Dose rate [µSv/h]")
 
     plt.tight_layout()
-    name_mesh_tally_saving = name_mesh_tally + ".png"
+    name_mesh_tally_saving = name_mesh_tally + suffix_saving + ".png"
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
