@@ -20,3 +20,9 @@ SECONDS_PER_DAY = 86400  # seconds in a day
 SECONDS_PER_WEEK = 86400 * 7  # seconds in a week
 SECONDS_PER_MONTH = 86400 * 30.44  # seconds in a month (30.44 days)
 SECONDS_PER_YEAR = 86400 * 365.25  # seconds in a year
+
+# Seuils officiels français (µSv/h)
+DOSE_AREAS_LIMIT = [0, 7.5, 25, 100, 2000, 100000, 1e32]
+
+# Couleurs associées aux zones réglementaires (avec blanc en dessous de 7.5 µSv/h)
+AREAS_COLORS = ['white', 'blue', 'green', 'yellow', 'orange', 'red']

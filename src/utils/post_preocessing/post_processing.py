@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
 
+# TODO : à terme, il faudrait utiliser les constantes définies dans lib/constants/constant.py
+# Je dois remonter le chemin pour l'importer correctement
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # Adjust path to
+from lib.constants.constant import DOSE_AREAS_LIMIT, AREAS_COLORS
 
 def print_calculation_finished():
     """
@@ -277,36 +283,83 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
 
+from matplotlib.colors import ListedColormap, BoundaryNorm
 
-    # plt.imshow(flux_data, 
-    #         origin='lower', 
-    #         extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], 
-    #         cmap='plasma',
-    #         norm=LogNorm(vmin=np.min(flux_data[flux_data>=0]), vmax=flux_data.max()))  
-    # plt.colorbar(label='Dose [μSv/h] (log scale)')
-    
-    # if plane == "xy":
-    #     plt.title(f'Dose {particule_type} cartography XY')
-    #     plt.xlabel('X [cm]')
-    #     plt.ylabel('Y [cm]')
-    # elif plane == "xz":
-    #     plt.title(f'Dose {particule_type} cartography XY')
-    #     plt.xlabel('X [cm]')
-    #     plt.ylabel('Z [cm]')
-    # elif plane == "yz":
-    #     plt.title(f'Dose {particule_type} cartography XY')
-    #     plt.xlabel('Y [cm]')
-    #     plt.ylabel('Z [cm]')
-    # else:
-    #     raise ValueError("plane must be 'xy', 'xz', or 'yz'")
-    # plt.tight_layout()
-    # plt.xlim(zoom_x[0], zoom_x[1])
-    # plt.ylim(zoom_y[0], zoom_y[1])
-    # name_mesh_tally_saving = name_mesh_tally + ".png"
-    # if saving_figure:
-    #     plt.savefig(cwd / name_mesh_tally_saving)
-    # plt.show()
+def load_mesh_tally_dose_areas(cwd, statepoint_file: object, name_mesh_tally: str = "flux_mesh_neutrons_dose_xy",
+                         particles_per_second: int = 1, particule_type: str = 'neutrons',
+                         bin_number: int = 400, lower_left: tuple = (-10.0, -10.0),
+                         upper_right: tuple = (10.0, 10.0), zoom_x: tuple = (-10, 10),
+                         zoom_y: tuple = (-10.0, 10.0), plane: str = "xy", saving_figure: bool = True,
+                         mesh_bin_volume: float = 1.0, plot_error: bool = False):
+    """
+    Load and plot the dose mesh tally from the statepoint file using radiological zone colors
+    defined in French regulation (Code du travail).
+    """
 
+    # Récupération des données depuis le fichier statepoint
+    mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
+    flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
+    flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # µSv/h
+    flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
+    flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / np.where(flux_data == 0, 1, flux_data)
+    cmap = ListedColormap(AREAS_COLORS)
+    norm = BoundaryNorm(DOSE_AREAS_LIMIT, ncolors=len(AREAS_COLORS))
+
+    if plot_error:
+        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+        # Carte des doses
+        im0 = axs[0].imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[0], lower_left[1], upper_right[1]],
+            cmap=cmap,
+            norm=norm
+        )
+        axs[0].set_title(f"Dose map {plane.upper()} {particule_type}")
+        axs[0].set_xlim(zoom_x)
+        axs[0].set_ylim(zoom_y)
+        axs[0].set_xlabel(f'{plane[0].upper()} [cm]')
+        axs[0].set_ylabel(f'{plane[1].upper()} [cm]')
+        cbar0 = fig.colorbar(im0, ax=axs[0], ticks=DOSE_AREAS_LIMIT)
+        # cbar0.ax.set_yticklabels(['<7.5', '7.5–25', '25–100', '100–2000', '2k–1e5', '>1e5'])
+        cbar0.set_label("Radiological area")
+
+        # Carte des erreurs relatives
+        im1 = axs[1].imshow(
+            flux_error,
+            origin='lower',
+            extent=[lower_left[0], upper_right[0], lower_left[1], upper_right[1]],
+            cmap='plasma'
+        )
+        axs[1].set_title(f"Relative error map {plane.upper()} {particule_type}")
+        axs[1].set_xlim(zoom_x)
+        axs[1].set_ylim(zoom_y)
+        axs[1].set_xlabel(f'{plane[0].upper()} [cm]')
+        axs[1].set_ylabel(f'{plane[1].upper()} [cm]')
+        fig.colorbar(im1, ax=axs[1], label="Relative error")
+
+    else:
+        plt.figure(figsize=(8, 6))
+        im0 = plt.imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[0], lower_left[1], upper_right[1]],
+            cmap=cmap,
+            norm=norm
+        )
+        plt.title(f"Dose map {plane.upper()} {particule_type}")
+        plt.xlabel(f'{plane[0].upper()} [cm]')
+        plt.ylabel(f'{plane[1].upper()} [cm]')
+        plt.xlim(zoom_x)
+        plt.ylim(zoom_y)
+        cbar = plt.colorbar(im0, ticks=DOSE_AREAS_LIMIT)
+        # cbar.ax.set_yticklabels(['<7.5', '7.5–25', '25–100', '100–2000', '2k–1e5', '>1e5'])
+        cbar.set_label("Radiological area")
+
+    plt.tight_layout()
+    if saving_figure:
+        plt.savefig(cwd / f"{name_mesh_tally}.png")
+    plt.show()
 
 def gaussian_energy_broadening(E, a:float=1000., b:float=4., c:float=0.0002):
     """
