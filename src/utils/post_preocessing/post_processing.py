@@ -170,7 +170,7 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
                         bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                         upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
                         zoom_y:tuple=(-10.0, 10.0), plane:str = "xy", saving_figure:bool = True, 
-                        mesh_bin_volume:float=1.0):
+                        mesh_bin_volume:float=1.0, plot_error:bool=False):
     """
     Load and plot the dose mesh tally from the statepoint file.
 
@@ -183,6 +183,12 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
     - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
     - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+    - plane: The plane of the mesh ('xy', 'xz', or 'yz') (default is 'xy').
+    - saving_figure: Boolean indicating whether to save the figure (default is True).
+    - particule_type: Type of particle for the tally (default is 'neutrons').
+    - particles_per_second: Number of particles per second (default is 1). Useless if source.strengh is set in "fixed source" mode.
+    - mesh_bin_volume: Volume of each mesh bin (default is 1.0).
+    - plot_error: Boolean indicating whether to plot the error (default is False).
     
     This function extracts the dose mesh tally from the statepoint file,
     reshapes the data, and plots it using matplotlib with a logarithmic color scale.
@@ -190,38 +196,116 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     """
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
-    flux_data = flux_data * particles_per_second  # Convert to dose rate (assuming n_per_second is the number of particles per second)
-    flux_data = flux_data * 1e-6 * 3600  # Convert from pSv/s to µSv/h
-    flux_data = flux_data / mesh_bin_volume  
-    
-    plt.imshow(flux_data, 
-            origin='lower', 
-            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], 
+    flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate in µSv/h per mesh bin volume
+    flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
+    flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / flux_data
+
+    if plot_error:
+        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+        # Plot flux_data
+        im0 = axs[0].imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
             cmap='plasma',
-            norm=LogNorm(vmin=np.min(flux_data[flux_data!=0]), vmax=flux_data.max()))  
-    plt.colorbar(label='Dose [μSv/h] (log scale)')
-    
-    if plane == "xy":
-        plt.title(f'Dose {particule_type} cartography XY')
-        plt.xlabel('X [cm]')
-        plt.ylabel('Y [cm]')
-    elif plane == "xz":
-        plt.title(f'Dose {particule_type} cartography XY')
-        plt.xlabel('X [cm]')
-        plt.ylabel('Z [cm]')
-    elif plane == "yz":
-        plt.title(f'Dose {particule_type} cartography XY')
-        plt.xlabel('Y [cm]')
-        plt.ylabel('Z [cm]')
-    else:
-        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
+        )
+        axs[0].set_title(f"Flux map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            axs[0].set_xlabel('X [cm]')
+            axs[0].set_ylabel('Y [cm]')
+        elif plane == "xz":
+            axs[0].set_xlabel('X [cm]')
+            axs[0].set_ylabel('Z [cm]')
+        elif plane == "yz":
+            axs[0].set_xlabel('Y [cm]')
+            axs[0].set_ylabel('Z [cm]')
+        else:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+        axs[0].set_xlim(zoom_x[0], zoom_x[1])
+        axs[0].set_ylim(zoom_y[0], zoom_y[1])
+        fig.colorbar(im0, ax=axs[0], label="Dose rate [µSv/h]")
+
+        # Plot flux_error
+        im1 = axs[1].imshow(
+            flux_error,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
+            cmap='plasma')
+        axs[1].set_title(f"Flux error map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            axs[1].set_xlabel('X [cm]')
+            axs[1].set_ylabel('Y [cm]')
+        elif plane == "xz":
+            axs[1].set_xlabel('X [cm]')
+            axs[1].set_ylabel('Z [cm]')
+        elif plane == "yz":
+            axs[1].set_xlabel('Y [cm]')
+            axs[1].set_ylabel('Z [cm]')
+        axs[1].set_xlim(zoom_x[0], zoom_x[1])
+        axs[1].set_ylim(zoom_y[0], zoom_y[1])
+        fig.colorbar(im1, ax=axs[1], label="Flux error")
+
+    else: 
+        plt.figure(figsize=(8, 6))
+        im0 = plt.imshow(
+            flux_data,
+            origin='lower',
+            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
+            cmap='plasma',
+            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
+        )
+        plt.title(f"Flux map {plane.upper()} {particule_type}")
+        if plane == "xy":
+            plt.xlabel('X [cm]')
+            plt.ylabel('Y [cm]')
+        elif plane == "xz":
+            plt.xlabel('X [cm]')
+            plt.ylabel('Z [cm]')
+        elif plane == "yz":
+            plt.xlabel('Y [cm]')
+            plt.ylabel('Z [cm]')
+        else:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+        plt.xlim(zoom_x[0], zoom_x[1])
+        plt.ylim(zoom_y[0], zoom_y[1])
+        plt.colorbar(im0, label="Dose rate [µSv/h]")
+
     plt.tight_layout()
-    plt.xlim(zoom_x[0], zoom_x[1])
-    plt.ylim(zoom_y[0], zoom_y[1])
     name_mesh_tally_saving = name_mesh_tally + ".png"
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
+
+
+    # plt.imshow(flux_data, 
+    #         origin='lower', 
+    #         extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]], 
+    #         cmap='plasma',
+    #         norm=LogNorm(vmin=np.min(flux_data[flux_data>=0]), vmax=flux_data.max()))  
+    # plt.colorbar(label='Dose [μSv/h] (log scale)')
+    
+    # if plane == "xy":
+    #     plt.title(f'Dose {particule_type} cartography XY')
+    #     plt.xlabel('X [cm]')
+    #     plt.ylabel('Y [cm]')
+    # elif plane == "xz":
+    #     plt.title(f'Dose {particule_type} cartography XY')
+    #     plt.xlabel('X [cm]')
+    #     plt.ylabel('Z [cm]')
+    # elif plane == "yz":
+    #     plt.title(f'Dose {particule_type} cartography XY')
+    #     plt.xlabel('Y [cm]')
+    #     plt.ylabel('Z [cm]')
+    # else:
+    #     raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+    # plt.tight_layout()
+    # plt.xlim(zoom_x[0], zoom_x[1])
+    # plt.ylim(zoom_y[0], zoom_y[1])
+    # name_mesh_tally_saving = name_mesh_tally + ".png"
+    # if saving_figure:
+    #     plt.savefig(cwd / name_mesh_tally_saving)
+    # plt.show()
 
 
 def gaussian_energy_broadening(E, a:float=1000., b:float=4., c:float=0.0002):
