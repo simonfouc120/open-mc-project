@@ -2,9 +2,7 @@ import openmc
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
-
-# TODO : à terme, il faudrait utiliser les constantes définies dans lib/constants/constant.py
-# Je dois remonter le chemin pour l'importer correctement
+from matplotlib.colors import ListedColormap, BoundaryNorm
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).resolve().parents[3]))  # Adjust path to
@@ -291,8 +289,6 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
-
-from matplotlib.colors import ListedColormap, BoundaryNorm
 
 def gaussian_energy_broadening(E, a:float=1000., b:float=4., c:float=0.0002):
     """
