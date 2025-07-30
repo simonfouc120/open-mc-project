@@ -104,7 +104,7 @@ class Radionuclide_lara:
             rays_types = rays_types[mask]
         return rays_energies, rays_intensities, rays_types
 
-    def plot_emissions(self, saving_figure:bool=False, photon_only:bool=False):
+    def plot_emissions(self, saving_figure:bool=False, photon_only:bool=False, log_scale:bool=True):
         rays_energies, rays_intensities, rays_types = self.get_rays_emission_data(photon_only=photon_only)
 
         gamma_rays_energies = rays_energies[rays_types == 'g']
@@ -143,7 +143,8 @@ class Radionuclide_lara:
         plt.xlabel('Energy [keV]')
         plt.ylabel('Intensity [%]')
         plt.title(f'Emissions of {self.name}')
-        plt.yscale('log')
+        if log_scale:
+            plt.yscale('log')
         plt.grid()
         plt.legend()
         plt.savefig(f"{self.name}_emissions.png") if saving_figure else None
