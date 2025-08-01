@@ -95,19 +95,34 @@ class Radionuclide_lara:
     
     def get_decay_constant(self):
         """
-        Returns the decay constant of the radionuclide in s^-1.
-        The decay constant is calculated using the formula:"""
+        Returns:
+            the decay constant of the radionuclide in s^-1.
+            The decay constant is calculated using the formula:
+        """
         half_life_seconds = self.get_half_life(unit='s')
         return np.log(2) / half_life_seconds if half_life_seconds > 0 else 0.0
 
     def get_massic_activity(self):
         """
-        Returns the massic activity of the radionuclide in Bq/g.
-        The massic activity is calculated using the formula:
-        massic_activity = (6.022e23 * decay_constant) / atomic_mass
+        Returns:
+            the massic activity of the radionuclide in Bq/g.
+            The massic activity is calculated using the formula:
+            massic_activity = (6.022e23 * decay_constant) / atomic_mass
         """
         massic_activity = self.radionuclide_data.get('Specific activity (Bq/g)')[0]
         return massic_activity if massic_activity is not None else 0.0
+
+    def get_activity(self, mass:float=1.0):
+        """
+        Args : 
+            mass (float): Mass of the radionuclide in grams.
+        Returns :
+            the activity of the radionuclide in Bq.
+            The activity is calculated using the formula:
+            activity = mass * massic_activity
+        """
+        massic_activity = float(self.get_massic_activity())
+        return mass * massic_activity if massic_activity > 0 else 0.0
 
     def get_rays_emission_data(self, energy_filter=None, intensity_filter=None, photon_only=False):
         rays_energies =  np.array([float(em['Energy (keV)']) for em in self.radionuclide_data["Emissions"]])
