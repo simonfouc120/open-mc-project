@@ -80,6 +80,35 @@ class Radionuclide_lara:
         rn_data['Emissions'] = emissions
         return rn_data
     
+    def get_half_life(self, unit='s'):
+        """Returns the half-life of the radionuclide in seconds.
+        Args:
+            unit (str): The unit of the half-life. Default is 's' for seconds.
+        Returns:
+            float: Half-life in the specified unit. In seconds by default. 's' or 'a' for seconds or years.
+        """
+        half_life_str = self.radionuclide_data.get(f'Half-life ({unit})', None)[0]
+        if half_life_str is not None:
+            return float(half_life_str)
+        else:
+            raise ValueError(f"Half-life data not found for {self.name}")
+    
+    def get_decay_constant(self):
+        """
+        Returns the decay constant of the radionuclide in s^-1.
+        The decay constant is calculated using the formula:"""
+        half_life_seconds = self.get_half_life(unit='s')
+        return np.log(2) / half_life_seconds if half_life_seconds > 0 else 0.0
+
+    def get_massic_activity(self):
+        """
+        Returns the massic activity of the radionuclide in Bq/g.
+        The massic activity is calculated using the formula:
+        massic_activity = (6.022e23 * decay_constant) / atomic_mass
+        """
+        massic_activity = self.radionuclide_data.get('Specific activity (Bq/g)')[0]
+        return massic_activity if massic_activity is not None else 0.0
+
     def get_rays_emission_data(self, energy_filter=None, intensity_filter=None, photon_only=False):
         rays_energies =  np.array([float(em['Energy (keV)']) for em in self.radionuclide_data["Emissions"]])
         rays_intensities = np.array([float(em['Intensity (%)']) for em in self.radionuclide_data["Emissions"]])
