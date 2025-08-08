@@ -305,3 +305,38 @@ def gaussian_energy_broadening(E, a:float=1000., b:float=4., c:float=0.0002):
     """
     sigma = (a + b * (E + c * E**2)**0.5) / (2 * (2 * np.log(2))**0.5)
     return np.random.normal(loc=E, scale=sigma)
+
+
+class Pulse_height_tally: 
+    def __init__(self, name: str):
+        """
+        Initialize the Pulse_height_tally class with a name.
+        
+        Parameters:
+        - name: Name of the pulse height tally.
+        """
+        self.name = name
+    
+    def get_spectrum(self, statepoint_file, normalize: bool = True):
+        tally = statepoint_file.get_tally(name=self.name)
+        spectrum = tally.mean.flatten()
+        spectrum_std = tally.std_dev.flatten()
+        if normalize:
+            spectrum /= np.sum(spectrum)
+        spectrum_std /= np.sum(spectrum) if np.sum(spectrum) != 0 else 0.0
+        return (spectrum, spectrum_std)
+    
+    def get_efficiency(self, statepoint_file):
+        """
+        Get the efficiency of the pulse height tally from the statepoint file.
+        
+        Parameters:
+        - statepoint_file: The OpenMC statepoint file object containing the tally data.
+        - normalize: Boolean indicating whether to normalize the efficiency (default is True).
+        
+        Returns:
+        - Efficiency values from the pulse height tally.
+        """
+        tally = statepoint_file.get_tally(name=self.name)
+        efficiency = sum(tally.get_values(scores=['pulse-height-efficiency']).flatten())
+        return efficiency
