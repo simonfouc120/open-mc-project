@@ -101,10 +101,11 @@ for e, data in dict_spectrum.items():
 
 spectrums = np.array(spectrums)
 spectrums = spectrums.reshape(-1, len(spectrums[0]))
+spectrums = spectrums.T  
 X, Y = np.meshgrid(energy, energy_bins[:-1])
 
 plt.figure()
-plt.pcolormesh(X, Y, spectrums.T, cmap='viridis', norm=LogNorm(), shading='auto')
+plt.pcolormesh(X, Y, spectrums, cmap='viridis', norm=LogNorm(), shading='auto')
 plt.colorbar(label='Counts')
 plt.ylabel('Energy [MeV]')
 plt.xlabel('Incident Energy [MeV]')
