@@ -125,6 +125,19 @@ class Radionuclide_lara:
         massic_activity = self.radionuclide_data.get('Specific activity (Bq/g)')[0]
         return massic_activity if massic_activity is not None else 0.0
 
+    def get_massic_activity_after_time(self, time:float=0.0):
+        """
+        Args:
+            time (float): Time in seconds.
+        Returns:
+            the massic activity of the radionuclide after a given time in Bq/g.
+            The massic activity is calculated using the formula:
+            massic_activity = (6.022e23 * decay_constant * exp(-decay_constant * time)) / atomic_mass
+        """
+        decay_constant = self.get_decay_constant
+        atomic_mass = self.atomic_mass
+        return (6.022e23 * decay_constant * np.exp(-decay_constant * time)) / atomic_mass if atomic_mass > 0 else 0.0
+
     def get_activity(self, mass:float=1.0):
         """
         Args : 
@@ -135,6 +148,19 @@ class Radionuclide_lara:
             activity = mass * massic_activity
         """
         massic_activity = float(self.get_massic_activity)
+        return mass * massic_activity if massic_activity > 0 else 0.0
+
+    def get_activity_after_time(self, mass:float=1.0, time:float=0.0):
+        """
+        Args:
+            mass (float): Mass of the radionuclide in grams.
+            time (float): Time in seconds.
+        Returns:
+            the activity of the radionuclide after a given time in Bq.
+            The activity is calculated using the formula:
+            activity = mass * massic_activity * exp(-decay_constant * time)
+        """
+        massic_activity = self.get_massic_activity_after_time(time)
         return mass * massic_activity if massic_activity > 0 else 0.0
 
     def get_rays_emission_data(self, energy_filter=None, intensity_filter=None, photon_only=False):
