@@ -81,18 +81,6 @@ class Radionuclide_lara:
         return rn_data
     
     @property
-    def atomic_mass(self):
-        """
-        Returns:
-            float: Atomic mass in amu.
-        """
-        atomic_mass_str = self.radionuclide_data.get('Atomic mass (amu)', None)
-        if atomic_mass_str is not None:
-            return float(atomic_mass_str[0])
-        else:
-            raise ValueError(f"Atomic mass data not found for {self.name}")
-
-    @property
     def get_half_life(self):
         """
         Returns:
@@ -125,18 +113,18 @@ class Radionuclide_lara:
         massic_activity = self.radionuclide_data.get('Specific activity (Bq/g)')[0]
         return massic_activity if massic_activity is not None else 0.0
 
-    def get_massic_activity_after_time(self, time:float=0.0):
+    def get_massic_activity_after_time(self, time: float = 0.0):
         """
         Args:
             time (float): Time in seconds.
         Returns:
-            the massic activity of the radionuclide after a given time in Bq/g.
+            The massic activity of the radionuclide after a given time in Bq/g.
             The massic activity is calculated using the formula:
-            massic_activity = (6.022e23 * decay_constant * exp(-decay_constant * time)) / atomic_mass
+            massic_activity = massic_activity_0 * exp(-decay_constant * time)
         """
+        massic_activity_0 = float(self.get_massic_activity)
         decay_constant = self.get_decay_constant
-        atomic_mass = self.atomic_mass
-        return (6.022e23 * decay_constant * np.exp(-decay_constant * time)) / atomic_mass if atomic_mass > 0 else 0.0
+        return massic_activity_0 * np.exp(-decay_constant * time) if massic_activity_0 > 0 else 0.0
 
     def get_activity(self, mass:float=1.0):
         """
@@ -161,7 +149,7 @@ class Radionuclide_lara:
             activity = mass * massic_activity * exp(-decay_constant * time)
         """
         massic_activity = self.get_massic_activity_after_time(time)
-        return mass * massic_activity if massic_activity > 0 else 0.0
+        return float(mass * massic_activity) if massic_activity > 0 else 0.0
 
     def get_rays_emission_data(self, energy_filter=None, intensity_filter=None, photon_only=False):
         rays_energies =  np.array([float(em['Energy (keV)']) for em in self.radionuclide_data["Emissions"]])
