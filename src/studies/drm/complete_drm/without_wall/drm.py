@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import openmc
 import os
-import json
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from pathlib import Path
 import sys
-from PIL import Image
 import numpy as np
 
-sys.path.append(str(Path(__file__).resolve().parents[4]))  # Adjust path to
+sys.path.append(str(Path(__file__).resolve().parents[5]))  # Adjust path to
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL
 from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally_plane
@@ -120,3 +118,5 @@ plt.xticks(
 plt.tight_layout()
 plt.savefig("drm_spectrum.png")
 plt.show()
+
+np.savez("drm_spectrum.npz", energy=energy, energy_bins=energy_bins, spectrums=spectrums, spectrum_std=spectrum_std)
