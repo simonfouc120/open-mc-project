@@ -1,6 +1,5 @@
+# -*- coding: utf-8 -*-
 import numpy as np
-
-
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
@@ -22,6 +21,7 @@ spectrums_without_wall = drm_without_wall['spectrums']
 spectrum_std_without_wall = drm_without_wall['spectrum_std']
 
 difference = spectrums - spectrums_without_wall
+difference[difference < 0] = 0  
 
 X, Y = np.meshgrid(energy, energy_bins[:-1])
 
