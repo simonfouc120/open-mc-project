@@ -151,7 +151,10 @@ class Radionuclide_lara:
         massic_activity = self.get_massic_activity_after_time(time)
         return float(mass * massic_activity) if massic_activity > 0 else 0.0
 
-    def get_rays_emission_data(self, energy_filter=None, intensity_filter=None, photon_only=False):
+    def get_rays_emission_data(self, 
+                               energy_filter=None, 
+                               intensity_filter=None, 
+                               photon_only=False) -> tuple:
         rays_energies =  np.array([float(em['Energy (keV)']) for em in self.radionuclide_data["Emissions"]])
         rays_intensities = np.array([float(em['Intensity (%)']) for em in self.radionuclide_data["Emissions"]])
         rays_types = np.array([em['Type'] for em in self.radionuclide_data["Emissions"]])
@@ -173,11 +176,12 @@ class Radionuclide_lara:
             rays_energies = rays_energies[mask]
             rays_intensities = rays_intensities[mask]
             rays_types = rays_types[mask]
+        rays_intensities = rays_intensities / 100 if rays_intensities.sum() > 0 else rays_intensities
         return rays_energies, rays_intensities, rays_types
 
     def plot_emissions(self, saving_figure:bool=False, photon_only:bool=False, log_scale:bool=True):
         rays_energies, rays_intensities, rays_types = self.get_rays_emission_data(photon_only=photon_only)
-
+        rays_intensities = rays_intensities * 100
         gamma_rays_energies = rays_energies[rays_types == 'g']
         gamma_rays_intensities = rays_intensities[rays_types == 'g']
         x_rays_energies = rays_energies[np.char.startswith(rays_types, 'X')]
