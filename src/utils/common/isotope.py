@@ -139,6 +139,18 @@ class Radionuclide_lara:
         massic_activity = float(self.get_massic_activity)
         return mass * massic_activity if massic_activity > 0 else 0.0
 
+    def get_mass(self, activity: float = 1.0):
+        """
+        Args:
+            activity (float): Activity of the radionuclide in Bq.
+        Returns:
+            the mass of the radionuclide in grams.
+            The mass is calculated using the formula:
+            mass = activity / massic_activity
+        """
+        massic_activity = float(self.get_massic_activity)
+        return activity / massic_activity if massic_activity > 0 else 0.0
+
     def get_activity_after_time(self, mass:float=1.0, time:float=0.0):
         """
         Args:
