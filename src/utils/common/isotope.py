@@ -307,3 +307,30 @@ class Radionuclide_list:
             _, _, total_weight = self.compute_total_source_term(time=time)
             total_weight_at_time.append(total_weight)
         return total_weight_at_time
+
+    def plot_total_activity(self, time_points:np.ndarray= np.linspace(0, 3600 * 24, 100), time_unit: str = "s"):
+        """
+        Plot the total activity (sum of all photon emission intensities) at multiple time points.
+
+        Args:
+            time_points (iterable): Sequence of time points (in seconds) at which to compute the total activity.
+            time_unit (str): Unit for the x-axis ("s", "min", "h", "d", "w", "mo").
+        """
+        total_activity = self.compute_total_activity(time_points)
+        if time_unit == "s":
+            plt.plot(time_points, total_activity, marker='o')
+        elif time_unit == "min":
+            plt.plot(time_points / 60, total_activity, marker='o')
+        elif time_unit == "h":
+            plt.plot(time_points / 3600, total_activity, marker='o')
+        elif time_unit == "d":
+            plt.plot(time_points / (3600 * 24), total_activity, marker='o')
+        elif time_unit == "w":
+            plt.plot(time_points / (3600 * 24 * 7), total_activity, marker='o')
+        elif time_unit == "mo":
+            plt.plot(time_points / (3600 * 24 * 30), total_activity, marker='o')
+        plt.xlabel(f"Time [{time_unit}]")
+        plt.ylabel("Total Activity [Bq]")
+        plt.title("Total Activity of Radionuclides Over Time")
+        plt.grid()
+        plt.show()
