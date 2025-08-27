@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import sys 
 from PIL import Image
+import pandas as pd
 import numpy as np
 
 CWD = Path(__file__).parent.resolve()
@@ -230,3 +231,67 @@ class Radionuclide_lara:
     
     def __repr__(self):
         return self.__str__()
+
+class Radionuclide_list:
+
+    def __init__(self, file: str = "rn.csv", given_information:str = "Mass[g]"):
+        self.df = pd.read_csv(file, sep=";")
+        self.information = given_information
+        self.dict_rn = self.df.set_index("Radionuclide").to_dict()[self.information]
+
+    def compute_total_source_term(self, time: int = 0, unit_energy: str = "keV") -> tuple:
+        """
+        Compute the total photon emission spectrum for a set of radionuclides.
+
+        Parameters:
+            dict_rn (dict): Dictionary of radionuclide names and their masses.
+            time (int): Time in seconds after which to compute the activity.
+            unit_energy (str): Energy unit for output rays ("keV", "MeV", or "eV").
+
+        Returns:
+            rays (np.ndarray): Array of photon energies.
+            weights (np.ndarray): Corresponding weighted intensities.
+            total_weight (float): Sum of all weights.
+        """
+        rays = []
+        weights = []
+        for rn, mass in self.dict_rn.items():
+            rn_lara = Radionuclide_lara(rn)
+            energy, intensity, _ = rn_lara.get_rays_emission_data(photon_only=True)
+            activity = rn_lara.get_activity_after_time(mass=mass, time=time)
+            rays.extend(energy)
+            weights.extend(intensity * activity)
+        rays = np.array(rays)
+        weights = np.array(weights)
+        if unit_energy == "keV":
+            pass
+        elif unit_energy == "MeV":
+            rays = rays / 1000
+        elif unit_energy == "eV":
+            rays = rays * 1000
+        total_weight = np.sum(weights)
+        return rays, weights, total_weight
+
+    def plot_source_term(self, time: int = 0, unit_energy: str = "keV", width: float = 0.05):
+        rays, weights, _ = self.compute_total_source_term(time=time, unit_energy=unit_energy)
+        plt.bar(rays, weights, width=width)
+        plt.xlabel("Energy [keV]")
+        plt.ylabel("Intensity [a.u.]")
+        plt.title("Total Source Term")
+        plt.show()
+
+    def compute_total_activity(self, time_points):
+        """
+        Compute the total activity (sum of all photon emission intensities) at multiple time points.
+
+        Parameters:
+            time_points (iterable): Sequence of time points (in seconds) at which to compute the total activity.
+
+        Returns:
+            total_weight_at_time (list): List of total photon emission intensities at each time point.
+        """
+        total_weight_at_time = []
+        for time in time_points:
+            _, _, total_weight = self.compute_total_source_term(time=time)
+            total_weight_at_time.append(total_weight)
+        return total_weight_at_time
