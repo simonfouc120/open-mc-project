@@ -244,11 +244,21 @@ class Radionuclide_lara:
     def __repr__(self):
         return self.__str__()
 
+
+UNIT_FACTORS = {
+            "s": 1,
+            "min": 60,
+            "h": 3600,
+            "d": 3600 * 24,
+            "w": 3600 * 24 * 7,
+            "mo": 3600 * 24 * 30
+        }
 class Radionuclide_list:
 
     def __init__(self, file: str = "rn.csv", given_information:str = "Mass[g]"):
         self.df = pd.read_csv(file, sep=";")
         self.information = given_information
+        self.df["Radionuclide"] = self.df["Radionuclide"].apply(lambda x: f"{''.join(filter(str.isalpha, x))}-{''.join(filter(str.isdigit, x))}")
         self.dict_rn = self.df.set_index("Radionuclide").to_dict()[self.information]
 
     def compute_total_source_term(self, time: int = 0, unit_energy: str = "keV") -> tuple:
@@ -284,15 +294,19 @@ class Radionuclide_list:
         total_weight = np.sum(weights)
         return rays, weights, total_weight
 
-    def plot_source_term(self, time: int = 0, unit_energy: str = "keV", width: float = 0.05):
+    def plot_source_term(self, time: int = 0, 
+                         unit_energy: str = "keV", 
+                         width: float = 0.05) -> plt.Figure:
         rays, weights, _ = self.compute_total_source_term(time=time, unit_energy=unit_energy)
-        plt.bar(rays, weights, width=width)
-        plt.xlabel("Energy [keV]")
-        plt.ylabel("Intensity [a.u.]")
-        plt.title("Total Source Term")
+        fig, ax = plt.subplots(figsize=(9, 6))
+        ax.bar(rays, weights, width=width)
+        ax.set_xlabel("Energy [keV]")
+        ax.set_ylabel("Intensity [a.u.]")
+        ax.set_title("Total Source Term")
         plt.show()
+        return fig
 
-    def compute_total_activity(self, time_points):
+    def compute_total_activity_array(self, time_points: np.ndarray) -> list:
         """
         Compute the total activity (sum of all photon emission intensities) at multiple time points.
 
@@ -308,7 +322,9 @@ class Radionuclide_list:
             total_weight_at_time.append(total_weight)
         return total_weight_at_time
 
-    def plot_total_activity(self, time_points:np.ndarray= np.linspace(0, 3600 * 24, 100), time_unit: str = "s"):
+    def plot_total_activity(self, 
+                            time_points:np.ndarray = np.linspace(0, 3600 * 24, 100), 
+                            time_unit: str = "s") -> plt.Figure:
         """
         Plot the total activity (sum of all photon emission intensities) at multiple time points.
 
@@ -316,21 +332,42 @@ class Radionuclide_list:
             time_points (iterable): Sequence of time points (in seconds) at which to compute the total activity.
             time_unit (str): Unit for the x-axis ("s", "min", "h", "d", "w", "mo").
         """
-        total_activity = self.compute_total_activity(time_points)
-        if time_unit == "s":
-            plt.plot(time_points, total_activity, marker='o')
-        elif time_unit == "min":
-            plt.plot(time_points / 60, total_activity, marker='o')
-        elif time_unit == "h":
-            plt.plot(time_points / 3600, total_activity, marker='o')
-        elif time_unit == "d":
-            plt.plot(time_points / (3600 * 24), total_activity, marker='o')
-        elif time_unit == "w":
-            plt.plot(time_points / (3600 * 24 * 7), total_activity, marker='o')
-        elif time_unit == "mo":
-            plt.plot(time_points / (3600 * 24 * 30), total_activity, marker='o')
-        plt.xlabel(f"Time [{time_unit}]")
-        plt.ylabel("Total Activity [Bq]")
-        plt.title("Total Activity of Radionuclides Over Time")
-        plt.grid()
+        total_activity = self.compute_total_activity_array(time_points)
+
+        factor = UNIT_FACTORS.get(time_unit, 1)
+        fig, ax = plt.subplots(figsize=(9, 6))
+        ax.plot(time_points / factor, total_activity, marker='o')
+        ax.set_xlabel(f"Time [{time_unit}]")
+        ax.set_ylabel("Total Activity [Bq]")
+        ax.set_title("Total Activity of Radionuclides Over Time")
+        ax.grid(True)
+        fig.tight_layout()
         plt.show()
+        return fig
+
+    def plot_total_activity_per_rn(self, 
+                                   time_points: np.ndarray = np.linspace(0, 3600 * 24, 100),
+                                   time_unit: str = "s") -> plt.Figure:
+        total_weights_per_rn = {}
+        for rn, mass in self.dict_rn.items():
+            rn_lara = Radionuclide_lara(rn)
+            activities = np.array([rn_lara.get_activity_after_time(mass=mass, time=t) for t in time_points])
+            total_weights_per_rn[rn] = activities
+
+        factor = UNIT_FACTORS.get(time_unit, 1)
+        fig, ax = plt.subplots(figsize=(9, 6))
+        for rn, activities in total_weights_per_rn.items():
+            ax.plot(time_points / factor, activities, label=rn)
+        ax.set_xlabel(f"Time [{time_unit}]")
+        ax.set_ylabel("Activity [Bq]")
+        ax.set_title("Total Weighted Activity of Each Radionuclide vs Time")
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        ax.set_yscale("log")
+        ax.grid(True)
+        fig.tight_layout()
+        plt.show()
+        return fig
+
+    def __str__(self):
+        return f"Radionuclide Source Term: {self.dict_rn}"
+    
