@@ -255,13 +255,17 @@ UNIT_FACTORS = {
         }
 class Radionuclide_list:
 
-    def __init__(self, file: str = "rn.csv", given_information:str = "Mass[g]"):
+    def __init__(self, 
+                 file: str = "rn.csv", 
+                 given_information:str = "Mass[g]"):
         self.df = pd.read_csv(file, sep=";")
         self.information = given_information
         self.df["Radionuclide"] = self.df["Radionuclide"].apply(lambda x: f"{''.join(filter(str.isalpha, x))}-{''.join(filter(str.isdigit, x))}")
         self.dict_rn = self.df.set_index("Radionuclide").to_dict()[self.information]
 
-    def compute_total_source_term(self, time: int = 0, unit_energy: str = "keV") -> tuple:
+    def compute_total_source_term(self, 
+                                  time: int = 0, 
+                                  unit_energy: str = "keV") -> tuple:
         """
         Compute the total photon emission spectrum for a set of radionuclides.
 
@@ -306,7 +310,7 @@ class Radionuclide_list:
         plt.show()
         return fig
 
-    def compute_total_activity_array(self, time_points: np.ndarray) -> list:
+    def compute_total_activity_decay(self, time_points: np.ndarray) -> list:
         """
         Compute the total activity (sum of all photon emission intensities) at multiple time points.
 
@@ -322,9 +326,11 @@ class Radionuclide_list:
             total_weight_at_time.append(total_weight)
         return total_weight_at_time
 
-    def plot_total_activity(self, 
+    def plot_total_activity_decay(self, 
                             time_points:np.ndarray = np.linspace(0, 3600 * 24, 100), 
-                            time_unit: str = "s") -> plt.Figure:
+                            time_unit: str = "s",
+                            savefig: bool = False, 
+                            plot: bool = True) -> plt.Figure:
         """
         Plot the total activity (sum of all photon emission intensities) at multiple time points.
 
@@ -332,22 +338,39 @@ class Radionuclide_list:
             time_points (iterable): Sequence of time points (in seconds) at which to compute the total activity.
             time_unit (str): Unit for the x-axis ("s", "min", "h", "d", "w", "mo").
         """
-        total_activity = self.compute_total_activity_array(time_points)
+        total_activity = self.compute_total_activity_decay(time_points)
 
         factor = UNIT_FACTORS.get(time_unit, 1)
         fig, ax = plt.subplots(figsize=(9, 6))
-        ax.plot(time_points / factor, total_activity, marker='o')
+        ax.plot(time_points / factor, total_activity, marker='x')
         ax.set_xlabel(f"Time [{time_unit}]")
         ax.set_ylabel("Total Activity [Bq]")
         ax.set_title("Total Activity of Radionuclides Over Time")
         ax.grid(True)
         fig.tight_layout()
-        plt.show()
-        return fig
+        if savefig:
+            plt.savefig("total_activity_decay.png")
+        if plot:
+            plt.show()
+        return True
 
-    def plot_total_activity_per_rn(self, 
+    def plot_total_activity_decay_per_rn(self, 
                                    time_points: np.ndarray = np.linspace(0, 3600 * 24, 100),
-                                   time_unit: str = "s") -> plt.Figure:
+                                   time_unit: str = "s", 
+                                   savefig: bool = False, 
+                                   plot: bool = True) -> plt.Figure:
+        """
+        Plot the activity decay curve for each radionuclide in the list over the specified time points.
+
+        Args:
+            time_points (np.ndarray): Array of time points (in seconds) at which to compute the activity.
+            time_unit (str): Unit for the x-axis ("s", "min", "h", "d", "w", "mo").
+            savefig (bool): Whether to save the figure as a PNG file.
+            plot (bool): Whether to display the plot.
+
+        Returns:
+            plt.Figure: The matplotlib Figure object containing the plot.
+        """
         total_weights_per_rn = {}
         for rn, mass in self.dict_rn.items():
             rn_lara = Radionuclide_lara(rn)
@@ -365,8 +388,47 @@ class Radionuclide_list:
         ax.set_yscale("log")
         ax.grid(True)
         fig.tight_layout()
-        plt.show()
+        if savefig:
+            plt.savefig("total_activity_per_rn.png")
+        if plot:
+            plt.show()
         return fig
+
+
+    def plot_activities_per_rn(self, 
+                               time: float = 0.0, 
+                               time_unit: str = "s",
+                               savefig: bool = False,
+                               plot: bool = True) -> plt.Figure:
+        """
+        Calculate and plot the activity of each radionuclide at a given time.
+
+        Parameters:
+            dict_rn (dict): Dictionary of radionuclide names and their masses.
+            time (float): Time in seconds at which to calculate the activity.
+        """
+        activities_at_time = {}
+        for rn, mass in self.dict_rn.items():
+            rn_lara = Radionuclide_lara(rn)
+            activity = rn_lara.get_activity_after_time(mass=mass, time=time)
+            activities_at_time[rn] = activity
+
+        factor = UNIT_FACTORS.get(time_unit, 1)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.bar(activities_at_time.keys(), activities_at_time.values())
+        ax.set_xlabel("Radionuclide")
+        ax.set_ylabel(f"Activity at t={time} [Bq]")
+        ax.set_title(f"Activity of Each Radionuclide at t={time/factor:.2f} {time_unit}")
+        ax.set_yscale("log")
+        ax.set_xticklabels(activities_at_time.keys(), rotation=45)
+        ax.grid(True)
+        fig.tight_layout()
+        if savefig:
+            plt.savefig("activities_per_rn.png")
+        if plot:
+            plt.show()
+        return fig
+
 
     def __str__(self):
         return f"Radionuclide Source Term: {self.dict_rn}"
