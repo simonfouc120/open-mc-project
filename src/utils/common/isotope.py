@@ -414,7 +414,7 @@ class Radionuclide_list:
             activities_at_time[rn] = activity
 
         factor = UNIT_FACTORS.get(time_unit, 1)
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(9, 6))
         ax.bar(activities_at_time.keys(), activities_at_time.values())
         ax.set_xlabel("Radionuclide")
         ax.set_ylabel(f"Activity at t={time} [Bq]")
@@ -429,6 +429,82 @@ class Radionuclide_list:
             plt.show()
         return fig
 
+
+    def plot_weighted_activities_per_rn(self, 
+                                        time=0, 
+                                        time_unit="s",
+                                        savefig=False,
+                                        plot=True):
+        """
+        Calculate and plot the weighted activity (total photon emission) of each radionuclide at a given time.
+
+        Parameters:
+            dict_rn (dict): Dictionary of radionuclide names and their masses.
+            time (float): Time in seconds at which to calculate the weighted activity.
+        """
+        weighted_activities = {}
+        for rn, mass in self.dict_rn.items():
+            rn_lara = Radionuclide_lara(rn)
+            energy, intensity, _ = rn_lara.get_rays_emission_data(photon_only=True)
+            activity = rn_lara.get_activity_after_time(mass=mass, time=time)
+            weighted_activity = np.sum(intensity * activity)
+            weighted_activities[rn] = weighted_activity
+
+        factor = UNIT_FACTORS.get(time_unit, 1)
+        fig, ax = plt.subplots(figsize=(9, 6))
+        ax.bar(weighted_activities.keys(), weighted_activities.values())
+        ax.set_xlabel("Radionuclide")
+        ax.set_ylabel(f"Weighted Activity at t={time} [Bq]")
+        ax.set_title(f"Activity of Each Radionuclide at t={time/factor:.2f} {time_unit}")
+        ax.set_yscale("log")
+        ax.set_xticklabels(weighted_activities.keys(), rotation=45)
+        ax.grid(True)
+        fig.tight_layout()
+        if savefig:
+            plt.savefig("weighted_activities_per_rn.png")
+        if plot:
+            plt.show()
+        return fig
+
+
+    def penalizing_source_term(self, 
+                               time: float = 0.0, 
+                               unit_energy: str = "MeV",
+                               energy_min:float = 0.0, 
+                               energy_max:float = 3.0, 
+                               energy_width:float = 0.5):
+        """
+        Aggregate rays and weights into specified energy windows.
+
+        Groups the photon emission spectrum into energy bins and sums the weights in each bin.
+
+        Parameters:
+            time (float): Time in seconds after which to compute the activity and spectrum.
+            unit_energy (str): Energy unit for output rays ("keV", "MeV", or "eV").
+            energy_min (float): Minimum energy of the window range (in unit_energy).
+            energy_max (float): Maximum energy of the window range (in unit_energy).
+            energy_width (float): Width of each energy window (in unit_energy).
+
+        Returns:
+            window_energies (list): Energy of the highest-energy ray in each window.
+            window_weights (list): Sum of weights in each window.
+        """
+        rays, weights, _ = self.compute_total_source_term(time=time, unit_energy=unit_energy)
+        rays = np.array(rays)
+        weights = np.array(weights)
+
+        bins = np.arange(energy_min, energy_max, energy_width)
+        energy_windows = [(emin, emin + energy_width) for emin in bins]
+        window_energies = []
+        window_weights = []
+        for (emin, emax) in energy_windows:
+            mask = (rays >= emin) & (rays < emax)
+            if np.any(mask):
+                max_energy = rays[mask].max()
+                sum_weight = weights[mask].sum()
+                window_energies.append(max_energy)
+                window_weights.append(sum_weight)
+        return window_energies, window_weights
 
     def __str__(self):
         return f"Radionuclide Source Term: {self.dict_rn}"
