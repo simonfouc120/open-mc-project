@@ -506,6 +506,39 @@ class Radionuclide_list:
                 window_weights.append(sum_weight)
         return window_energies, window_weights
 
+    def plot_penalizing_source_term(self, 
+                                    time=0.0, 
+                                    unit_energy="MeV", 
+                                    energy_min:float = 0.0, 
+                                    energy_max:float = 3.0, 
+                                    energy_width:float = 0.5,
+                                    savefig: bool = False, 
+                                    plot: bool = True):
+        """
+        Plot the penalizing source term for a given time and energy unit.
+
+        Parameters:
+            time (float): Time in seconds at which to compute the source term.
+            unit_energy (str): Energy unit for the plot ("keV", "MeV", or "eV").
+        """
+        window_energies, window_weights = self.penalizing_source_term(time=time, 
+                                                                      unit_energy=unit_energy,
+                                                                      energy_min=energy_min,
+                                                                      energy_max=energy_max,
+                                                                      energy_width=energy_width)
+        fig, ax = plt.subplots(figsize=(9, 6))
+        ax.bar(window_energies, window_weights, width=0.1)
+        ax.set_xlabel(f"Energy [{unit_energy}]")
+        ax.set_ylabel("Weight")
+        ax.set_title(f"Penalizing Source Term at t={time} [s]")
+        ax.grid(True)
+        fig.tight_layout()
+        if savefig:
+            plt.savefig("penalizing_source_term.png")
+        if plot:
+            plt.show()
+        return fig
+
     def __str__(self):
         return f"Radionuclide Source Term: {self.dict_rn}"
     
