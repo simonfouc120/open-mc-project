@@ -512,7 +512,9 @@ class Radionuclide_list:
                                     energy_min:float = 0.0, 
                                     energy_max:float = 3.0, 
                                     energy_width:float = 0.5,
-                                    savefig: bool = False, 
+                                    savefig: bool = False,
+                                    suffix_saving: str = "",
+                                    suffix_title: str = "",
                                     plot: bool = True, 
                                     figsize:list=(9,6)) -> plt.Figure:
         """
@@ -531,11 +533,11 @@ class Radionuclide_list:
         ax.bar(window_energies, window_weights, width=0.1)
         ax.set_xlabel(f"Energy [{unit_energy}]")
         ax.set_ylabel("Weight")
-        ax.set_title(f"Penalizing Source Term at t={time} [s]")
+        ax.set_title(f"Penalizing Source Term at t={time} [s] {suffix_title}")
         ax.grid(True)
         fig.tight_layout()
         if savefig:
-            plt.savefig("penalizing_source_term.png")
+            plt.savefig(f"penalizing_source_term{suffix_saving}.png")
         if plot:
             plt.show()
         return fig
