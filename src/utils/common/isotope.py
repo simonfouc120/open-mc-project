@@ -263,7 +263,7 @@ class Radionuclide_list:
         self.df["Radionuclide"] = self.df["Radionuclide"].apply(lambda x: f"{''.join(filter(str.isalpha, x))}-{''.join(filter(str.isdigit, x))}")
         self.dict_rn = self.df.set_index("Radionuclide").to_dict()[self.information]
 
-    def compute_total_source_term(self, 
+    def compute_source_term(self, 
                                   time: int = 0, 
                                   unit_energy: str = "keV") -> tuple:
         """
@@ -301,7 +301,7 @@ class Radionuclide_list:
     def plot_source_term(self, time: int = 0, 
                          unit_energy: str = "keV", 
                          width: float = 0.05) -> plt.Figure:
-        rays, weights, _ = self.compute_total_source_term(time=time, unit_energy=unit_energy)
+        rays, weights, _ = self.compute_source_term(time=time, unit_energy=unit_energy)
         fig, ax = plt.subplots(figsize=(9, 6))
         ax.bar(rays, weights, width=width)
         ax.set_xlabel("Energy [keV]")
@@ -322,7 +322,7 @@ class Radionuclide_list:
         """
         total_weight_at_time = []
         for time in time_points:
-            _, _, total_weight = self.compute_total_source_term(time=time)
+            _, _, total_weight = self.compute_source_term(time=time)
             total_weight_at_time.append(total_weight)
         return total_weight_at_time
 
@@ -489,7 +489,7 @@ class Radionuclide_list:
             window_energies (list): Energy of the highest-energy ray in each window.
             window_weights (list): Sum of weights in each window.
         """
-        rays, weights, _ = self.compute_total_source_term(time=time, unit_energy=unit_energy)
+        rays, weights, _ = self.compute_source_term(time=time, unit_energy=unit_energy)
         rays = np.array(rays)
         weights = np.array(weights)
 
@@ -513,7 +513,8 @@ class Radionuclide_list:
                                     energy_max:float = 3.0, 
                                     energy_width:float = 0.5,
                                     savefig: bool = False, 
-                                    plot: bool = True):
+                                    plot: bool = True, 
+                                    figsize:list=(9,6)) -> plt.Figure:
         """
         Plot the penalizing source term for a given time and energy unit.
 
@@ -526,7 +527,7 @@ class Radionuclide_list:
                                                                       energy_min=energy_min,
                                                                       energy_max=energy_max,
                                                                       energy_width=energy_width)
-        fig, ax = plt.subplots(figsize=(9, 6))
+        fig, ax = plt.subplots(figsize=figsize)
         ax.bar(window_energies, window_weights, width=0.1)
         ax.set_xlabel(f"Energy [{unit_energy}]")
         ax.set_ylabel("Weight")
