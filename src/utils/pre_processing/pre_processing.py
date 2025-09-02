@@ -22,7 +22,8 @@ def remove_surface_source_files():
             os.remove(file)
 
 
-def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax, surface_id_start=10):
+def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax, 
+                   surface_id_start=10, boundary_type:str='vacuum'):
     """
     Creates a rectangular parallelepiped region using OpenMC planes.
 
@@ -38,12 +39,12 @@ def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax, surface_id_start=10):
     Returns:
         openmc.Region: The OpenMC region representing the parallelepiped.
     """
-    wall_xmin = openmc.XPlane(x0=xmin, surface_id=surface_id_start)
-    wall_xmax = openmc.XPlane(x0=xmax, surface_id=surface_id_start+1)
-    wall_ymin = openmc.YPlane(y0=ymin, surface_id=surface_id_start+2)
-    wall_ymax = openmc.YPlane(y0=ymax, surface_id=surface_id_start+3)
-    wall_zmin = openmc.ZPlane(z0=zmin, surface_id=surface_id_start+4)
-    wall_zmax = openmc.ZPlane(z0=zmax, surface_id=surface_id_start+5)
+    wall_xmin = openmc.XPlane(x0=xmin, surface_id=surface_id_start, boundary_type=boundary_type)
+    wall_xmax = openmc.XPlane(x0=xmax, surface_id=surface_id_start+1, boundary_type=boundary_type)
+    wall_ymin = openmc.YPlane(y0=ymin, surface_id=surface_id_start+2, boundary_type=boundary_type)
+    wall_ymax = openmc.YPlane(y0=ymax, surface_id=surface_id_start+3, boundary_type=boundary_type)
+    wall_zmin = openmc.ZPlane(z0=zmin, surface_id=surface_id_start+4, boundary_type=boundary_type)
+    wall_zmax = openmc.ZPlane(z0=zmax, surface_id=surface_id_start+5, boundary_type=boundary_type)
     region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -wall_zmax
     return region
 
