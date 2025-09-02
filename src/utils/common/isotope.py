@@ -192,7 +192,11 @@ class Radionuclide_lara:
         rays_intensities = rays_intensities / 100 if rays_intensities.sum() > 0 else rays_intensities
         return rays_energies, rays_intensities, rays_types
 
-    def plot_emissions(self, saving_figure:bool=False, photon_only:bool=False, log_scale:bool=True):
+    def plot_emissions(self, 
+                       saving_figure:bool=False, 
+                       photon_only:bool=False, 
+                       log_scale:bool=True,
+                       width_factor:int=110):
         rays_energies, rays_intensities, rays_types = self.get_rays_emission_data(photon_only=photon_only)
         rays_intensities = rays_intensities * 100
         gamma_rays_energies = rays_energies[rays_types == 'g']
@@ -221,7 +225,7 @@ class Radionuclide_lara:
                 min(alpha_rays_energies) if len(alpha_rays_energies) > 0 else 0)
 
         delta_energy = max_energy - min_energy
-        width = delta_energy // 110 if delta_energy > 0 else 1
+        width = delta_energy // width_factor if delta_energy > 0 else 1
         if len(gamma_rays_energies) != 0:
             plt.bar(gamma_rays_energies, gamma_rays_intensities, width=width, label ='Gamma Emissions', color='blue', alpha=1)
         if len(x_rays_energies) != 0:
