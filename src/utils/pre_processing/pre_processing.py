@@ -58,7 +58,7 @@ def plot_geometry(
     dpi: int = 300,
     color_by: str = 'material',
     prefix: str = "plot",
-    saving_figure: bool = True
+    saving_figure: bool = False
 ):
     """
     Plots the OpenMC geometry in a specified plane.
