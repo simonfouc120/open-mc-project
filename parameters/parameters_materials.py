@@ -182,3 +182,15 @@ void.add_element("O", 0.21)
 void.add_element("Ar", 0.01)
 void.set_density("g/cm3", 1E-10)  # Very low density to represent a void
 VOID_MATERIAL = void
+
+# PYC DENSE INTERNAL
+pyc_internal = openmc.Material(name="PyC Internal")
+pyc_internal.add_element("C", 1.0)
+pyc_internal.set_density("g/cm3", 1.9)
+PYC_INTERNAL_MATERIAL = pyc_internal
+
+# PYC DENSE EXTERNAL
+pyc_external = openmc.Material(name="PyC External")
+pyc_external.add_element("C", 1.0)
+pyc_external.set_density("g/cm3", 3.5)
+PYC_EXTERNAL_MATERIAL = pyc_external
