@@ -194,3 +194,10 @@ pyc_external = openmc.Material(name="PyC External")
 pyc_external.add_element("C", 1.0)
 pyc_external.set_density("g/cm3", 3.5)
 PYC_EXTERNAL_MATERIAL = pyc_external
+
+# SIC
+sic = openmc.Material(name="SiC")
+sic.add_element("Si", 0.7)
+sic.add_element("C", 0.3)
+sic.set_density("g/cm3", 3.1)
+SIC_MATERIAL = sic
