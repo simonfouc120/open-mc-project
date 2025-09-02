@@ -264,8 +264,8 @@ class Radionuclide_list:
         self.dict_rn = self.df.set_index("Radionuclide").to_dict()[self.information]
 
     def compute_source_term(self, 
-                                  time: int = 0, 
-                                  unit_energy: str = "keV") -> tuple:
+                            time: int = 0, 
+                            unit_energy: str = "keV") -> tuple:
         """
         Compute the total photon emission spectrum for a set of radionuclides.
 
@@ -467,7 +467,7 @@ class Radionuclide_list:
         return fig
 
 
-    def penalizing_source_term(self, 
+    def compute_penalizing_source_term(self, 
                                time: float = 0.0, 
                                unit_energy: str = "MeV",
                                energy_min:float = 0.0, 
@@ -524,7 +524,7 @@ class Radionuclide_list:
             time (float): Time in seconds at which to compute the source term.
             unit_energy (str): Energy unit for the plot ("keV", "MeV", or "eV").
         """
-        window_energies, window_weights = self.penalizing_source_term(time=time, 
+        window_energies, window_weights = self.compute_penalizing_source_term(time=time, 
                                                                       unit_energy=unit_energy,
                                                                       energy_min=energy_min,
                                                                       energy_max=energy_max,
