@@ -10,7 +10,7 @@ import numpy as np
 sys.path.append(str(Path(__file__).resolve().parents[5]))  # Adjust path to
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, LEAD_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally_plane
+from src.utils.pre_processing.pre_processing import remove_previous_results, rpp, plot_geometry, mesh_tally_plane
 from src.utils.post_preocessing.post_processing import load_mesh_tally, gaussian_energy_broadening, Pulse_height_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
@@ -20,10 +20,10 @@ materials = openmc.Materials([CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, LEAD_
 sphere = openmc.Sphere(r=1.0, surface_id=1)
 detector = openmc.Sphere(x0=10., r=1.0, surface_id=2)
 outer_boundary = openmc.Sphere(r=200.0, surface_id=3, boundary_type='vacuum')
-first_wall_region = parallelepiped(-40, -20, -50, 50, -50, 50, surface_id_start=10)
+first_wall_region = rpp(-40, -20, -50, 50, -50, 50, surface_id_start=10)
 first_wall_cell = openmc.Cell(name="lead_wall", fill=LEAD_MATERIAL, region=first_wall_region)
 
-second_wall_region = parallelepiped(15, 25, -50, 50, -50, 50, surface_id_start=20)
+second_wall_region = rpp(15, 25, -50, 50, -50, 50, surface_id_start=20)
 second_wall_cell = openmc.Cell(name="lead_wall_2", fill=LEAD_MATERIAL, region=second_wall_region)
 
 detector_cell = openmc.Cell(name="detector_cell")

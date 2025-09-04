@@ -10,7 +10,7 @@ import numpy as np
 sys.path.append(str(Path(__file__).resolve().parents[5]))  # Adjust path to
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS
 from parameters.parameters_materials import CS137_MATERIAL, CDTE_MATERIAL, AIR_MATERIAL, CONCRETE_MATERIAL
-from src.utils.pre_processing.pre_processing import remove_previous_results, parallelepiped, plot_geometry, mesh_tally_plane
+from src.utils.pre_processing.pre_processing import remove_previous_results, rpp, plot_geometry, mesh_tally_plane
 from src.utils.post_preocessing.post_processing import load_mesh_tally, gaussian_energy_broadening, Pulse_height_tally
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 

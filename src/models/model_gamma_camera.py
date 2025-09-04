@@ -16,7 +16,7 @@ from parameters.parameters_materials import AIR_MATERIAL, CONCRETE_MATERIAL, GRA
 
 material = openmc.Materials([AIR_MATERIAL, CDTE_MATERIAL, CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, VOID_MATERIAL])
 
-from src.utils.pre_processing.pre_processing import plot_geometry, parallelepiped
+from src.utils.pre_processing.pre_processing import plot_geometry, rpp
 
 material.export_to_xml()
 MATERIAL = material
