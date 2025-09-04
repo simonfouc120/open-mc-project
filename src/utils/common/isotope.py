@@ -438,7 +438,7 @@ class Radionuclide_list:
                                         time=0, 
                                         time_unit="s",
                                         savefig=False,
-                                        plot=True):
+                                        plot=True) -> plt.Figure:
         """
         Calculate and plot the weighted activity (total photon emission) of each radionuclide at a given time.
 
@@ -476,7 +476,7 @@ class Radionuclide_list:
                                unit_energy: str = "MeV",
                                energy_min:float = 0.0, 
                                energy_max:float = 3.0, 
-                               energy_width:float = 0.5):
+                               energy_width:float = 0.5) -> tuple:
         """
         Aggregate rays and weights into specified energy windows.
 
