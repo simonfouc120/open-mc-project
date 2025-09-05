@@ -22,18 +22,12 @@ from parameters.parameters_materials import (FUEL_MATERIAL, HELIUM_MATERIAL, AIR
 from src.utils.pre_processing.pre_processing import (plot_geometry)
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
+
+### A INCLURE DANS CLASSE MODEL ###
 material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, 
                              CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, 
                              WATER_MATERIAL, HEAVY_WATER_MATERIAL, BERYLLIUM_MATERIAL, 
                              BORATED_STEEL_MATERIAL])
-# material.export_to_xml()
-
-# Plot the geometry
-
-# plot_geometry(materials = material, plane="yz", saving_figure=True, dpi=500, height=800, width=800)
-
-# plot_geometry(materials = material, plane="xy", saving_figure=True, dpi=500, height=400, width=400)
-
 
 class reactor_model:
     def __init__(self, 
@@ -41,6 +35,7 @@ class reactor_model:
                  helium_temperature:int=900, 
                  air_temperature:int=600, 
                  concrete_temperature:int=600,
+                 graphite_temperature:int=600,
                  r_pin_fuel:float=1.0,
                  pin_helium_fuel:float=1.0,
                  pitch_lattice:float=4.5,
@@ -48,13 +43,17 @@ class reactor_model:
                  total_height_active_part:float=500.0,
                  pitch_graphite_assembly:float=55.0,
                  berryllium_thickness:float=30.0,
-                 edge_length_vessel:float=194.0):
+                 edge_length_vessel:float=194.0,
+                 thickness_steel_liner:float=6.0, 
+                 calculation_sphere_coordinates:tuple=(0.0, 400.0, -300.0),
+                 calculation_sphere_radius:float=10.0):
 
         FUEL_MATERIAL.temperature = fuel_temperature # K
         HELIUM_MATERIAL.temperature = helium_temperature # K
-
         AIR_MATERIAL.temperature = air_temperature # K
         CONCRETE_MATERIAL.temperature = concrete_temperature # K
+        GRAPHITE_MATERIAL.temperature = graphite_temperature # K
+
 
         fuel_cyl = openmc.ZCylinder(r=r_pin_fuel)
         fuel_cell = openmc.Cell(fill=FUEL_MATERIAL, region=-fuel_cyl)
@@ -107,99 +106,191 @@ class reactor_model:
             [block_universe]               # first ring (6 universes)
         ] 
 
-        graphite_assembly_main_cell = openmc.Cell(
+        self.graphite_assembly_main_cell = openmc.Cell(
             name="graphite_assembly_cell",
             fill=graphite_lat,
             region=(-openmc.model.HexagonalPrism(edge_length=edge_length_vessel, orientation='y', origin=(0.0, 0.0))
         & -top_plane & +bottom_plane)
         )
 
-        beryllium_above_cell = openmc.Cell(
+        self.beryllium_above_cell = openmc.Cell(
             fill=BERYLLIUM_MATERIAL,
             region=(-openmc.model.HexagonalPrism(edge_length=edge_length_vessel, orientation='y', origin=(0.0, 0.0))
-        & ~graphite_assembly_main_cell.region & -openmc.ZPlane(z0=total_height_active_part/2 + berryllium_thickness) 
+        & ~self.graphite_assembly_main_cell.region & -openmc.ZPlane(z0=total_height_active_part/2 + berryllium_thickness) 
         & +openmc.ZPlane(z0=total_height_active_part/2)) 
         )
 
-        beryllium_below_cell = openmc.Cell(
+        self.beryllium_below_cell = openmc.Cell(
             fill=BERYLLIUM_MATERIAL,
             region=(-openmc.model.HexagonalPrism(edge_length=edge_length_vessel, orientation='y', origin=(0.0, 0.0))
-        & ~graphite_assembly_main_cell.region & +openmc.ZPlane(z0=-total_height_active_part/2 - berryllium_thickness) 
+        & ~self.graphite_assembly_main_cell.region & +openmc.ZPlane(z0=-total_height_active_part/2 - berryllium_thickness) 
         & -openmc.ZPlane(z0=-total_height_active_part/2))
         )
 
-        steel_liner_main_cell = openmc.Cell(
+        self.steel_liner_main_cell = openmc.Cell(
             fill=BORATED_STEEL_MATERIAL,
-            region=(-openmc.model.HexagonalPrism(edge_length=200.0, orientation='y', origin=(0.0, 0.0))
-        & ~graphite_assembly_main_cell.region & ~beryllium_above_cell.region &  ~beryllium_below_cell.region
-        & -openmc.ZPlane(z0=286.0) & +openmc.ZPlane(z0=-286.0)) 
+            region=(-openmc.model.HexagonalPrism(edge_length=edge_length_vessel+thickness_steel_liner, orientation='y', origin=(0.0, 0.0))
+        & ~self.graphite_assembly_main_cell.region & ~self.beryllium_above_cell.region &  ~self.beryllium_below_cell.region
+        & -openmc.ZPlane(z0=total_height_active_part/2 + berryllium_thickness + thickness_steel_liner) 
+        & +openmc.ZPlane(z0=-total_height_active_part/2 - berryllium_thickness - thickness_steel_liner)) 
         )
 
-        light_water_main_cell = openmc.Cell(
+        self.other_cells = []
+
+        self.light_water_main_cell = openmc.Cell(
             fill=WATER_MATERIAL,
             region=(-openmc.model.RectangularParallelepiped(xmin=-315.0, xmax=315.0, ymin=-315.0, ymax=315.0, zmin=-350.0, zmax=-90.0)
-            & ~graphite_assembly_main_cell.region & ~beryllium_above_cell.region 
-            &  ~beryllium_below_cell.region & ~steel_liner_main_cell.region
+            & ~self.graphite_assembly_main_cell.region & ~self.beryllium_above_cell.region 
+            &  ~self.beryllium_below_cell.region & ~self.steel_liner_main_cell.region
         ))
+
+        self.other_cells.append(self.light_water_main_cell)
 
         light_water_liner_main_cell = openmc.Cell(
             fill=STEEL_MATERIAL,
             region=(-openmc.model.RectangularParallelepiped(xmin=-320.0, xmax=320.0, ymin=-320.0, ymax=320.0, zmin=-355.0, zmax=-90.0)
-            & ~graphite_assembly_main_cell.region & ~beryllium_above_cell.region &  ~beryllium_below_cell.region 
-            & ~steel_liner_main_cell.region & ~light_water_main_cell.region)
+            & ~self.graphite_assembly_main_cell.region & ~self.beryllium_above_cell.region &  ~self.beryllium_below_cell.region 
+            & ~self.steel_liner_main_cell.region & ~self.light_water_main_cell.region)
         )
 
+        self.other_cells.append(light_water_liner_main_cell)
+
         # add a slab of concrete below the light water
-        concrete_main_cell = openmc.Cell(
+        self.concrete_slab_cell = openmc.Cell(
             fill=CONCRETE_MATERIAL,
             region=(-openmc.model.RectangularParallelepiped(xmin=-400.0, xmax=400.0, ymin=-400.0, ymax=400.0, zmax=-355.0, zmin=-400.0)
-            & ~graphite_assembly_main_cell.region & ~beryllium_above_cell.region &  ~beryllium_below_cell.region 
-            & ~steel_liner_main_cell.region & ~light_water_main_cell.region & ~light_water_liner_main_cell.region)
+            & ~self.graphite_assembly_main_cell.region & ~self.beryllium_above_cell.region &  ~self.beryllium_below_cell.region 
+            & ~self.steel_liner_main_cell.region & ~self.light_water_main_cell.region & ~light_water_liner_main_cell.region)
         )
+
+        self.other_cells.append(self.concrete_slab_cell)
 
         calc_sphere_cell = openmc.Cell(
             fill = AIR_MATERIAL,
-            region=-(openmc.Sphere(x0=0.0, y0=400.0, z0=-300.0, r=10.0)) 
+            region=-(openmc.Sphere(x0=calculation_sphere_coordinates[0], y0=calculation_sphere_coordinates[1], z0=calculation_sphere_coordinates[2], r=calculation_sphere_radius)) 
         )
 
-        outer_sphere_main = openmc.Sphere(r=1000.0, boundary_type='vacuum')
+        self.other_cells.append(calc_sphere_cell)
 
-        air_main_region = -outer_sphere_main & ~steel_liner_main_cell.region & ~light_water_main_cell.region & ~concrete_main_cell.region & ~calc_sphere_cell.region
-        air_main_cell = openmc.Cell(fill=AIR_MATERIAL, region=air_main_region)
+        self.outer_sphere_main = openmc.Sphere(r=1000.0, boundary_type='vacuum')
 
-        geometry = openmc.Geometry([steel_liner_main_cell, graphite_assembly_main_cell, calc_sphere_cell,
-                                    beryllium_above_cell, beryllium_below_cell,
-                                    light_water_main_cell, light_water_liner_main_cell, concrete_main_cell, air_main_cell])
+        self.air_main_region = -self.outer_sphere_main & ~self.steel_liner_main_cell.region
+        if self.other_cells:
+            for cell in self.other_cells:
+                self.air_main_region &= ~cell.region
 
-        model = openmc.Model(
-                geometry=openmc.Geometry(
-                    [graphite_assembly_main_cell, beryllium_above_cell, beryllium_below_cell, steel_liner_main_cell, 
-                    light_water_main_cell, light_water_liner_main_cell, concrete_main_cell, calc_sphere_cell, air_main_cell]
-                ),
+        self.air_main_cell = openmc.Cell(fill=AIR_MATERIAL, region=self.air_main_region)
+
+
+        self.reactor_cells = [self.graphite_assembly_main_cell, self.beryllium_above_cell, 
+                               self.beryllium_below_cell, self.steel_liner_main_cell]
+
+
+        self.geometry = openmc.Geometry(self.reactor_cells + [self.air_main_cell] + self.other_cells)
+
+        self.model = openmc.Model(
+                geometry=self.geometry,
                 settings=openmc.Settings(),
                 materials=material
         )
-        self.model = model
         self.graphite_cell = main_graphite_cell
         self.calculation_cell = calc_sphere_cell
 
+    def build_geometry(self):
+        self.geometry = openmc.Geometry(self.reactor_cells + [self.air_main_cell] + self.other_cells)
+
     def build_model(self):
-        return self.model, self.graphite_cell, self.calculation_cell
+        self.build_geometry()
+        self.model = openmc.Model(
+                geometry=self.geometry,
+                settings=openmc.Settings(),
+                materials=material
+        )
+
+    def rebuild_universe(self):
+        self.air_main_region = -self.outer_sphere_main & ~self.steel_liner_main_cell.region
+        if self.other_cells:
+            for cell in self.other_cells:
+                self.air_main_region &= ~cell.region
+
+        self.air_main_cell = openmc.Cell(fill=AIR_MATERIAL, region=self.air_main_region)
+        self.build_model()
+
+
+    def add_wall_concrete(self, concrete_wall_coordinates = (0, 0, 0), 
+                          dx:float=50.0, dy:float=50.0, dz:float=1000.0, 
+                          excluding_cells:list=[]):
+        x0, y0, z0 = concrete_wall_coordinates
+        concrete_wall_region = -openmc.model.RectangularParallelepiped(
+            xmin=x0 - dx/2, xmax=x0 + dx/2, 
+            ymin=y0 - dy/2, ymax=y0 + dy/2, 
+            zmin=z0 - dz/2, zmax=z0 + dz/2
+        )
+        if excluding_cells:
+            for cell in excluding_cells:
+                concrete_wall_region &= ~cell.region
+        concrete_wall_cell = openmc.Cell(fill=CONCRETE_MATERIAL, region=concrete_wall_region)
+        # self.air_main_cell.region &= ~concrete_wall_cell.region
+        self.other_cells.append(concrete_wall_cell)
+
+
+        # self.air_main_region = -self.outer_sphere_main & ~self.steel_liner_main_cell.region
+        # if self.other_cells:
+        #     for cell in self.other_cells:
+        #         self.air_main_region &= ~cell.region
+
+        # self.air_main_cell = openmc.Cell(fill=AIR_MATERIAL, region=self.air_main_region)
+
+        self.rebuild_universe()
+        # self.air_main_cell = openmc.Cell(fill=AIR_MATERIAL, region=self.air_main_region)
+        # self.other_cells.append(concrete_wall_cell)
+        # self.build_model()
+
+    def add_cell(self, cell:openmc.Cell, excluding_cells:list=[]):
+        if excluding_cells:
+            for ex_cell in excluding_cells:
+                cell.region &= ~ex_cell.region
+        self.other_cells.append(cell)
+        self.rebuild_universe()
+
 
     def export_to_xml(self):
         self.model.export_to_xml()
 
-
     def materials(self):
         return self.model.materials
 
-
 my_reactor = reactor_model(total_height_active_part=500.0)
-MODEL = my_reactor.build_model()[0]
+MODEL = my_reactor.model
+my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,250,0), dy=50.0, dz=1000.0, excluding_cells=[my_reactor.light_water_main_cell])
 my_reactor.export_to_xml()
-plot_geometry(materials = MODEL.materials, plane="yz", saving_figure=True, dpi=500, height=800, width=800)
+
+plot_geometry(materials = my_reactor.materials(), plane="yz", saving_figure=True, dpi=500, height=1000, width=1000)
 plot_geometry(materials = my_reactor.materials(), plane="xy", saving_figure=True, dpi=500, height=400, width=400)
 
 
 
 # fonction material pas de fission
+
+
+
+# run the simulation
+
+
+
+settings = openmc.Settings()
+batches_number= 100
+settings.batches = batches_number
+settings.inactive = 20
+settings.particles = 500
+settings.source = openmc.IndependentSource()
+settings.source.space = openmc.stats.Point((0, 0, 0))
+settings.source.particle = 'neutron'
+settings.photon_transport = True
+settings.source.angle = openmc.stats.Isotropic()  
+settings.export_to_xml()
+MODEL.settings = settings
+settings.export_to_xml()
+MODEL.export_to_xml()
+
+openmc.run()
