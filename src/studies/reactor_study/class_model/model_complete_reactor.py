@@ -30,6 +30,7 @@ material = openmc.Materials([FUEL_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL,
                              BORATED_STEEL_MATERIAL])
 
 class reactor_model:
+    """Class to create a reactor model with various components and materials."""
     def __init__(self, 
                  fuel_temperature:int=900, 
                  helium_temperature:int=900, 
@@ -47,7 +48,26 @@ class reactor_model:
                  thickness_steel_liner:float=6.0, 
                  calculation_sphere_coordinates:tuple=(0.0, 400.0, -300.0),
                  calculation_sphere_radius:float=10.0):
+        """Initialize the reactor model with specified parameters.
 
+        Parameters:
+        - fuel_temperature (int): Temperature of the fuel in Kelvin.
+        - helium_temperature (int): Temperature of the helium in Kelvin.
+        - air_temperature (int): Temperature of the air in Kelvin.
+        - concrete_temperature (int): Temperature of the concrete in Kelvin.
+        - graphite_temperature (int): Temperature of the graphite in Kelvin.
+        - r_pin_fuel (float): Radius of the fuel pin in cm.
+        - pin_helium_fuel (float): Radius of the helium pin in cm.
+        - pitch_lattice (float): Pitch of the lattice in cm.
+        - radius_graphite_cylinder (float): Radius of the graphite cylinder in cm.
+        - total_height_active_part (float): Total height of the active part in cm.
+        - pitch_graphite_assembly (float): Pitch of the graphite assembly in cm.
+        - berryllium_thickness (float): Thickness of the beryllium layer in cm.
+        - edge_length_vessel (float): Edge length of the vessel in cm.
+        - thickness_steel_liner (float): Thickness of the steel liner in cm.
+        - calculation_sphere_coordinates (tuple): Coordinates of the calculation sphere center (x, y, z).
+        - calculation_sphere_radius (float): Radius of the calculation sphere in cm.
+        """
         FUEL_MATERIAL.temperature = fuel_temperature # K
         HELIUM_MATERIAL.temperature = helium_temperature # K
         AIR_MATERIAL.temperature = air_temperature # K
@@ -141,7 +161,7 @@ class reactor_model:
             fill=WATER_MATERIAL,
             region=(-openmc.model.RectangularParallelepiped(xmin=-315.0, xmax=315.0, ymin=-315.0, ymax=315.0, zmin=-350.0, zmax=-90.0)
             & ~self.graphite_assembly_main_cell.region & ~self.beryllium_above_cell.region 
-            &  ~self.beryllium_below_cell.region & ~self.steel_liner_main_cell.region
+            & ~self.beryllium_below_cell.region & ~self.steel_liner_main_cell.region
         ))
 
         self.other_cells.append(self.light_water_main_cell)
