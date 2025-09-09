@@ -90,6 +90,17 @@ concrete.add_element("K", 0.015)
 concrete.set_density("g/cm3", 2.3)
 CONCRETE_MATERIAL = concrete
 
+
+heavy_concrete_hematite = openmc.Material(name="Heavy Concrete")
+heavy_concrete_hematite.add_element("O", 0.580)
+heavy_concrete_hematite.add_element("Si", 0.090)
+heavy_concrete_hematite.add_element("Ca", 0.060)
+heavy_concrete_hematite.add_element("H", 0.010)
+heavy_concrete_hematite.add_element("Fe", 0.240)
+heavy_concrete_hematite.add_element("Al", 0.020)
+heavy_concrete_hematite.set_density("g/cm3", 3.4)
+HEAVY_CONCRETE_HEMATITE_MATERIAL = heavy_concrete_hematite
+
 lead = openmc.Material(name="Lead")
 lead.add_element("Pb", 1.0)
 lead.set_density("g/cm3", 11.34)
