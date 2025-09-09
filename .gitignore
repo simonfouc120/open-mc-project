@@ -8,6 +8,7 @@ summary*
 tallies.out
 tallies.xml
 plot*
+particle_*
 
 # Ignore  file from openMC plotter 
 plot_settings.pkl
