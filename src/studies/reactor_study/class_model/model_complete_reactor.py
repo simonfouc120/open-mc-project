@@ -371,6 +371,32 @@ class Reactor_model:
         self.other_cells.append(new_cell)
         self.rebuild_universe()
 
+    # from add cell create a method add wall concrete
+    def add_wall_concrete_from_add_cell(self, concrete_wall_coordinates=(0, 0, 0),
+                                        dx: float = 50.0, dy: float = 50.0, dz: float = 1000.0,
+                                        cells_to_exclude: list = [],
+                                        cells_to_be_excluded_by: list = []):
+        """
+        Adds a concrete wall cell using the add_cell method.
+        Parameters:
+        - concrete_wall_coordinates: Center coordinates (x0, y0, z0) of the wall.
+        - dx, dy, dz: Dimensions of the wall.
+        - cells_to_exclude: List of cells to exclude from the wall region.
+        - cells_to_be_excluded_by: List of cells that should exclude the wall region.
+        """
+        x0, y0, z0 = concrete_wall_coordinates
+        wall_surface = openmc.model.RectangularParallelepiped(
+            xmin=x0 - dx / 2, xmax=x0 + dx / 2,
+            ymin=y0 - dy / 2, ymax=y0 + dy / 2,
+            zmin=z0 - dz / 2, zmax=z0 + dz / 2
+        )
+        self.add_cell(
+            surface=wall_surface,
+            material_name="CONCRETE_MATERIAL",
+            cells_to_exclude=cells_to_exclude,
+            cells_to_be_excluded_by=cells_to_be_excluded_by
+        )
+
     def add_wall_concrete(self, concrete_wall_coordinates = (0, 0, 0), 
                           dx:float=50.0, dy:float=50.0, dz:float=1000.0, 
                           cells_to_exclude:list=[], 
@@ -399,8 +425,6 @@ class Reactor_model:
         self.other_cells.append(concrete_wall_cell)
         self.rebuild_universe()
 
-
-        
 # material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
 for material in material_dict.values():
@@ -411,7 +435,7 @@ my_reactor = Reactor_model(materials=material_dict,
                            total_height_active_part=500.0, 
                            light_water_pool=True, 
                            slab_thickness=100,
-                           concrete_wall_thickness=150)
+                           concrete_wall_thickness=50)
 
 # my_reactor.add_wall_concrete(concrete_wall_coordinates=(0, 250, -200), dy=50.0, dz=150.0, 
 #                              cells_to_be_excluded_by=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell, my_reactor.air_main_cell])
@@ -420,13 +444,19 @@ my_reactor = Reactor_model(materials=material_dict,
 # my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,250,0), dy=50.0, dz=1000.0)
 # my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,0,0), dx=800.0, dy=800.0, dz=1000.0, 
 #                              cells_to_exclude=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell, my_reactor.steel_liner_main_cell])
-my_reactor.add_cell(surface=openmc.Sphere(y0=230, z0=-200, r=15.0, boundary_type='vacuum'),
-                    material_name="STEEL_MATERIAL",
-                    cells_to_be_excluded_by=[my_reactor.air_main_cell, my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell])
 
-my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(xmin=-550, xmax=-400, ymin=-15, ymax=15, zmin=-15, zmax=15, boundary_type='vacuum'),
-                    material_name="AIR_MATERIAL",
-                    cells_to_be_excluded_by=[my_reactor.concrete_walls_cells[i] for i in range(len(my_reactor.concrete_walls_cells))] + [my_reactor.air_main_cell])
+# my_reactor.add_cell(surface=openmc.Sphere(y0=230, z0=-200, r=15.0),
+#                     material_name="STEEL_MATERIAL",
+#                     cells_to_be_excluded_by=[my_reactor.air_main_cell, my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell])
+
+# my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(xmin=-450, xmax=-400, ymin=-15, ymax=15, zmin=-15, zmax=15),
+#                     material_name="AIR_MATERIAL",
+#                     cells_to_be_excluded_by=[my_reactor.concrete_walls_cells[i] for i in range(len(my_reactor.concrete_walls_cells))] + [my_reactor.air_main_cell])
+
+
+my_reactor.add_wall_concrete_from_add_cell(concrete_wall_coordinates=(0,0,0), dx=800.0, dy=800.0, dz=1000.0, 
+                             cells_to_exclude=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell, my_reactor.steel_liner_main_cell])
+
 
 MODEL = my_reactor.model
 MODEL.export_to_xml()
@@ -457,10 +487,10 @@ tallys.export_to_xml()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 200
+batches_number= 50
 settings.batches = batches_number
 settings.inactive = 10
-settings.particles = 50000
+settings.particles = 500
 settings.source = openmc.IndependentSource()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
@@ -475,9 +505,9 @@ openmc.run()
 statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 load_mesh_tally(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
-                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-850, 850), zoom_y=(-850, 850))
+                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True)
 
 load_mesh_tally(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
-                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-850, 850), zoom_y=(-850, 850)) 
+                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True) 
