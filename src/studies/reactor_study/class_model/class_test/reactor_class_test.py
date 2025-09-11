@@ -9,7 +9,7 @@ from PIL import Image
 import numpy as np
 
 CWD = Path(__file__).parent.resolve() 
-project_root = Path(__file__).resolve().parents[4]  
+project_root = Path(__file__).resolve().parents[5]  
 sys.path.append(str(project_root))
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH

@@ -130,9 +130,8 @@ def plot_geometry(
                 label = f"Material {mat.id}"
             legend_patches.append(plt.Rectangle((0, 0), 1, 1, color=color, label=label))
         
-        # Add legend to the right of the plot
-        plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', 
-                    borderaxespad=0., title="Materials")
+        plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 0.5), loc='center left', 
+                   borderaxespad=0., title="Materials")
     plt.tight_layout()
     if saving_figure:
         plt.savefig(f"{prefix}_{plane}{suffix}.png", dpi=dpi, bbox_inches='tight')
