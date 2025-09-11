@@ -48,7 +48,6 @@ def parallelepiped(xmin, xmax, ymin, ymax, zmin, zmax,
     region = +wall_xmin & -wall_xmax & +wall_ymin & -wall_ymax & +wall_zmin & -wall_zmax
     return region
 
-
 def plot_geometry(
     materials: list,
     plane: str = "xy",
@@ -59,10 +58,12 @@ def plot_geometry(
     dpi: int = 300,
     color_by: str = 'material',
     prefix: str = "plot",
+    suffix: str = "",
+    legend_materials: bool = False,
     saving_figure: bool = False
 ):
     """
-    Plots the OpenMC geometry in a specified plane.
+    Plots the OpenMC geometry in a specified plane with a material legend.
     """
     # Set up plot object
     plot = openmc.Plot()
@@ -103,25 +104,39 @@ def plot_geometry(
     openmc.Plots([plot]).export_to_xml()
     openmc.plot_geometry()
 
-    # Load and display image
     img = Image.open(plot.filename)
-    plt.imshow(img)
-    plt.title(f"OpenMC Geometry Plot - {plane.upper()} Plane")
-    plt.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
-    plt.xticks(
+    fig, ax = plt.subplots()
+    ax.imshow(img)
+    ax.set_title(f"OpenMC Geometry Plot - {plane.upper()} Plane")
+    ax.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
+    
+    # Set axis labels and ticks
+    ax.set_xticks(
         np.linspace(0, img.size[0], num=7),
         [f"{x:.2f}" for x in np.linspace(np.min(x_vals), np.max(x_vals), num=7)]
     )
-    plt.yticks(
+    ax.set_yticks(
         np.linspace(0, img.size[1], num=7),
         [f"{y:.2f}" for y in np.linspace(np.max(y_vals), np.min(y_vals), num=7)]
     )
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    if saving_figure:
-        plt.savefig(f"{prefix}_{plane}.png", dpi=dpi, bbox_inches='tight')
-    os.remove(plot.filename)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if legend_materials:
+        legend_patches = []
+        for mat, color in plot.colors.items():
+            if hasattr(mat, 'name') and mat.name:
+                label = mat.name
+            else:
+                label = f"Material {mat.id}"
+            legend_patches.append(plt.Rectangle((0, 0), 1, 1, color=color, label=label))
+        
+        # Add legend to the right of the plot
+        plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', 
+                    borderaxespad=0., title="Materials")
     plt.tight_layout()
+    if saving_figure:
+        plt.savefig(f"{prefix}_{plane}{suffix}.png", dpi=dpi, bbox_inches='tight')
+    os.remove(plot.filename)
     plt.show()
 
 

@@ -30,15 +30,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            light_water_pool=True, 
                            slab_thickness=100,
                            concrete_wall_thickness=50,
-                           calculation_sphere_coordinates=(0, -350, 0))
-
-# my_reactor.add_wall_concrete(concrete_wall_coordinates=(0, 250, -200), dy=50.0, dz=150.0, 
-#                              cells_to_be_excluded_by=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell, my_reactor.air_main_cell])
-# my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,250,-200), dy=50.0, dz=150.0, cells_to_exclude=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell])
-# my_reactor.export_to_xml()
-# my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,250,0), dy=50.0, dz=1000.0)
-# my_reactor.add_wall_concrete(concrete_wall_coordinates=(0,0,0), dx=800.0, dy=800.0, dz=1000.0, 
-#                              cells_to_exclude=[my_reactor.light_water_main_cell, my_reactor.light_water_liner_main_cell, my_reactor.steel_liner_main_cell])
+                           calculation_sphere_coordinates=(0, -350, 0), 
+                           r_pin_fuel=1.5)
 
 # my_reactor.add_cell(surface=openmc.Sphere(y0=230, z0=-200, r=15.0),
 #                     material_name="STEEL_MATERIAL",
@@ -65,7 +58,9 @@ MODEL.export_to_xml()
 # plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="xy", saving_figure=True, dpi=500, height=400, width=400)
 
 # plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="xy", origin=(0,0,-200), saving_figure=True, dpi=500, height=700, width=700)
-plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700)
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
+              suffix="_test_no_fission", pixels=(1700,1700))
 
 # fonction material pas de fission
 
