@@ -66,7 +66,8 @@ class Reactor_model:
         width_cavity: float = 400.0, # cm
         slab_thickness: float = 40.0, # cm
         cavity: bool = True, 
-        concrete_wall_thickness: float = 30.0 # cm
+        concrete_wall_thickness: float = 30.0, # cm
+        universe_boundary: str = "vacuum",
     ):
         """Initialize the reactor model with specified parameters."""
 
@@ -308,7 +309,7 @@ class Reactor_model:
         self.other_cells.append(self.calc_sphere_cell)
 
         # Outer sphere (vacuum boundary)
-        self.outer_sphere_main = openmc.Sphere(r=1000.0, boundary_type="vacuum")
+        self.outer_sphere_main = openmc.Sphere(r=1500.0, boundary_type=universe_boundary)
 
         # Air region outside everything else
         self.air_main_region = -self.outer_sphere_main & ~self.steel_liner_main_cell.region
@@ -417,3 +418,25 @@ class Reactor_model:
             cells_to_be_excluded_by=cells_to_be_excluded_by
         )
         return sphere_cell
+    
+
+def set_low_density_for_materials(material_dict, low_density_material_types:list=None, density_value:float=EPSILON_DENSITY):
+    """
+    Sets a very low density for specified material types in the material dictionary.
+    
+    Parameters:
+    -----------
+    material_dict : dict
+        Dictionary containing all materials
+    low_density_material_types : list, optional
+        List of materials to set to low density, defaults to [WATER_MATERIAL, HEAVY_WATER_MATERIAL, CONCRETE_MATERIAL]
+    density_value : float, optional
+        Low density value to set (in g/cm3), defaults to EPSILON_DENSITY
+    """
+    if low_density_material_types is None:
+        low_density_material_types = [WATER_MATERIAL, HEAVY_WATER_MATERIAL, CONCRETE_MATERIAL]
+        
+    for material in material_dict.values():
+        if material in low_density_material_types:
+            material.set_density('g/cm3', density_value)
+    return material_dict

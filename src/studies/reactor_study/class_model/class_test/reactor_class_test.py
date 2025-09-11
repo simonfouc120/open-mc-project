@@ -60,7 +60,7 @@ MODEL.export_to_xml()
 # plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="xy", origin=(0,0,-200), saving_figure=True, dpi=500, height=700, width=700)
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
-              suffix="_test_no_fission", pixels=(1700,1700))
+              suffix="_test_no_fission", pixels=(700,700))
 
 # fonction material pas de fission
 
@@ -91,10 +91,10 @@ tallys.export_to_xml()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 50
+batches_number = 80
 settings.batches = batches_number
 settings.inactive = 10
-settings.particles = 500
+settings.particles = 5000
 settings.source = openmc.IndependentSource()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
@@ -105,7 +105,7 @@ settings.export_to_xml()
 MODEL.export_to_xml()
 
 openmc.run()
-
+remove_previous_results(CWD)
 statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 load_mesh_tally(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 

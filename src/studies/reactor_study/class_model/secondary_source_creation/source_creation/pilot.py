@@ -9,7 +9,7 @@ from PIL import Image
 import numpy as np
 
 CWD = Path(__file__).parent.resolve() 
-project_root = Path(__file__).resolve().parents[5]  
+project_root = Path(__file__).resolve().parents[6]  
 sys.path.append(str(project_root))
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
@@ -18,12 +18,6 @@ from src.utils.pre_processing.pre_processing import *
 from src.utils.post_preocessing.post_processing import *
 from src.models.model_complete_reactor_class import *
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
-
-# material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
-
-for material in material_dict.values():
-    if material in [WATER_MATERIAL, HEAVY_WATER_MATERIAL, CONCRETE_MATERIAL]:
-        material.set_density('g/cm3', EPSILON_DENSITY)
 
 my_reactor = Reactor_model(materials=material_dict, 
                            total_height_active_part=500.0, 
@@ -35,10 +29,6 @@ my_reactor = Reactor_model(materials=material_dict,
 MODEL = my_reactor.model
 MODEL.export_to_xml()
 
-plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
-              plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
-              suffix="_test_no_fission", pixels=(1700,1700))
-
 # fonction material pas de fission
 
 tallys = openmc.Tallies()
@@ -48,23 +38,24 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 50
+batches_number= 200
 settings.batches = batches_number
 settings.inactive = 10
-settings.particles = 500
+settings.particles = 40000
 settings.source = openmc.IndependentSource()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
 settings.photon_transport = True
-settings.source.angle = openmc.stats.Isotropic()  
 settings.surf_source_write = {
     'cell': 999,
     'max_source_files': 3, 
-    'max_particles' : 100000000,  # Nombre de particules par fichier
+    'max_particles' : 1000000000,  # Nombre de particules par fichier
 }
 MODEL.settings = settings
 settings.export_to_xml()
 MODEL.export_to_xml()
+
+remove_previous_results(CWD)
 
 openmc.run()
 
