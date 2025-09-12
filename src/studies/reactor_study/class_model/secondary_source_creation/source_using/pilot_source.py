@@ -44,9 +44,9 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 50
+batches_number= 100
 settings.batches = batches_number
-settings.particles = 50000
+settings.particles = 500000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 settings.run_mode = "fixed source"
@@ -54,7 +54,6 @@ settings.source.particles = ["neutron", "photon"]
 MODEL.settings = settings
 settings.export_to_xml()
 MODEL.export_to_xml()
-
 
 tallys = openmc.Tallies()
 
@@ -71,9 +70,10 @@ tallys.append(mesh_tally_xy_photons)
 
 tallys.export_to_xml()
 
+remove_previous_results(CWD)
 
 openmc.run()
-remove_previous_results(CWD)
+
 statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 

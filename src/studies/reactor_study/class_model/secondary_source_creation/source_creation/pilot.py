@@ -38,7 +38,7 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 200
+batches_number= 250
 settings.batches = batches_number
 settings.inactive = 10
 settings.particles = 40000
@@ -49,7 +49,7 @@ settings.photon_transport = True
 settings.surf_source_write = {
     'cell': 999,
     'max_source_files': 3, 
-    'max_particles' : 1000000000,  # Nombre de particules par fichier
+    'max_particles' : 100000000,  # Nombre de particules par fichier
 }
 MODEL.settings = settings
 settings.export_to_xml()
