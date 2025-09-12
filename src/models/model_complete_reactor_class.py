@@ -40,7 +40,7 @@ material_dict = materials = {
 }
 
 EPSILON_DENSITY = 1e-6
-
+POWER = 50e6
 class Reactor_model:
     """Class to create a reactor model with various components and materials."""
     def __init__(
