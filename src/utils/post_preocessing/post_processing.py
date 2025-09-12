@@ -331,7 +331,7 @@ def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "fl
     """
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
-    flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate in µSv/h per mesh bin volume
+    flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
     flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
     flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / flux_data
     
