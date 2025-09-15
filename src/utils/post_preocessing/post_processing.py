@@ -470,3 +470,170 @@ class Pulse_height_tally:
         tally = statepoint_file.get_tally(name=self.name)
         efficiency = sum(tally.get_values(scores=['pulse-height-efficiency']).flatten())
         return efficiency
+    
+class mesh_tally_data:
+    def __init__(self, statepoint, name_mesh_tally, plane, bin_number, lower_left, upper_right):
+        self.mesh_tally = statepoint.get_tally(name=name_mesh_tally)
+        self.plane = plane
+        self.bin_number = bin_number
+        self.lower_left = lower_left
+        self.upper_right = upper_right
+
+    @property
+    def get_coordinates(self):
+        """
+        Generate coordinates for mesh bins.
+        
+        Parameters
+        ----------
+        bin_number : int
+            Number of bins in each dimension
+        lower_left : tuple
+            (x, y) coordinates of the lower left corner
+        upper_right : tuple
+            (x, y) coordinates of the upper right corner
+            
+        Returns
+        -------
+        numpy.ndarray
+            Array of coordinates for each bin position
+        """
+        coord_axis_one = np.linspace(self.lower_left[0], self.upper_right[0], self.bin_number)
+        coord_axis_two = np.linspace(self.lower_left[1], self.upper_right[1], self.bin_number)
+        coords = (coord_axis_one, coord_axis_two)
+        return coords
+    
+    @property
+    def get_flux_data(self):
+        return self.mesh_tally.mean.reshape((self.bin_number, self.bin_number))
+
+    @property
+    def get_flux_error(self):
+        return self.mesh_tally.std_dev.reshape((self.bin_number, self.bin_number))
+
+    def plot_flux(self, 
+                  axis_one_index=None, 
+                  axis_two_index=None, 
+                  x_lim:tuple=None, 
+                  y_lim:tuple=None,
+                  save_fig:bool=False, 
+                  fig_name:str="flux_plot.png"):
+
+        if x_lim is None:
+            x_lim = (self.get_coordinates[0][0], self.get_coordinates[0][-1])
+        coords = self.get_coordinates
+        plane = self.plane
+
+        if axis_two_index is not None:
+            plt.errorbar(coords[0], self.get_flux_data[:, axis_two_index], yerr= self.get_flux_error[:, axis_two_index],
+                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
+                 label='Flux values')
+            plt.xlabel(f'{plane[0].upper()} [cm]')
+            plt.legend()
+            plt.ylabel('Flux [n/cm^2/P-source]')
+            plt.title(f'Flux=f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
+            plt.yscale('log')
+            plt.grid()
+            if y_lim is not None:
+                plt.ylim(y_lim)
+            if x_lim is not None:
+                plt.xlim(x_lim)
+            if save_fig:
+                plt.savefig(fig_name, dpi=300)
+            plt.show()
+
+        if axis_one_index is not None:
+            plt.errorbar(coords[1], self.get_flux_data[axis_one_index, :], yerr= self.get_flux_error[axis_one_index, :],
+                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
+                 label='Flux values')
+            plt.xlabel(f'{plane[1].upper()} [cm]')
+            plt.legend()
+            plt.ylabel('Flux [n/cm^2/P-source]')
+            plt.title(f'Flux=f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm')
+            plt.yscale('log')
+            plt.grid()
+            if y_lim is not None:
+                plt.ylim(y_lim)
+            if x_lim is not None:
+                plt.xlim(x_lim)
+            if save_fig:
+                plt.savefig(fig_name, dpi=300)
+            plt.show()
+
+    def plot_dose(self, 
+                  particles_per_second:int=1, 
+                  particule_type:str='neutrons',
+                  mesh_bin_volume:float=1.0, 
+                  axis_one_index=None, 
+                  axis_two_index=None, 
+                  x_lim:tuple=None, 
+                  y_lim:tuple=None,
+                  save_fig:bool=False, 
+                  fig_name:str="dose_plot.png",
+                  radiological_area: bool = False,
+                  log_scale: bool = True):
+        if x_lim is None:
+            x_lim = (self.get_coordinates[0][0], self.get_coordinates[0][-1])
+        if y_lim is None:
+            y_lim = (0.1, None)
+        coords = self.get_coordinates
+        plane = self.plane
+
+        dose_data = self.get_flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
+        dose_error = (self.get_flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) 
+
+        if radiological_area:
+           plt.fill_betweenx(y=[0, DOSE_AREAS_LIMIT[1]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[0], alpha=0.3, label='Free area')
+           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[1], DOSE_AREAS_LIMIT[2]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[1], alpha=0.3, label='Supervised area')
+           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[2], DOSE_AREAS_LIMIT[3]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[2], alpha=0.3, label='Controlled area')
+           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[3], DOSE_AREAS_LIMIT[4]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[3], alpha=0.3, label='High controlled area')
+           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[4], DOSE_AREAS_LIMIT[5]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[4], alpha=0.3, label='Very high controlled area')
+           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[5], DOSE_AREAS_LIMIT[-1]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[5], alpha=0.3, label='Extremely high controlled area') 
+
+        if axis_two_index is not None:
+            plt.errorbar(coords[0], dose_data[:, axis_two_index], yerr= dose_error[:, axis_two_index],
+                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
+                 label='Dose values')
+            plt.xlabel(f'{plane[0].upper()} [cm]')
+            if not radiological_area:
+                plt.legend()
+            else:
+                legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
+                legend.get_frame().set_edgecolor('black')
+                legend.get_frame().set_linewidth(1.5)
+            plt.ylabel("Dose rate [µSv/h]")
+            plt.title(f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
+            if log_scale:
+                plt.yscale('log')
+            if x_lim is not None:
+                plt.xlim(x_lim)
+            if y_lim is not None:
+                plt.ylim(y_lim)
+            plt.grid()
+            if save_fig:
+                plt.savefig(fig_name, dpi=300)
+            plt.show()
+
+        if axis_one_index is not None:
+            plt.errorbar(coords[1], dose_data[axis_one_index, :], yerr= dose_error[axis_one_index, :],
+                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
+                 label='Dose values')
+            plt.xlabel(f'{plane[1].upper()} [cm]')
+            if not radiological_area:
+                plt.legend()
+            else:
+                legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
+                legend.get_frame().set_edgecolor('black')
+                legend.get_frame().set_linewidth(1.5)
+            plt.ylabel("Dose rate [µSv/h]")
+            plt.title(f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm')
+            if log_scale:
+                plt.yscale('log')
+            if x_lim is not None:
+                plt.xlim(x_lim)
+            if y_lim is not None:
+                plt.ylim(y_lim)
+            plt.grid()
+            if save_fig:
+                plt.savefig(fig_name, dpi=300)
+            plt.show()

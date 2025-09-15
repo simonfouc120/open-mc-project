@@ -20,9 +20,6 @@ from src.utils.post_preocessing.post_processing import *
 from src.models.model_complete_reactor_class import *
 from src.utils.weight_window.weight_window import *
 
-for material in material_dict.values():
-    material= reducing_density(material, factor=10)
-
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
@@ -57,7 +54,7 @@ tallys = openmc.Tallies()
 settings = openmc.Settings()
 batches_number= 100
 settings.batches = batches_number
-settings.particles = 50000
+settings.particles = 500
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 settings.run_mode = "fixed source"
@@ -129,3 +126,6 @@ print(f"Neutron dose rate in calculation sphere: {dose_rate:.3e} Sv/s ± {dose_r
 output_json = CWD / "dose_rate_results.json"
 with open(output_json, "w") as f:
     json.dump({"dose_rate_sievert_per_hour": dose_rate, "dose_rate_error_sievert_per_hour": dose_rate_error}, f)
+
+
+# retracer dose en fonction de x

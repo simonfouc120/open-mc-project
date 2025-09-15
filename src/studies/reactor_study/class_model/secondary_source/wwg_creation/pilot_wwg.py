@@ -49,7 +49,7 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 200
 settings.batches = batches_number
 settings.particles = 500000
 settings.source = openmc.FileSource('surface_source.h5')
@@ -98,3 +98,9 @@ plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_f
 
 plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
 
+mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_xy_neutrons", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
+mesh_tally_neutrons.plot_flux(axis_one_index=250, x_lim=(0, 850), save_fig=True, fig_name="flux_plot_neutrons.png")
+
+
+mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
+mesh_tally_photons.plot_flux(axis_one_index=250, x_lim=(0, 850), save_fig=True, fig_name="flux_plot_photons.png")

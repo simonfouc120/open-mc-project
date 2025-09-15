@@ -96,12 +96,12 @@ statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 
 load_mesh_tally_dose(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particles_per_second=neutron_emission_rate,
                 mesh_bin_volume=bin_mesh_volume, particule_type="neutron")
 
 load_mesh_tally_dose(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
                 particles_per_second=neutron_emission_rate, mesh_bin_volume=bin_mesh_volume) 
 
