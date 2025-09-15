@@ -49,7 +49,7 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 200
+batches_number= 100
 settings.batches = batches_number
 settings.particles = 500000
 settings.source = openmc.FileSource('surface_source.h5')

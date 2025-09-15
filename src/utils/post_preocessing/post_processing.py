@@ -579,61 +579,71 @@ class mesh_tally_data:
         coords = self.get_coordinates
         plane = self.plane
 
-        dose_data = self.get_flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
-        dose_error = (self.get_flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) 
+        dose_data = self.get_flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
+        dose_error = self.get_flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
+
+        def plot_radiological_areas():
+            for i in range(len(DOSE_AREAS_LIMIT) - 1):
+                plt.fill_betweenx(
+                    y=[DOSE_AREAS_LIMIT[i], DOSE_AREAS_LIMIT[i + 1]],
+                    x1=coords[0][0],
+                    x2=coords[0][-1],
+                    color=AREAS_COLORS[i],
+                    alpha=0.3,
+                    label=[
+                    'Free area', 'Supervised area', 'Controlled area',
+                    'High controlled area', 'Very high controlled area', 'Extremely high controlled area'
+                    ][i]
+            )
+
+        def finalize_plot(xlabel, ylabel, title):
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
+            plt.title(title)
+            if log_scale:
+                plt.yscale('log')
+            if x_lim is not None:
+                plt.xlim(x_lim)
+            if y_lim is not None:
+                plt.ylim(y_lim)
+            plt.grid()
+            if save_fig:
+                plt.savefig(fig_name, dpi=300)
+            plt.show()
 
         if radiological_area:
-           plt.fill_betweenx(y=[0, DOSE_AREAS_LIMIT[1]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[0], alpha=0.3, label='Free area')
-           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[1], DOSE_AREAS_LIMIT[2]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[1], alpha=0.3, label='Supervised area')
-           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[2], DOSE_AREAS_LIMIT[3]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[2], alpha=0.3, label='Controlled area')
-           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[3], DOSE_AREAS_LIMIT[4]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[3], alpha=0.3, label='High controlled area')
-           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[4], DOSE_AREAS_LIMIT[5]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[4], alpha=0.3, label='Very high controlled area')
-           plt.fill_betweenx(y=[DOSE_AREAS_LIMIT[5], DOSE_AREAS_LIMIT[-1]], x1=coords[0][0], x2=coords[0][-1], color=AREAS_COLORS[5], alpha=0.3, label='Extremely high controlled area') 
+            plot_radiological_areas()
 
         if axis_two_index is not None:
-            plt.errorbar(coords[0], dose_data[:, axis_two_index], yerr= dose_error[:, axis_two_index],
-                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
-                 label='Dose values')
-            plt.xlabel(f'{plane[0].upper()} [cm]')
-            if not radiological_area:
-                plt.legend()
-            else:
+            plt.errorbar(
+            coords[0], dose_data[:, axis_two_index], yerr=dose_error[:, axis_two_index],
+            fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2, label='Dose values'
+            )
+            if radiological_area:
                 legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
                 legend.get_frame().set_edgecolor('black')
                 legend.get_frame().set_linewidth(1.5)
-            plt.ylabel("Dose rate [µSv/h]")
-            plt.title(f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
-            if log_scale:
-                plt.yscale('log')
-            if x_lim is not None:
-                plt.xlim(x_lim)
-            if y_lim is not None:
-                plt.ylim(y_lim)
-            plt.grid()
-            if save_fig:
-                plt.savefig(fig_name, dpi=300)
-            plt.show()
+            else:
+                plt.legend()
+            finalize_plot(
+            f'{plane[0].upper()} [cm]',
+            "Dose rate [µSv/h]",
+            f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm'
+            )
 
         if axis_one_index is not None:
-            plt.errorbar(coords[1], dose_data[axis_one_index, :], yerr= dose_error[axis_one_index, :],
-                 fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
-                 label='Dose values')
-            plt.xlabel(f'{plane[1].upper()} [cm]')
-            if not radiological_area:
-                plt.legend()
-            else:
+            plt.errorbar(
+            coords[1], dose_data[axis_one_index, :], yerr=dose_error[axis_one_index, :],
+            fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2, label='Dose values'
+            )
+            if radiological_area:
                 legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
                 legend.get_frame().set_edgecolor('black')
                 legend.get_frame().set_linewidth(1.5)
-            plt.ylabel("Dose rate [µSv/h]")
-            plt.title(f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm')
-            if log_scale:
-                plt.yscale('log')
-            if x_lim is not None:
-                plt.xlim(x_lim)
-            if y_lim is not None:
-                plt.ylim(y_lim)
-            plt.grid()
-            if save_fig:
-                plt.savefig(fig_name, dpi=300)
-            plt.show()
+            else:
+                plt.legend()
+            finalize_plot(
+            f'{plane[1].upper()} [cm]',
+            "Dose rate [µSv/h]",
+            f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
+            )
