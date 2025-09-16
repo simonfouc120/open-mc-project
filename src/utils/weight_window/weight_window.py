@@ -39,7 +39,9 @@ def plot_weight_window(weight_window, index_coord:int=0, energy_index:int=0,
 def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25, 
                            lower_left=np.array([-500.0, -500.0, -500]), 
                            upper_right=np.array([500.0, 500.0, 500]), 
-                           target=np.array([50.0, 0.0, 0.0])):
+                           target=np.array([50.0, 0.0, 0.0]),
+                           beta:float=50.0,
+                           factor_div:float=1e5) -> np.ndarray:
     """
     Compute a 3D importance map based on the inverse distance to a target.
 
@@ -48,25 +50,25 @@ def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25,
     - lower_left: Lower left corner of the grid (numpy array)
     - upper_right: Upper right corner of the grid (numpy array)
     - target: Target position (numpy array)
+    - beta: Smoothing parameter (float)
+    - factor_div: Scaling parameter (float)
 
     Returns:
     - importance_map: 3D numpy array of importance values
-    - x_vals, y_vals, z_vals: 1D numpy arrays of grid coordinates
     """
     x_vals = np.linspace(lower_left[0], upper_right[0], nx)
     y_vals = np.linspace(lower_left[1], upper_right[1], ny)
     z_vals = np.linspace(lower_left[2], upper_right[2], nz)
 
-    importance_map = np.zeros((nx, ny, nz))
+    importance_map = np.zeros((nx, ny, nz), dtype=np.float64)
 
     for i, x in enumerate(x_vals):
         for j, y in enumerate(y_vals):
             for k, z in enumerate(z_vals):
-                pos = ([x, y, z])
+                pos = np.array([x, y, z])
                 dist = np.linalg.norm(pos - target)
-                importance_map[i, j, k] = (dist + 50.0) / 1e5
-
-    return np.asarray(importance_map)
+                importance_map[i, j, k] = (dist + beta) / factor_div
+    return importance_map
 
 
 def apply_correction_ww(ww, correction_weight_window):

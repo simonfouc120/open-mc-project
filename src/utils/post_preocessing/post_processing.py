@@ -17,8 +17,8 @@ def print_calculation_finished():
     print("######################################################")
 
 
-def load_mesh_tally(cwd, 
-                    statepoint_file: object, 
+def load_mesh_tally(statepoint_file: object,
+                    cwd: Path = Path.cwd(), 
                     name_mesh_tally:str = "flux_mesh_tally", 
                     particule_type:str='neutron',
                     bin_number:int=400, 
@@ -299,7 +299,7 @@ def load_dammage_energy_tally(cwd, statepoint_file: object, name_mesh_tally:str 
     plt.show()
 
 
-def load_mesh_tally_dose(cwd, statepoint_file: object, name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
+def load_mesh_tally_dose(statepoint_file: object, cwd: Path = Path.cwd(), name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
                         particles_per_second:int=1, particule_type:str='neutrons',
                         bin_number:int=400, lower_left:tuple=(-10.0, -10.0), 
                         upper_right:tuple=(10.0, 10.0), zoom_x:tuple=(-10, 10), 
@@ -524,14 +524,14 @@ class mesh_tally_data:
         coords = self.get_coordinates
         plane = self.plane
 
-        if axis_two_index is not None:
-            plt.errorbar(coords[0], self.get_flux_data[:, axis_two_index], yerr= self.get_flux_error[:, axis_two_index],
+        if axis_one_index is not None:
+            plt.errorbar(coords[0], self.get_flux_data[:, axis_one_index], yerr= self.get_flux_error[:, axis_one_index],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
-            plt.xlabel(f'{plane[0].upper()} [cm]')
+            plt.xlabel(f'{plane[1].upper()} [cm]')
             plt.legend()
             plt.ylabel('Flux [n/cm^2/P-source]')
-            plt.title(f'Flux=f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
+            plt.title(f'Flux=f({plane[0].lower()}) at {plane[0].lower()}={coords[1][axis_one_index]:.2f} cm')
             plt.yscale('log')
             plt.grid()
             if y_lim is not None:
@@ -542,14 +542,14 @@ class mesh_tally_data:
                 plt.savefig(fig_name, dpi=300)
             plt.show()
 
-        if axis_one_index is not None:
-            plt.errorbar(coords[1], self.get_flux_data[axis_one_index, :], yerr= self.get_flux_error[axis_one_index, :],
+        if axis_two_index is not None:
+            plt.errorbar(coords[0], self.get_flux_data[axis_two_index, :], yerr= self.get_flux_error[axis_two_index, :],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
-            plt.xlabel(f'{plane[1].upper()} [cm]')
+            plt.xlabel(f'{plane[0].upper()} [cm]')
             plt.legend()
             plt.ylabel('Flux [n/cm^2/P-source]')
-            plt.title(f'Flux=f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm')
+            plt.title(f'Flux=f({plane[1].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
             plt.yscale('log')
             plt.grid()
             if y_lim is not None:
@@ -608,15 +608,15 @@ class mesh_tally_data:
                 plt.ylim(y_lim)
             plt.grid()
             if save_fig:
-                plt.savefig(fig_name, dpi=300)
+                plt.savefig(fig_name, dpi=300, bbox_inches='tight')
             plt.show()
 
         if radiological_area:
             plot_radiological_areas()
 
-        if axis_two_index is not None:
+        if axis_one_index is not None:
             plt.errorbar(
-            coords[0], dose_data[:, axis_two_index], yerr=dose_error[:, axis_two_index],
+            coords[0], dose_data[:, axis_one_index], yerr=dose_error[:, axis_one_index],
             fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2, label='Dose values'
             )
             if radiological_area:
@@ -628,12 +628,12 @@ class mesh_tally_data:
             finalize_plot(
             f'{plane[0].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm'
+            f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_one_index]:.2f} cm'
             )
 
-        if axis_one_index is not None:
+        if axis_two_index is not None:
             plt.errorbar(
-            coords[1], dose_data[axis_one_index, :], yerr=dose_error[axis_one_index, :],
+            coords[1], dose_data[axis_two_index, :], yerr=dose_error[axis_two_index, :],
             fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2, label='Dose values'
             )
             if radiological_area:
@@ -645,5 +645,5 @@ class mesh_tally_data:
             finalize_plot(
             f'{plane[1].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
+            f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_two_index]:.2f} cm'
             )

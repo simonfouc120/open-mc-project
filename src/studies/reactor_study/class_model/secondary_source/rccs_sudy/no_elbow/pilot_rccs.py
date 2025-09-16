@@ -10,7 +10,7 @@ import numpy as np
 from copy import deepcopy
 
 CWD = Path(__file__).parent.resolve() 
-project_root = Path(__file__).resolve().parents[6]  
+project_root = Path(__file__).resolve().parents[7]  
 sys.path.append(str(project_root))
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
@@ -29,16 +29,22 @@ my_reactor = Reactor_model(materials=material_dict,
                            light_water_pool=False, 
                            slab_thickness=100,
                            concrete_wall_thickness=100,
-                           calculation_sphere_coordinates=(-600, 0, 0), 
+                           calculation_sphere_coordinates=(-600, 200, 0), 
                            calculation_sphere_radius=50.0)
+
+my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(-500, -400, 190, 210, -10, 10), material_name="AIR_MATERIAL",
+                    cells_to_be_excluded_by=[my_reactor.concrete_walls_cells[i] for i in range(len(my_reactor.concrete_walls_cells))] + [my_reactor.air_main_cell])
 
 MODEL = my_reactor.model
 MODEL.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
-              pixels=(700, 700))
+              pixels=(700, 700), color_by="cell")
 
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
+              pixels=(700, 700), color_by="material")
 
 results_path = "simulation_results.json"
 with open(results_path, "r") as f:
@@ -54,7 +60,7 @@ tallys = openmc.Tallies()
 settings = openmc.Settings()
 batches_number= 100
 settings.batches = batches_number
-settings.particles = 5000
+settings.particles = 500
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 settings.run_mode = "fixed source"
@@ -65,7 +71,8 @@ shape_ww = get_ww_size(weight_windows=ww)
 ww_corrected = apply_correction_ww(ww=ww, correction_weight_window=create_correction_ww_tally(nx=30, ny=30, nz=30,
                                                                                               lower_left=(-700, -700, -700),
                                                                                               upper_right=(700, 700, 700),
-                                                                                              target=np.array([-600, 0, 0])))
+                                                                                              target=np.array([-600, 200, 0]),
+                                                                                              factor_div=1e6))
 settings.weight_windows = ww_corrected
 
 plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
@@ -108,13 +115,13 @@ statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 
-load_mesh_tally_dose(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+load_mesh_tally_dose(statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particles_per_second=neutron_emission_rate,
                 mesh_bin_volume=bin_mesh_volume, particule_type="neutron")
 
-load_mesh_tally_dose(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+load_mesh_tally_dose(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
                 particles_per_second=neutron_emission_rate, mesh_bin_volume=bin_mesh_volume) 
 
@@ -123,37 +130,12 @@ flux_tally_neutron = statepoint.get_tally(name="flux_tally_sphere_dose")
 dose_rate = flux_tally_neutron.mean.flatten()[0] * neutron_emission_rate * 1e-6 * 3600 / volume_tally_sphere
 dose_rate_error = flux_tally_neutron.std_dev.flatten()[0] * neutron_emission_rate * 1e-6 * 3600 / volume_tally_sphere
 print(f"Neutron dose rate in calculation sphere: {dose_rate:.3e} μSv/h ± {dose_rate_error:.3e} μSv/h ({dose_rate_error/dose_rate*100:.2f} %)")
-output_json = "dose_rate_results.json"
+output_json = CWD / "dose_rate_results.json"
 with open(output_json, "w") as f:
     json.dump({"dose_rate_sievert_per_hour": dose_rate, 
                "dose_rate_error_sievert_per_hour": dose_rate_error,
                "relative_error_percentage": dose_rate_error/dose_rate*100}, f)
 
 
-mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_xy_neutrons", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
 
-mesh_tally_neutrons.plot_flux(axis_two_index=250, x_lim=(-850, 0), save_fig=True, fig_name="flux_plot_neutrons.png", y_lim=(1e-8, 1e-1))
-
-mesh_tally_neutrons.plot_dose(axis_two_index=250, 
-                              particles_per_second=neutron_emission_rate, 
-                              x_lim=(-850, 0),
-                              y_lim=(1e2, 1e10),
-                              mesh_bin_volume=bin_mesh_volume,
-                              save_fig=True,
-                              radiological_area=True,
-                              fig_name="dose_plot_neutrons.png")
-
-
-mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
-
-mesh_tally_photons.plot_flux(axis_two_index=250, x_lim=(-850, 0), save_fig=True, fig_name="flux_plot_photons.png", y_lim=(1e-8, 1e-1))
-
-mesh_tally_photons.plot_dose(axis_two_index=250, 
-                             particles_per_second=neutron_emission_rate, 
-                             x_lim=(-850, 0),
-                             y_lim=(1e2, 1e10),
-                             mesh_bin_volume=bin_mesh_volume,
-                             save_fig=True,
-                             radiological_area=True,
-                             fig_name="dose_plot_photons.png")
 # retracer dose en fonction de x

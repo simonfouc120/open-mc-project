@@ -77,10 +77,37 @@ openmc.run()
 statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 
-load_mesh_tally(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+load_mesh_tally(statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True)
 
-load_mesh_tally(cwd=CWD, statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
-                saving_figure=False, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
+load_mesh_tally(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
+                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon") 
+
+mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_xy_neutrons", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
+
+mesh_tally_neutrons.plot_flux(axis_two_index=250, x_lim=(-850, 0), save_fig=True, fig_name="flux_plot_neutrons.png", y_lim=(1e-8, 1e-1))
+
+mesh_tally_neutrons.plot_dose(axis_two_index=250, 
+                              particles_per_second=1e18, 
+                              x_lim=(-850, 0),
+                              y_lim=(1e2, 1e10),
+                              mesh_bin_volume=Volume_cell(my_reactor.calc_sphere_cell).get_volume(),
+                              save_fig=True,
+                              radiological_area=True,
+                              fig_name="dose_plot_neutrons.png")
+
+
+mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
+
+mesh_tally_photons.plot_flux(axis_two_index=250, x_lim=(-850, 0), save_fig=True, fig_name="flux_plot_photons.png", y_lim=(1e-8, 1e-1))
+
+mesh_tally_photons.plot_dose(axis_two_index=250, 
+                             particles_per_second=1e18, 
+                             x_lim=(-850, 0),
+                             y_lim=(1e2, 1e10),
+                             mesh_bin_volume=Volume_cell(my_reactor.calc_sphere_cell).get_volume(),
+                             save_fig=True,
+                             radiological_area=True,
+                             fig_name="dose_plot_photons.png")
