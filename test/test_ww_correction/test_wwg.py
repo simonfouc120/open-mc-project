@@ -32,8 +32,8 @@ shape_ww = get_ww_size(weight_windows=ww)
 ww_corrected_ = apply_correction_ww(ww=ww, correction_weight_window=create_correction_ww_tally(nx=30, ny=30, nz=30,
                                                                                               lower_left=(-700, -700, -700),
                                                                                               upper_right=(700, 700, 700),
-                                                                                              target=np.array([-600, 0, 0]),
-                                                                                              beta=50.0, factor_div=5e9))
-ww_corrected_factor = apply_correction_ww(ww=ww_corrected_, correction_weight_window=np.ones(shape_ww) * 1e7)
+                                                                                              target=np.array([-600, 200, 0]),
+                                                                                              beta=50.0, factor_div=1e6))
+ww_corrected_factor = apply_correction_ww(ww=ww_corrected_, correction_weight_window=np.ones(shape_ww) * 1e3)
 # plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
 plot_weight_window(weight_window=ww_corrected_factor[1], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')

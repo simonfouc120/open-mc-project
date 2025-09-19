@@ -3,11 +3,11 @@
 geometry.xml
 materials.xml
 settings.xml
+plots.xml
 statepoint*
 summary*
 tallies.out
 tallies.xml
-plot*
 particle_*
 
 # Ignore  file from openMC plotter 
@@ -20,9 +20,9 @@ __pycache__
 lib/cross_sections/*
 
 # dont ignore plots with xy xz and yz views
-plot_xy.png
-plot_xz.png
-plot_yz.png
+!plot_xy.png
+!plot_xz.png
+!plot_yz.png
 
 
 # tracks_file
