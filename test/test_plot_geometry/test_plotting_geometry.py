@@ -54,10 +54,10 @@ bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850
 
 flux_over_geometry(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=False, particule_type="photon", 
+                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
                 model=MODEL) 
 
 flux_over_geometry(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-600, -350), zoom_y=(100, 350), plot_error=False, particule_type="photon", 
+                zoom_x=(-600, -350), zoom_y=(100, 350), plot_error=True, particule_type="photon", 
                 model=MODEL, pixels_model_geometry=1_000_000) 

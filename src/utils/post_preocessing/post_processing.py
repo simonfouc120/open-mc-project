@@ -662,6 +662,7 @@ def flux_over_geometry(model, statepoint_file: object,
                     plane:str = "xy", 
                     plane_coord:float=0.0,
                     pixels_model_geometry:int=1_000_000,
+                    suffix_saving: str = "",
                     saving_figure:bool = True):
     """
     Load and plot the mesh tally from the statepoint file.
@@ -680,114 +681,70 @@ def flux_over_geometry(model, statepoint_file: object,
     and plots it using matplotlib with a logarithmic color scale. The resulting plot
     is saved as a PNG file in the specified directory and displayed.
     """
+    if plane not in ["xy", "xz", "yz"]:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
-    flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
-    flux_error = flux_error / flux_data
+    std_dev_data = mesh_tally.std_dev.reshape((bin_number, bin_number))
+
+    # Calculate relative error, avoiding division by zero
+    relative_error = np.zeros_like(flux_data)
+    nonzero_flux = flux_data != 0
+    relative_error[nonzero_flux] = std_dev_data[nonzero_flux] / flux_data[nonzero_flux]
+
+    mesh = mesh_tally.find_filter(openmc.MeshFilter).mesh
+    extent = mesh.bounding_box.extent[plane]
+
+    # Common settings for model.plot
+    plot_kwargs = {
+        'outline': "only",
+        'axes': None,  # This will be set per-plot
+        'pixels': pixels_model_geometry,
+        'color_by': "material",
+        'origin': ((lower_left[0] + upper_right[0]) / 2, (lower_left[1] + upper_right[1]) / 2, plane_coord),
+        'width': (upper_right[0] - lower_left[0], upper_right[1] - lower_left[1])
+    }
+
+    def setup_ax(ax, title):
+        """Helper function to set up axis properties."""
+        ax.set_title(title)
+        ax.set_xlabel(f'{plane[0].upper()} [cm]')
+        ax.set_ylabel(f'{plane[1].upper()} [cm]')
+        ax.set_xlim(zoom_x)
+        ax.set_ylim(zoom_y)
+
     if plot_error:
-        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
-        # Plot flux_data
-        im0 = axs[0].imshow(
-            flux_data,
-            origin='lower',
-            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
-            cmap='plasma',
-            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
-        )
-        axs[0].set_title(f"Flux map {plane.upper()} {particule_type}")
-        if plane == "xy":
-            axs[0].set_xlabel('X [cm]')
-            axs[0].set_ylabel('Y [cm]')
-        elif plane == "xz":
-            axs[0].set_xlabel('X [cm]')
-            axs[0].set_ylabel('Z [cm]')
-        elif plane == "yz":
-            axs[0].set_xlabel('Y [cm]')
-            axs[0].set_ylabel('Z [cm]')
-        else:
-            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
-        axs[0].set_xlim(zoom_x[0], zoom_x[1])
-        axs[0].set_ylim(zoom_y[0], zoom_y[1])
-        fig.colorbar(im0, ax=axs[0], label="Flux [p/p-source] (log scale)")
+        fig, (ax_flux, ax_error) = plt.subplots(1, 2, figsize=(14, 6))
 
-        # Plot flux_error
-        im1 = axs[1].imshow(
-            flux_error,
-            origin='lower',
-            extent=[lower_left[0], upper_right[1], lower_left[1], upper_right[1]],
-            cmap='plasma'
-        )
-        # Overlay geometry outline on the error map (do not overwrite im1)
-        model.plot(
-            outline="only",
-            extent=model.bounding_box.extent[plane],
-            axes=axs[1],
-            pixels=10_000_000,
-            color_by="material"
-        )
-        axs[1].set_title(f"Flux error map {plane.upper()} {particule_type}")
-        if plane == "xy":
-            axs[1].set_xlabel('X [cm]')
-            axs[1].set_ylabel('Y [cm]')
-        elif plane == "xz":
-            axs[1].set_xlabel('X [cm]')
-            axs[1].set_ylabel('Z [cm]')
-        elif plane == "yz":
-            axs[1].set_xlabel('Y [cm]')
-            axs[1].set_ylabel('Z [cm]')
-        axs[1].set_xlim(zoom_x[0], zoom_x[1])
-        axs[1].set_ylim(zoom_y[0], zoom_y[1])
-        fig.colorbar(im1, ax=axs[1], label="Flux error")
+        # Plot flux data
+        norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+        im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
+        plot_kwargs['axes'] = ax_flux
+        model.plot(**plot_kwargs)
+        setup_ax(ax_flux, f"Flux map {plane.upper()} {particule_type}")
+        fig.colorbar(im_flux, ax=ax_flux, label="Flux [p/p-source] (log scale)")
 
-    else: 
+        # Plot relative error
+        im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
+        plot_kwargs['axes'] = ax_error
+        model.plot(**plot_kwargs)
+        setup_ax(ax_error, f"Flux error map {plane.upper()} {particule_type}")
+        fig.colorbar(im_error, ax=ax_error, label="Relative Error")
+
+    else:
         fig, ax = plt.subplots(figsize=(8, 6))
-        mesh = mesh_tally.find_filter(openmc.MeshFilter).mesh
 
-        im0 = ax.imshow(
-            flux_data,
-            origin='lower',
-            extent=mesh.bounding_box.extent[plane],
-            cmap='plasma',
-            norm=LogNorm(vmin=np.min(flux_data[flux_data != 0]), vmax=flux_data.max())
-        )
-
-        ax = model.plot(
-            outline="only",
-            extent=mesh.bounding_box.extent[plane],
-            axes=ax,
-            pixels=10_000_000,
-            color_by="material",
-            origin=(
-                (lower_left[0] + upper_right[0]) / 2,
-                (lower_left[1] + upper_right[1]) / 2,
-                plane_coord
-            ),
-            width=(
-                upper_right[0] - lower_left[0],
-                upper_right[1] - lower_left[1]
-            )
-        )
-        
-
-        ax.set_title(f"Flux map {plane.upper()} {particule_type}")
-        if plane == "xy":
-            ax.set_xlabel('X [cm]')
-            ax.set_ylabel('Y [cm]')
-        elif plane == "xz":
-            ax.set_xlabel('X [cm]')
-            ax.set_ylabel('Z [cm]')
-        elif plane == "yz":
-            ax.set_xlabel('Y [cm]')
-            ax.set_ylabel('Z [cm]')
-        else:
-            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
-        ax.set_xlim(zoom_x[0], zoom_x[1])
-        ax.set_ylim(zoom_y[0], zoom_y[1])
-
-        fig.colorbar(im0, ax=ax, label="Flux [p/p-source] (log scale)")
+        # Plot flux data
+        norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+        im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
+        plot_kwargs['axes'] = ax
+        model.plot(**plot_kwargs)
+        setup_ax(ax, f"Flux map {plane.upper()} {particule_type}")
+        fig.colorbar(im_flux, ax=ax, label="Flux [p/p-source] (log scale)")
 
     plt.tight_layout()
-    name_mesh_tally_saving = name_mesh_tally + ".png"
+    name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
     plt.show()
