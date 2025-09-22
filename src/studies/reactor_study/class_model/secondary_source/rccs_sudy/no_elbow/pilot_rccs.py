@@ -84,16 +84,48 @@ MODEL.export_to_xml()
 
 tallys = openmc.Tallies()
 
-mesh_tally_xy_neutrons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_xy_neutrons", particule_type='neutron', plane="xy",
+### Tally dose
+# XY plane
+dose_mesh_xy_neutrons = mesh_tally_dose_plane(name_mesh_tally = "dose_mesh_xy_neutrons", particule_type='neutron', plane="xy",
                                       bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
                                       thickness= 20.0, coord_value=0.0)
-tallys.append(mesh_tally_xy_neutrons)
+tallys.append(dose_mesh_xy_neutrons)
 
 
-mesh_tally_xy_photons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy", particule_type='photon', plane="xy",
+dose_mesh_xy_photons = mesh_tally_dose_plane(name_mesh_tally = "dose_mesh_xy_photons", particule_type='photon', plane="xy",
                                       bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
                                       thickness= 20.0, coord_value=0.0)
-tallys.append(mesh_tally_xy_photons)
+tallys.append(dose_mesh_xy_photons)
+
+# YZ plane
+dose_mesh_yz_photons = mesh_tally_dose_plane(name_mesh_tally = "dose_mesh_yz_photons", particule_type='photon', plane="yz",
+                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      thickness= 20.0, coord_value=0.0)
+tallys.append(dose_mesh_yz_photons)
+
+dose_mesh_yz_neutrons = mesh_tally_dose_plane(name_mesh_tally = "dose_mesh_yz_neutrons", particule_type='neutron', plane="yz",
+                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      thickness= 20.0, coord_value=0.0)
+tallys.append(dose_mesh_yz_neutrons)
+
+### Tally flux
+# XY plane
+flux_mesh_xy_neutrons = mesh_tally_plane(name_mesh_tally = "flux_mesh_xy_neutrons", particule_type='neutron', plane="xy",
+                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      thickness= 20.0, coord_value=0.0)
+
+tallys.append(flux_mesh_xy_neutrons)
+
+flux_mesh_xy_photons = mesh_tally_plane(name_mesh_tally = "flux_mesh_photons_xy", particule_type='photon', plane="xy",
+                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      thickness= 20.0, coord_value=0.0)
+tallys.append(flux_mesh_xy_photons)
+
+# YZ plane
+flux_mesh_yz_photons = mesh_tally_plane(name_mesh_tally = "flux_mesh_yz_photons", particule_type='photon', plane="yz",
+                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      thickness= 20.0, coord_value=0.0)
+tallys.append(flux_mesh_yz_photons)
 
 tallys.export_to_xml()
 
@@ -110,32 +142,5 @@ tallys.export_to_xml()
 remove_previous_results(CWD)
 
 openmc.run()
-
-statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
-
-bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
-
-load_mesh_tally_dose(statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
-                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particles_per_second=neutron_emission_rate,
-                mesh_bin_volume=bin_mesh_volume, particule_type="neutron")
-
-load_mesh_tally_dose(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
-                saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
-                zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
-                particles_per_second=neutron_emission_rate, mesh_bin_volume=bin_mesh_volume) 
-
-# load flux tally neutron
-flux_tally_neutron = statepoint.get_tally(name="flux_tally_sphere_dose")
-dose_rate = flux_tally_neutron.mean.flatten()[0] * neutron_emission_rate * 1e-6 * 3600 / volume_tally_sphere
-dose_rate_error = flux_tally_neutron.std_dev.flatten()[0] * neutron_emission_rate * 1e-6 * 3600 / volume_tally_sphere
-print(f"Neutron dose rate in calculation sphere: {dose_rate:.3e} μSv/h ± {dose_rate_error:.3e} μSv/h ({dose_rate_error/dose_rate*100:.2f} %)")
-output_json = CWD / "dose_rate_results.json"
-with open(output_json, "w") as f:
-    json.dump({"dose_rate_sievert_per_hour": dose_rate, 
-               "dose_rate_error_sievert_per_hour": dose_rate_error,
-               "relative_error_percentage": dose_rate_error/dose_rate*100}, f)
-
-
 
 # retracer dose en fonction de x

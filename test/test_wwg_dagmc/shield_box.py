@@ -1,5 +1,24 @@
 import openmc
 from typing import Tuple
+import openmc
+import os 
+from pathlib import Path
+import sys 
+import numpy as np
+
+
+CWD = Path(__file__).parent.resolve() 
+project_root = Path(__file__).resolve().parents[2]  
+sys.path.append(str(project_root))
+
+from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
+from parameters.parameters_materials import *
+from src.utils.pre_processing.pre_processing import *
+from src.utils.post_preocessing.post_processing import *
+from src.models.model_complete_reactor_class import *
+from src.utils.weight_window.weight_window import *
+
+os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 
 def generate_ww(
@@ -58,18 +77,25 @@ def generate_ww(
 
     rr_model.convert_to_random_ray()
 
-    mesh = openmc.RegularMesh().from_domain(rr_model)
+    # mesh = openmc.RegularMesh().from_domain(rr_model)
+    mesh = openmc.RegularMesh().from_domain(rr_model.geometry)
+
+    mesh = openmc.RegularMesh()
+    mesh.lower_left = (-1000, -1000, -1000)
+    mesh.upper_right = (1000, 1000, 1000)
+    mesh.dimension = (400, 400, 400)
+
     if isinstance(mesh_dimension, int):
         import openmc.checkvalue as cv
 
         cv.check_greater_than("mesh_dimension", mesh_dimension, 1, equality=True)
         # If a single integer is provided, divide the domain into that many
         # mesh cells with roughly equal lengths in each direction
-        ideal_cube_volume = model.bounding_box.volume / mesh_dimension
+        ideal_cube_volume = mesh.total_volume / mesh_dimension
         ideal_cube_size = ideal_cube_volume ** (1 / 3)
         mesh_dimension = tuple(
             max(1, int(round(side / ideal_cube_size)))
-            for side in model.bounding_box.width
+            for side in mesh.bounding_box.width
         )
 
     mesh.dimension = mesh_dimension
@@ -95,7 +121,12 @@ def generate_ww(
         energy_bounds=[0.0, 100e6]
         # energy_bounds=openmc.mgxs.EnergyGroups("CASMO-2").group_edges
     )
-
+    # rr_model.settings.temperature = {"method": "interpolation"}
+    rr_model.settings.temperature = {
+        "default": 294,
+        "method": "nearest",  # ou "interpolation"
+        "tolerance": 1000
+    }
     # this generates a statepoint file but more importantly it also makes a weight_windows.h5 file
     rr_model.run()
 
@@ -108,37 +139,45 @@ def generate_ww(
 
     return weight_window
 
+material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
+material_dict["AIR_MATERIAL"].temperature = 294
 
-mat1 = openmc.Material(name="mat1")
-mat1.add_nuclide("H1", 1, percent_type="ao")
-mat1.set_density("g/cm3", 0.001)
-mat2 = openmc.Material(name="mat2")
-mat2.add_nuclide("H1", 1, percent_type="ao")
-mat2.set_density("g/cm3", 0.002)
-mat3 = openmc.Material(name="mat3")
-mat3.add_nuclide("H1", 1, percent_type="ao")
-mat3.set_density("g/cm3", 0.003)
-my_materials = openmc.Materials([mat1, mat2, mat3])
+my_reactor = Reactor_model(materials=material_dict, 
+                           total_height_active_part=500.0, 
+                           light_water_pool=False, 
+                           slab_thickness=100,
+                           concrete_wall_thickness=100,
+                           calculation_sphere_coordinates=(-600, 200, 0), 
+                           calculation_sphere_radius=50.0)
 
-dag_univ = openmc.DAGMCUniverse(filename='dagmc.h5m')
-bound_dag_univ = dag_univ.bounded_universe()
-my_geometry = openmc.Geometry(root=bound_dag_univ)
 
 my_settings = openmc.Settings()
 my_settings.batches = 10
-my_settings.particles = 5000
+my_settings.particles = 500
 my_settings.run_mode = "fixed source"
 
 # Create a DT point source
-my_source = openmc.IndependentSource()
-my_source.space = openmc.stats.Point(my_geometry.bounding_box.center)
-my_source.angle = openmc.stats.Isotropic()
-my_source.energy = openmc.stats.Discrete([14e6], [1])
-my_settings.source = my_source
+# my_source = openmc.IndependentSource()
+# my_source.space = openmc.stats.Point(my_reactor.geometry.bounding_box.center)
+# my_source.angle = openmc.stats.Isotropic()
+# my_source.energy = openmc.stats.Discrete([14e6], [1])
+
+my_settings.source = openmc.FileSource('surface_source.h5')
+my_settings.photon_transport = True
+my_settings.run_mode = "fixed source"
+my_settings.source.particles = ["neutron", "photon"]
+
+
+my_geometry = openmc.Geometry(my_reactor.model.geometry.root_universe)
+# my_geometry = my_reactor.model.geometry
+my_materials = openmc.Materials(my_reactor.model.materials)
+
 
 model = openmc.model.Model(my_geometry, my_materials, my_settings)
 
-weight_window = generate_ww(model=model)
+weight_window = generate_ww(model=model, 
+                            random_ray_batches=50,
+                            random_ray_inactive=10)
 
 model.settings.weight_windows_on = True
 model.settings.weight_window_checkpoints = {"collision": True, "surface": True}

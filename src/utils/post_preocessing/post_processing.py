@@ -663,6 +663,7 @@ def flux_over_geometry(model, statepoint_file: object,
                     plane_coord:float=0.0,
                     pixels_model_geometry:int=1_000_000,
                     suffix_saving: str = "",
+                    color_by: str = "material",
                     saving_figure:bool = True):
     """
     Load and plot the mesh tally from the statepoint file.
@@ -701,13 +702,12 @@ def flux_over_geometry(model, statepoint_file: object,
         'outline': "only",
         'axes': None,  # This will be set per-plot
         'pixels': pixels_model_geometry,
-        'color_by': "material",
+        'color_by': color_by,
         'origin': ((lower_left[0] + upper_right[0]) / 2, (lower_left[1] + upper_right[1]) / 2, plane_coord),
         'width': (upper_right[0] - lower_left[0], upper_right[1] - lower_left[1])
     }
 
     def setup_ax(ax, title):
-        """Helper function to set up axis properties."""
         ax.set_title(title)
         ax.set_xlabel(f'{plane[0].upper()} [cm]')
         ax.set_ylabel(f'{plane[1].upper()} [cm]')
@@ -743,6 +743,113 @@ def flux_over_geometry(model, statepoint_file: object,
         setup_ax(ax, f"Flux map {plane.upper()} {particule_type}")
         fig.colorbar(im_flux, ax=ax, label="Flux [p/p-source] (log scale)")
 
+    plt.tight_layout()
+    name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
+    if saving_figure:
+        plt.savefig(cwd / name_mesh_tally_saving)
+    plt.show()
+
+
+
+def dose_over_geometry(model, statepoint_file: object,
+                    cwd: Path = Path.cwd(), 
+                    name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
+                    particule_type:str='neutrons',
+                    particles_per_second:int=1,
+                    bin_number:int=400, 
+                    lower_left:tuple=(-10.0, -10.0), 
+                    upper_right:tuple=(10.0, 10.0), 
+                    zoom_x:tuple=(-10, 10), 
+                    zoom_y:tuple=(-10.0, 10.0), 
+                    plane:str = "xy", 
+                    plane_coord:float=0.0,
+                    pixels_model_geometry:int=1_000_000,
+                    mesh_bin_volume:float=1.0, 
+                    radiological_area: bool = False,
+                    suffix_saving: str = "",
+                    color_by: str = "material",
+                    saving_figure:bool = True,
+                    plot_error:bool=False):
+    """
+    Load and plot the dose mesh tally from the statepoint file.
+
+    Parameters:
+    - cwd: Path or directory where the mesh tally image will be saved.
+    - statepoint_file: The OpenMC statepoint file object containing the tally data.
+    - name_mesh_tally_saving: Name of the tally (default is "mesh_tally.png").
+    - bin_number: Number of bins for the mesh tally in each dimension (default is 400).
+    - lower_left: Tuple specifying the lower left corner of the mesh (default is (-10.0, -10.0)).
+    - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
+    - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
+    - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+
+    This function extracts the dose mesh tally from the statepoint file, reshapes the data,
+    and plots it using matplotlib with a logarithmic color scale. The resulting plot
+    is saved as a PNG file in the specified directory and displayed.
+    """
+    if plane not in ["xy", "xz", "yz"]:
+        raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+    mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
+    flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
+    flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
+    flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
+    flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / flux_data
+    relative_error = np.zeros_like(flux_data)
+    nonzero_flux = flux_data != 0
+    relative_error[nonzero_flux] = flux_error[nonzero_flux]
+
+    mesh = mesh_tally.find_filter(openmc.MeshFilter).mesh
+    extent = mesh.bounding_box.extent[plane]
+    # Common settings for model.plot
+    plot_kwargs = {
+        'outline': "only",
+        'basis': plane,
+        'axes': None,  # This will be set per-plot
+        'pixels': pixels_model_geometry,
+        'color_by': color_by,
+        'origin': ((lower_left[0] + upper_right[0]) / 2, (lower_left[1] + upper_right[1]) / 2, plane_coord),    
+        'width': (upper_right[0] - lower_left[0], upper_right[1] - lower_left[1])
+    }
+    def setup_ax(ax, title):
+        ax.set_title(title)
+        ax.set_xlabel(f'{plane[0].upper()} [cm]')
+        ax.set_ylabel(f'{plane[1].upper()} [cm]')
+        ax.set_xlim(zoom_x)
+        ax.set_ylim(zoom_y)
+    if radiological_area:
+        cmap = ListedColormap(AREAS_COLORS)
+        norm = BoundaryNorm(DOSE_AREAS_LIMIT, ncolors=len(AREAS_COLORS))
+        label_flux = "Radiological area"
+    else :
+        cmap = 'plasma'
+        norm = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+        label_flux = "Dose rate [µSv/h]"
+    if plot_error:
+        fig, (ax_flux, ax_error) = plt.subplots(1, 2, figsize=(14, 6))
+
+        # Plot flux data
+        im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
+        plot_kwargs['axes'] = ax_flux
+        model.plot(**plot_kwargs)
+        setup_ax(ax_flux, f"Dose map {plane.upper()} {particule_type}")
+        fig.colorbar(im_flux, ax=ax_flux, label=label_flux)
+
+        # Plot relative error
+        im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
+        plot_kwargs['axes'] = ax_error
+        model.plot(**plot_kwargs)
+        setup_ax(ax_error, f"Dose error map {plane.upper()} {particule_type}")
+        fig.colorbar(im_error, ax=ax_error, label="Relative Error")
+    else:
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        # Plot flux data
+        im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
+        plot_kwargs['axes'] = ax
+        model.plot(**plot_kwargs)
+        setup_ax(ax, f"Dose map {plane.upper()} {particule_type}")
+        fig.colorbar(im_flux, ax=ax, label=label_flux)
     plt.tight_layout()
     name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
     if saving_figure:
