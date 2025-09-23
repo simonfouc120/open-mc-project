@@ -38,8 +38,6 @@ plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())),
 # fonction material pas de fission
 # run the simulation
 
-
-
 settings = openmc.Settings()
 batches_number= 100
 settings.batches = batches_number
@@ -57,11 +55,10 @@ tallys = openmc.Tallies()
 heating_tally = openmc.Tally(name="heating_tally")
 heating_tally.scores = ["heating"]
 heating_tally.filters = [openmc.CellFilter(my_reactor.concrete_walls_cells)]
-
 tallys.append(heating_tally)
 tallys.export_to_xml()
 
-remove_previous_results(CWD)
+remove_previous_results(batches_number=batches_number)
 
 openmc.run()
 

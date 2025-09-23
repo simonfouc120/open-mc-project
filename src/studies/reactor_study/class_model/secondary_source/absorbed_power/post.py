@@ -18,7 +18,6 @@ from src.utils.pre_processing.pre_processing import *
 from src.utils.post_preocessing.post_processing import *
 from src.models.model_complete_reactor_class import *
 
-
 results_path = "simulation_results.json"
 with open(results_path, "r") as f:
     results = json.load(f)
