@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).resolve().parents[3]))  # Adjust path to
 from lib.constants.constant import DOSE_AREAS_LIMIT, AREAS_COLORS
+from typing import Optional
+
 
 def print_calculation_finished():
     """
@@ -854,4 +856,66 @@ def dose_over_geometry(model, statepoint_file: object,
     name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
     if saving_figure:
         plt.savefig(cwd / name_mesh_tally_saving)
+    plt.show()
+
+def plot_flux_spectrum(
+    statepoint: openmc.StatePoint,
+    tally_name: str,
+    particle_name: str,
+    figure_num: int,
+    x_scale: str = 'log',
+    y_scale: str = 'log',
+    ylim: Optional[tuple] = None,
+    energy_unit: str = 'eV',
+    figsize: tuple[float, float] = (6.4, 4.8),
+    savefig: bool = False,
+) -> None:
+    """
+    Plots a particle spectrum from a tally in a statepoint file.
+
+    Args:
+        statepoint (openmc.StatePoint): The loaded statepoint object.
+        tally_name (str): The name of the tally to plot.
+        particle_name (str): The name of the particle (e.g., 'Neutron', 'Photon').
+        figure_num (int): The matplotlib figure number.
+        x_scale (str): The scale for the x-axis.
+        y_scale (str): The scale for the y-axis.
+        ylim (tuple, optional): A tuple for the y-axis limits.
+        energy_unit (str): The unit for the energy axis ('eV' or 'MeV').
+        figsize (tuple): The size of the figure.
+        savefig (bool): Whether to save the figure.
+    """
+    tally = statepoint.get_tally(name=tally_name)
+
+    # Extract data from the tally
+    energy_bins = tally.find_filter(openmc.EnergyFilter).bins
+    flux_values = tally.mean.flatten()
+    error = tally.std_dev.flatten()
+    middle_energy_bins = (energy_bins[:, 0] + energy_bins[:, 1]) / 2
+
+    # Convert energy units if necessary
+    if energy_unit.lower() == 'mev':
+        middle_energy_bins /= 1e6
+    elif energy_unit.lower() != 'ev':
+        raise ValueError("Unsupported energy unit. Please use 'eV' or 'MeV'.")
+
+    # Create the plot
+    plt.figure(figsize=figsize, num=figure_num)
+    plt.step(middle_energy_bins, flux_values, where='post', label=f'{particle_name} Flux')
+    plt.fill_between(middle_energy_bins, flux_values - error, flux_values + error, step='post', alpha=0.3, label='Uncertainty')
+    
+    if x_scale:
+        plt.xscale(x_scale)
+    if y_scale:
+        plt.yscale(y_scale)
+    if ylim:
+        plt.ylim(ylim)
+        
+    plt.xlabel(f'Energy [{energy_unit}]')
+    plt.ylabel("Flux [p.cm$^{-2}$ p-source$^{-1}$]")
+    plt.title(f'{particle_name} Spectrum in Calculation Sphere')
+    plt.grid(True, which="both", ls="--")
+    plt.legend()
+    if savefig:
+        plt.savefig(f"spectrum_flux_{particle_name.lower()}.png", dpi=300)
     plt.show()

@@ -32,5 +32,7 @@ df["Power [W]"] = df["mean"] * 1.602e-19 * neutron_emission_rate
 df["Std Dev [W]"] = df["std. dev."] * 1.602e-19 * neutron_emission_rate
 
 max_power = df["Power [W]"].max()
+std_max_power = df.loc[df["Power [W]"].idxmax(), "Std Dev [W]"]
 
 print(f"Max power deposited in concrete walls: {max_power} W")
+print(f"Standard deviation of max power: {std_max_power} W")
