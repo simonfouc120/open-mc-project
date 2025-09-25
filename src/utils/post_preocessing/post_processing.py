@@ -862,7 +862,6 @@ def plot_flux_spectrum(
     statepoint: openmc.StatePoint,
     tally_name: str,
     particle_name: str,
-    figure_num: int,
     x_scale: str = 'log',
     y_scale: str = 'log',
     sigma: int = 1,
@@ -902,7 +901,7 @@ def plot_flux_spectrum(
         raise ValueError("Unsupported energy unit. Please use 'eV' or 'MeV'.")
 
     # Create the plot
-    plt.figure(figsize=figsize, num=figure_num)
+    plt.figure(figsize=figsize)
     plt.step(middle_energy_bins, flux_values, where='post', label=f'{particle_name} Flux')
     plt.fill_between(middle_energy_bins, flux_values - sigma * error, flux_values + sigma * error, 
                      step='post', alpha=0.3, label=f'{sigma}σ Uncertainty')
