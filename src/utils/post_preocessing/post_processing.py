@@ -865,6 +865,7 @@ def plot_flux_spectrum(
     figure_num: int,
     x_scale: str = 'log',
     y_scale: str = 'log',
+    sigma: int = 1,
     ylim: Optional[tuple] = None,
     energy_unit: str = 'eV',
     figsize: tuple[float, float] = (6.4, 4.8),
@@ -881,6 +882,7 @@ def plot_flux_spectrum(
         x_scale (str): The scale for the x-axis.
         y_scale (str): The scale for the y-axis.
         ylim (tuple, optional): A tuple for the y-axis limits.
+        sigma (int): The number of standard deviations for error bars.
         energy_unit (str): The unit for the energy axis ('eV' or 'MeV').
         figsize (tuple): The size of the figure.
         savefig (bool): Whether to save the figure.
@@ -902,7 +904,8 @@ def plot_flux_spectrum(
     # Create the plot
     plt.figure(figsize=figsize, num=figure_num)
     plt.step(middle_energy_bins, flux_values, where='post', label=f'{particle_name} Flux')
-    plt.fill_between(middle_energy_bins, flux_values - error, flux_values + error, step='post', alpha=0.3, label='Uncertainty')
+    plt.fill_between(middle_energy_bins, flux_values - sigma * error, flux_values + sigma * error, 
+                     step='post', alpha=0.3, label=f'{sigma}σ Uncertainty')
     
     if x_scale:
         plt.xscale(x_scale)

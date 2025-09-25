@@ -33,7 +33,8 @@ plot_flux_spectrum(
     ylim=(1e-7, 1e-2),
     energy_unit='eV',
     savefig=True,
-    figsize=(9, 6)
+    figsize=(9, 6),
+    sigma=2
 )
 
 # Plot the photon spectrum in MeV
@@ -47,5 +48,6 @@ plot_flux_spectrum(
     energy_unit='MeV',
     savefig=True,
     ylim=(1e-7, 1e-1),
-    figsize=(9, 6)
+    figsize=(9, 6),
+    sigma=2
 )
