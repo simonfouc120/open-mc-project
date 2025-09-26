@@ -18,6 +18,58 @@ def print_calculation_finished():
     print("Calculation finished successfully.")  # TODO: Implement a more sophisticated logging mechanism if needed.
     print("######################################################")
 
+def compute_dose_rate_tally(statepoint: openmc.StatePoint, 
+                            tally_name: str, 
+                            particule_per_second: float, 
+                            volume: float,
+                            unit: str = 'µSv/h') -> tuple[float, float]:
+    """
+    Calculates the dose rate and its error from a tally.
+
+    Parameters:
+    ----------
+    statepoint : openmc.StatePoint
+        The statepoint file object.
+    tally_name : str
+        The name of the tally to use for the calculation.
+    particule_per_second : float
+        The source strength in particles per second.
+    volume : float
+        The volume of the cell tally in cm^3.
+    unit : str, optional
+        The desired unit for the dose rate. Options are 'pSv/s', 'µSv/h', 
+        'mSv/h', 'Sv/h'. Default is 'µSv/h'.
+
+    Returns:
+    -------
+    tuple
+        A tuple containing the dose rate and its standard deviation in the specified unit.
+    """
+    tally = statepoint.get_tally(name=tally_name)
+    mean = tally.mean.flatten()[0]
+    std_dev = tally.std_dev.flatten()[0]
+    
+    # Dose rate in pSv/s
+    dose_rate_pSv_s = (mean / volume) * particule_per_second
+    error_pSv_s = (std_dev / volume) * particule_per_second
+
+    unit_conversions = {
+        'psv/s': 1.0,
+        'µsv/h': 3600 * 1e-6,
+        'msv/h': 3600 * 1e-9,
+        'sv/h': 3600 * 1e-12,
+    }
+
+    unit_lower = unit.lower()
+    if unit_lower not in unit_conversions:
+        raise ValueError(f"Unsupported unit: {unit}. Supported units are {list(unit_conversions.keys())}")
+
+    conversion_factor = unit_conversions[unit_lower]
+    
+    dose_rate = dose_rate_pSv_s * conversion_factor
+    dose_rate_error = error_pSv_s * conversion_factor
+    
+    return dose_rate, dose_rate_error
 
 def load_mesh_tally(statepoint_file: object,
                     cwd: Path = Path.cwd(), 
@@ -795,11 +847,14 @@ def dose_over_geometry(model, statepoint_file: object,
     mesh_tally = statepoint_file.get_tally(name=name_mesh_tally)
     flux_data = mesh_tally.mean.reshape((bin_number, bin_number))
     flux_data = flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
+    # flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
+    # flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / flux_data
+    # relative_error = np.zeros_like(flux_data)
+    nonzero_flux = flux_data != 0
+    # relative_error[nonzero_flux] = flux_error[nonzero_flux]
     flux_error = mesh_tally.std_dev.reshape((bin_number, bin_number))
     flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume) / flux_data
-    relative_error = np.zeros_like(flux_data)
-    nonzero_flux = flux_data != 0
-    relative_error[nonzero_flux] = flux_error[nonzero_flux]
+    relative_error = flux_error
 
     mesh = mesh_tally.find_filter(openmc.MeshFilter).mesh
     extent = mesh.bounding_box.extent[plane]

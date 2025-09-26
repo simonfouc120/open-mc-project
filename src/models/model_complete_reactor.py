@@ -83,6 +83,8 @@ graphite_lattice.center = (0., 0.)
 graphite_lattice.pitch = (55.0,)  # pitch in cm
 graphite_lattice.outer = bloc_universe
 graphite_lattice.universes = [
+    [bloc_universe]*18,               # 6th ring
+    [bloc_universe]*12,               # 5th ring
     [bloc_universe]*6,                # center (1 universe)
     [bloc_universe]               # first ring (6 universes)
 ] 
@@ -167,4 +169,4 @@ model.export_to_xml()
 
 # plot_geometry(materials = material, plane="yz", saving_figure=True, dpi=500, height=800, width=800)
 
-# plot_geometry(materials = material, plane="xy", saving_figure=True, dpi=500, height=400, width=400)
+plot_geometry(materials = material, plane="xy", saving_figure=True, dpi=500, height=400, width=400)

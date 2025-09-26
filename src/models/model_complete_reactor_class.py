@@ -137,8 +137,10 @@ class Reactor_model:
         graphite_lat.pitch = (pitch_graphite_assembly,)
         graphite_lat.outer = block_universe
         graphite_lat.universes = [
-            [block_universe] * 6,  # center (6 universes)
-            [block_universe],      # first ring (1 universe)
+            [block_universe] * 18,  # 3rd ring
+            [block_universe] * 12,  # 2nd ring
+            [block_universe] * 6,   # 1st ring
+            [block_universe],       # Center
         ]
 
         hex_prism = openmc.model.HexagonalPrism(

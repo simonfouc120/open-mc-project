@@ -5,13 +5,25 @@ import numpy as np
 from PIL import Image
 
 
-def remove_previous_results(batches_number):
+def remove_previous_results(batches_number: int = None):
+    """
+    Remove previous simulation results.
+    If batches_number is provided, it removes the specific statepoint file.
+    Otherwise, it removes all statepoint files.
+    It also removes the summary.h5 file.
+    """
     summary_path = "summary.h5"
-    statepoint_path = f"statepoint.{batches_number}.h5"
     if os.path.exists(summary_path):
         os.remove(summary_path)
-    if os.path.exists(statepoint_path):
-        os.remove(statepoint_path)
+
+    if batches_number is not None:
+        statepoint_path = f"statepoint.{batches_number}.h5"
+        if os.path.exists(statepoint_path):
+            os.remove(statepoint_path)
+    else:
+        for file in os.listdir('.'):
+            if file.startswith('statepoint.') and file.endswith('.h5'):
+                os.remove(file)
         
 def remove_surface_source_files():
     """
@@ -348,3 +360,23 @@ class Volume_cell:
             z0 = getattr(self.cell.region.surface, 'z0', 0.0)
             return (x0, y0, z0)
         return None
+    
+def create_dose_rate_tally(name: str, particle_type: str, cell: openmc.Cell) -> openmc.Tally:
+    """
+    Creates a tally to calculate dose in a specific cell for a given particle type.
+
+    Args:
+        name: The name for the tally.
+        particle_type: The type of particle to score (e.g., 'photon', 'neutron').
+        cell: The cell in which to tally the dose.
+
+    Returns:
+        An OpenMC Tally object configured for dose calculation.
+    """
+    tally = openmc.Tally(name=name)
+    tally.scores = ['flux']
+    energy_bins, dose_coeffs = openmc.data.dose_coefficients(particle=particle_type, geometry='ISO')
+    energy_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs, interpolation='cubic')
+    cell_filter = openmc.CellFilter(cell)
+    tally.filters = [cell_filter, energy_filter]
+    return tally
