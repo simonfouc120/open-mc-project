@@ -62,11 +62,9 @@ mesh.dimension = (30, 30, 30)
 mesh.lower_left = (-700.0, -700.0, -700.0)
 mesh.upper_right = (700.0, 700.0, 700.0)
 
-energy_bounds = np.linspace(0.0, 15e6, 10)  # 10 energy bins from 0 to 15 MeV
-
 wwg_neutron = openmc.WeightWindowGenerator(
     mesh=mesh,  
-    energy_bounds=energy_bounds,
+    max_realizations=settings.batches,
     particle_type='neutron', 
     method="magic"
 )
@@ -79,7 +77,6 @@ settings.weight_window_generators = [wwg_neutron, wwg_photon]
 
 
 MODEL.settings = settings
-# settings.export_to_xml()
 MODEL.export_to_xml()
 
 remove_previous_results(CWD)

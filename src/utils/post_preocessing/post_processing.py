@@ -718,7 +718,8 @@ def flux_over_geometry(model, statepoint_file: object,
                     pixels_model_geometry:int=1_000_000,
                     suffix_saving: str = "",
                     color_by: str = "material",
-                    saving_figure:bool = True):
+                    saving_figure:bool = True,
+                    dpi: int = 300):
     """
     Load and plot the mesh tally from the statepoint file.
 
@@ -800,7 +801,7 @@ def flux_over_geometry(model, statepoint_file: object,
     plt.tight_layout()
     name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
     if saving_figure:
-        plt.savefig(cwd / name_mesh_tally_saving)
+        plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
     plt.show()
 
 
@@ -823,7 +824,8 @@ def dose_over_geometry(model, statepoint_file: object,
                     suffix_saving: str = "",
                     color_by: str = "material",
                     saving_figure:bool = True,
-                    plot_error:bool=False):
+                    plot_error:bool=False,
+                    dpi: int = 300):
     """
     Load and plot the dose mesh tally from the statepoint file.
 
@@ -910,7 +912,7 @@ def dose_over_geometry(model, statepoint_file: object,
     plt.tight_layout()
     name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
     if saving_figure:
-        plt.savefig(cwd / name_mesh_tally_saving)
+        plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
     plt.show()
 
 def plot_flux_spectrum(
