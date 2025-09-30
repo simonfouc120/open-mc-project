@@ -64,27 +64,6 @@ settings.source.particles = ["photon"]
 settings.source.energy = openmc.stats.Discrete(energies_eV, pdf_list)
 settings.source.strength = photons_per_s
 
-## FWCADIS
-# MODEL.settings = settings
-
-# rr_model = copy.deepcopy(MODEL)
-# rr_model.convert_to_multigroup(
-#     # I tend to use "stochastic_slab" method here.
-#     # Using the "material_wise" method is more accurate but slower
-#     # In problems where one needs weight windows to solve we don't really want
-#     # the calculation of weight windows to be slow.
-#     # In extreme cases the "material_wise" method could require its own weight windows to solve.
-#     # The "stochastic_slab" method is much faster and works well for most problems.
-#     # more details here https://docs.openmc.org/en/latest/usersguide/random_ray.html#the-easy-way
-#     method="stochastic_slab", 
-#     overwrite_mgxs_library=True,  # overrights the 
-#     nparticles=2000 # this is the default but can be adjusted upward to improve the fidelity of the generated cross section library
-# )
-# rr_model.convert_to_random_ray()
-
-# ##
-
-
 mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
 mesh.dimension = (65, 65, 65)
 mesh.lower_left = (-700.0, -700.0, -700.0)

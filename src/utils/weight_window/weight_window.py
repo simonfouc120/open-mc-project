@@ -40,6 +40,7 @@ def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25,
                            lower_left=np.array([-500.0, -500.0, -500]), 
                            upper_right=np.array([500.0, 500.0, 500]), 
                            target=np.array([50.0, 0.0, 0.0]),
+                           alpha:float=1.0,
                            beta:float=50.0,
                            factor_div:float=1e5) -> np.ndarray:
     """
@@ -67,7 +68,7 @@ def create_correction_ww_tally(nx:int=25, ny:int=25, nz:int=25,
             for k, z in enumerate(z_vals):
                 pos = np.array([x, y, z])
                 dist = np.linalg.norm(pos - target)
-                importance_map[i, j, k] = (dist + beta) / factor_div
+                importance_map[i, j, k] = (alpha * dist + beta) / factor_div
     return importance_map
 
 
@@ -143,3 +144,74 @@ def remove_zeros_from_ww(weight_windows:list) -> list:
                 current_slice_upper[current_slice_upper <= 0] = min_nonzero_upper
                 wwg.upper_ww_bounds[:, :, :, index_energy] = current_slice_upper
     return weight_windows
+
+
+
+
+def make_oriented_importance(mesh_bounds, shape,
+                             sphere_center, sphere_radius,
+                             I_min=1e-3, I_max=1.0, lambda_radial=1.0,
+                             beam_dir=None, angular_power=2.0, alpha=0.1):
+    """
+    mesh_bounds: ((x0,x1),(y0,y1),(z0,z1))
+    shape: (nx,ny,nz)
+    sphere_center: (xc,yc,zc)
+    sphere_radius: R
+    I_min, I_max: radial importance floor and peak
+    lambda_radial: exponential decay constant (1/length)
+    beam_dir: None or 3-vector unit (direction which is 'looking at' the sphere)
+    angular_power: p in (cos(theta))**p
+    alpha: floor weight for angular factor (0..1)
+    """
+    (x0,x1),(y0,y1),(z0,z1) = mesh_bounds
+    nx, ny, nz = shape
+
+    xs = np.linspace(x0, x1, nx, endpoint=False) + (x1 - x0)/nx*0.5
+    ys = np.linspace(y0, y1, ny, endpoint=False) + (y1 - y0)/ny*0.5
+    zs = np.linspace(z0, z1, nz, endpoint=False) + (z1 - z0)/nz*0.5
+
+    X = xs[:, None, None]
+    Y = ys[None, :, None]
+    Z = zs[None, None, :]
+
+    # position of cell centers
+    # broadcasted arrays of same shape (nx,ny,nz)
+    xv = X
+    yv = Y
+    zv = Z
+
+    # vector from voxel to sphere center
+    sx, sy, sz = sphere_center
+    vx = sx - xv
+    vy = sy - yv
+    vz = sz - zv
+    r = np.sqrt(vx**2 + vy**2 + vz**2)
+
+    # distance to sphere surface
+    d_surface = np.maximum(0.0, r - sphere_radius)
+
+    # radial factor (exponential)
+    fr = I_min + (I_max - I_min) / np.exp(-lambda_radial * d_surface)
+
+    # angular factor
+    if beam_dir is None:
+        fa = 1.0
+    else:
+        u = np.array(beam_dir, dtype=float)
+        unorm = np.linalg.norm(u)
+        if unorm == 0.0:
+            raise ValueError("beam_dir must be non-zero")
+        u /= unorm
+        # unit vectors from voxel to sphere (handle r=0)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            vxn = np.where(r > 0, vx / r, 0.0)
+            vyn = np.where(r > 0, vy / r, 0.0)
+            vzn = np.where(r > 0, vz / r, 0.0)
+        cos_theta = vxn*u[0] + vyn*u[1] + vzn*u[2]
+        cos_theta = np.clip(cos_theta, -1.0, 1.0)
+        fa = np.maximum(0.0, cos_theta) ** angular_power
+        # combine with floor alpha to avoid zeros everywhere
+        fa = alpha + (1.0 - alpha) * fa
+
+    importance = fr * fa
+    return importance

@@ -45,6 +45,7 @@ plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())),
 # fonction material pas de fission
 
 tallys = openmc.Tallies()
+tallys.export_to_xml()
 
 # run the simulation
 
