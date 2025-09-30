@@ -680,9 +680,9 @@ class mesh_tally_data:
             else:
                 plt.legend()
             finalize_plot(
-            f'{plane[0].upper()} [cm]',
+            f'{plane[1].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[0].lower()}) at {plane[1].lower()}={coords[1][axis_one_index]:.2f} cm'
+            f'Dose {particule_type} = f({plane[1].lower()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
             )
 
         if axis_two_index is not None:
@@ -697,9 +697,9 @@ class mesh_tally_data:
             else:
                 plt.legend()
             finalize_plot(
-            f'{plane[1].upper()} [cm]',
+            f'{plane[0].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[1].upper()}) at {plane[0].lower()}={coords[0][axis_two_index]:.2f} cm'
+            f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm'
             )
 
 
