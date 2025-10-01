@@ -1,8 +1,8 @@
 {
     "dose_rate": {
-        "value [mSv/h]": 5.4039704889348394,
-        "error [mSv/h]": 2.909477532753581,
-        "relative_error [%]": 53.83962659883177,
+        "value [mSv/h]": 5.455067434722345,
+        "error [mSv/h]": 2.0983650522586625,
+        "relative_error [%]": 38.46634486866735,
         "unit": "mSv/h"
     }
 }

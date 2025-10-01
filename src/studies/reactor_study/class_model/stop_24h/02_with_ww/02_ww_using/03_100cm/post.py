@@ -22,7 +22,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.090.h5")
+statepoint = openmc.StatePoint(f"statepoint.200.h5")
 
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 photons_per_s = 2.5e15
@@ -79,3 +79,6 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              radiological_area=True,
                              geometrical_limit=[(-400, 'Concrete wall start'), (-500, 'Concrete wall end')],
                              fig_name="dose_plot_photons.png")
+mesh_tally_photons.dose_over_geometry(model=MODEL, name_mesh_tally="flux_mesh_photons_xy", 
+                saving_figure=True, plot_error=True, particule_type="photon",
+                particles_per_second=photons_per_s, radiological_area=True)   

@@ -528,26 +528,21 @@ class Pulse_height_tally:
 class mesh_tally_data:
     def __init__(self, statepoint, name_mesh_tally, plane):
         self.mesh_tally = statepoint.get_tally(name=name_mesh_tally)
-        self.plane = plane
+        self.plane = plane.lower()
         self.bin_number = np.sqrt(self.mesh_tally.num_bins).astype(int)
-        if plane.lower() == "xy":
-            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
-            mesh = mesh_filter.mesh
-            self.lower_left = mesh.lower_left[:-1]
-            self.upper_right = mesh.upper_right[:-1]
-        elif plane.lower() == "xz":
-            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
-            mesh = mesh_filter.mesh
-            self.lower_left = (mesh.lower_left[0], mesh.lower_left[2])
-            self.upper_right = (mesh.upper_right[0], mesh.upper_right[2])
-        elif plane.lower() == "yz":
-            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
-            mesh = mesh_filter.mesh
-            self.lower_left = (mesh.lower_left[1], mesh.lower_left[2])
-            self.upper_right = (mesh.upper_right[1], mesh.upper_right[2])
+        self.mesh = self.mesh_tally.find_filter(openmc.MeshFilter).mesh
+        if self.plane == "xy":
+            self.lower_left = self.mesh.lower_left[:-1]
+            self.upper_right = self.mesh.upper_right[:-1]
+        elif self.plane == "xz":
+            self.lower_left = (self.mesh.lower_left[0], self.mesh.lower_left[2])
+            self.upper_right = (self.mesh.upper_right[0], self.mesh.upper_right[2])
+        elif self.plane == "yz":
+            self.lower_left = (self.mesh.lower_left[1], self.mesh.lower_left[2])
+            self.upper_right = (self.mesh.upper_right[1], self.mesh.upper_right[2])
 
     @property
-    def get_coordinates(self):
+    def mesh_coordinates(self):
         """
         Generate coordinates for mesh bins.
         
@@ -571,12 +566,47 @@ class mesh_tally_data:
         return coords
     
     @property
-    def get_flux_data(self):
+    def mesh_tally_value(self):
         return self.mesh_tally.mean.reshape((self.bin_number, self.bin_number))
 
     @property
-    def get_flux_error(self):
+    def mesh_tally_error(self):
         return self.mesh_tally.std_dev.reshape((self.bin_number, self.bin_number))
+
+    @property
+    def voxel_volume(self,
+                     coord_value: float = 0.0,
+                     thickness: float = 1.0):
+        """
+        Get the volumes of the mesh bins in the specified plane.
+
+        Parameters:
+            plane (str): Plane to create the mesh in ('xy', 'xz', or 'yz').
+            bin_number (int): Number of bins in each direction.
+            lower_left (tuple): Lower left corner of the mesh (2D).
+            upper_right (tuple): Upper right corner of the mesh (2D).
+            coord_value (float): Coordinate value for the orthogonal axis.
+            thickness (float): Thickness along the orthogonal axis.
+
+        Returns:
+            np.ndarray: Array of volumes for each mesh bin.
+        """
+        mesh = openmc.RegularMesh()
+        if self.plane == "xy":
+            mesh.dimension = [self.bin_number, self.bin_number, 1]
+            mesh.lower_left = (self.lower_left[0], self.lower_left[1], coord_value - thickness / 2)
+            mesh.upper_right = (self.upper_right[0], self.upper_right[1], coord_value + thickness / 2)
+        elif self.plane == "xz":
+            mesh.dimension = [self.bin_number, 1, self.bin_number]
+            mesh.lower_left = (self.lower_left[0], coord_value - thickness / 2, self.lower_left[1])
+            mesh.upper_right = (self.upper_right[0], coord_value + thickness / 2, self.upper_right[1])
+        elif self.plane == "yz":
+            mesh.dimension = [1, self.bin_number, self.bin_number]
+            mesh.lower_left = (coord_value - thickness / 2, self.lower_left[0], self.lower_left[1])
+            mesh.upper_right = (coord_value + thickness / 2, self.upper_right[0], self.upper_right[1])
+        else:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+        return mesh.volumes[0][0][0]
 
     def plot_flux(self, 
                   axis_one_index=None, 
@@ -588,8 +618,8 @@ class mesh_tally_data:
                   fig_name:str="flux_plot.png"):
 
         if x_lim is None:
-            x_lim = (self.get_coordinates[0][0], self.get_coordinates[0][-1])
-        coords = self.get_coordinates
+            x_lim = (self.mesh_coordinates[0][0], self.mesh_coordinates[0][-1])
+        coords = self.mesh_coordinates
         plane = self.plane
 
         if (geometrical_limit[0][0] is not None and geometrical_limit[0][1] is not None):
@@ -599,7 +629,7 @@ class mesh_tally_data:
 
 
         if axis_one_index is not None:
-            plt.errorbar(coords[0], self.get_flux_data[:, axis_one_index], yerr= self.get_flux_error[:, axis_one_index],
+            plt.errorbar(coords[0], self.mesh_tally_value[:, axis_one_index], yerr= self.mesh_tally_error[:, axis_one_index],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
             plt.xlabel(f'{plane[1].upper()} [cm]')
@@ -622,7 +652,7 @@ class mesh_tally_data:
             plt.show()
 
         if axis_two_index is not None:
-            plt.errorbar(coords[0], self.get_flux_data[axis_two_index, :], yerr= self.get_flux_error[axis_two_index, :],
+            plt.errorbar(coords[0], self.mesh_tally_value[axis_two_index, :], yerr= self.mesh_tally_error[axis_two_index, :],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
             plt.xlabel(f'{plane[0].upper()} [cm]')
@@ -658,14 +688,14 @@ class mesh_tally_data:
                   geometrical_limit: tuple = [(None, None)],
                   log_scale: bool = True):
         if x_lim is None:
-            x_lim = (self.get_coordinates[0][0], self.get_coordinates[0][-1])
+            x_lim = (self.mesh_coordinates[0][0], self.mesh_coordinates[0][-1])
         if y_lim is None:
             y_lim = (0.1, None)
-        coords = self.get_coordinates
+        coords = self.mesh_coordinates
         plane = self.plane
 
-        dose_data = self.get_flux_data * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
-        dose_error = self.get_flux_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
+        dose_data = self.mesh_tally_value * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
+        dose_error = self.mesh_tally_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
 
         def plot_radiological_areas():
             for i in range(len(DOSE_AREAS_LIMIT) - 1):
@@ -738,6 +768,109 @@ class mesh_tally_data:
             f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
             )
 
+    def dose_over_geometry(self, model,
+                        cwd: Path = Path.cwd(), 
+                        name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
+                        particule_type:str='neutrons',
+                        particles_per_second:int=1,
+                        plane_coord:float=0.0,
+                        zoom_x:tuple=(None, None),
+                        zoom_y:tuple=(None, None),
+                        pixels_model_geometry:int=1_000_000,
+                        radiological_area: bool = False,
+                        suffix_saving: str = "",
+                        color_by: str = "material",
+                        saving_figure:bool = True,
+                        plot_error:bool=False,
+                        dpi: int = 300):
+        """
+        Load and plot the dose mesh tally from the statepoint file.
+
+        Parameters:
+        - cwd: Path or directory where the mesh tally image will be saved.
+        - statepoint_file: The OpenMC statepoint file object containing the tally data.
+        - name_mesh_tally_saving: Name of the tally (default is "mesh_tally.png").
+        - bin_number: Number of bins for the mesh tally in each dimension (default is 400).
+        - lower_left: Tuple specifying the lower left corner of the mesh (default is (-10.0, -10.0)).
+        - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
+        - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
+        - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+
+        This function extracts the dose mesh tally from the statepoint file, reshapes the data,
+        and plots it using matplotlib with a logarithmic color scale. The resulting plot
+        is saved as a PNG file in the specified directory and displayed.
+        """
+        if self.plane not in ["xy", "xz", "yz"]:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+        if zoom_x == (None, None):
+            zoom_x = (self.lower_left[0], self.upper_right[0])
+        if zoom_y == (None, None):
+            zoom_y = (self.lower_left[1], self.upper_right[1])
+
+        flux_data = self.mesh_tally_value * particles_per_second * 1e-6 * 3600 / self.voxel_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
+        nonzero_flux = flux_data != 0
+        # relative_error[nonzero_flux] = flux_error[nonzero_flux]
+        flux_error = self.mesh_tally_error.reshape((self.bin_number, self.bin_number))
+        flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / self.voxel_volume) / flux_data
+        relative_error = flux_error
+
+        mesh = self.mesh
+        extent = mesh.bounding_box.extent[self.plane]
+        # Common settings for model.plot
+        plot_kwargs = {
+            'outline': "only",
+            'basis': self.plane,
+            'axes': None,  # This will be set per-plot
+            'pixels': pixels_model_geometry,
+            'color_by': color_by,
+            'origin': ((self.lower_left[0] + self.upper_right[0]) / 2, (self.lower_left[1] + self.upper_right[1]) / 2, plane_coord),    
+            'width': (self.upper_right[0] - self.lower_left[0], self.upper_right[1] - self.lower_left[1])
+        }
+        def setup_ax(ax, title):
+            ax.set_title(title)
+            ax.set_xlabel(f'{self.plane[0].upper()} [cm]')
+            ax.set_ylabel(f'{self.plane[1].upper()} [cm]')
+            ax.set_xlim(zoom_x)
+            ax.set_ylim(zoom_y)
+        if radiological_area:
+            cmap = ListedColormap(AREAS_COLORS)
+            norm = BoundaryNorm(DOSE_AREAS_LIMIT, ncolors=len(AREAS_COLORS))
+            label_flux = "Radiological area"
+        else :
+            cmap = 'plasma'
+            norm = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+            label_flux = "Dose rate [µSv/h]"
+        if plot_error:
+            fig, (ax_flux, ax_error) = plt.subplots(1, 2, figsize=(14, 6))
+
+            # Plot flux data
+            im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
+            plot_kwargs['axes'] = ax_flux
+            model.plot(**plot_kwargs)
+            setup_ax(ax_flux, f"Dose map {self.plane.upper()} {particule_type}")
+            fig.colorbar(im_flux, ax=ax_flux, label=label_flux)
+
+            # Plot relative error
+            im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
+            plot_kwargs['axes'] = ax_error
+            model.plot(**plot_kwargs)
+            setup_ax(ax_error, f"Dose error map {self.plane.upper()} {particule_type}")
+            fig.colorbar(im_error, ax=ax_error, label="Relative Error")
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            # Plot flux data
+            im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
+            plot_kwargs['axes'] = ax
+            model.plot(**plot_kwargs)
+            setup_ax(ax, f"Dose map {self.plane.upper()} {particule_type}")
+            fig.colorbar(im_flux, ax=ax, label=label_flux)
+        plt.tight_layout()
+        name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
+        if saving_figure:
+            plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
+        plt.show()
 
 def flux_over_geometry(model, statepoint_file: object,
                     cwd: Path = Path.cwd(), 
