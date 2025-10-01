@@ -79,6 +79,6 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              radiological_area=True,
                              geometrical_limit=[(-400, 'Concrete wall start'), (-500, 'Concrete wall end')],
                              fig_name="dose_plot_photons.png")
-mesh_tally_photons.dose_over_geometry(model=MODEL, name_mesh_tally="flux_mesh_photons_xy", 
+mesh_tally_photons.dose_cartography(model=MODEL, name_mesh_tally="flux_mesh_photons_xy", 
                 saving_figure=True, plot_error=True, particule_type="photon",
                 particles_per_second=photons_per_s, radiological_area=True)   

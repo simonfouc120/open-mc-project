@@ -768,7 +768,7 @@ class mesh_tally_data:
             f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
             )
 
-    def dose_over_geometry(self, model,
+    def dose_cartography(self, model,
                         cwd: Path = Path.cwd(), 
                         name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
                         particule_type:str='neutrons',
@@ -779,9 +779,10 @@ class mesh_tally_data:
                         pixels_model_geometry:int=1_000_000,
                         radiological_area: bool = False,
                         suffix_saving: str = "",
+                        model_geometry: bool = True,
                         color_by: str = "material",
-                        saving_figure:bool = True,
-                        plot_error:bool=False,
+                        saving_figure: bool = True,
+                        plot_error: bool = False,
                         dpi: int = 300):
         """
         Overlay the dose mesh tally on the OpenMC model geometry.
@@ -853,14 +854,16 @@ class mesh_tally_data:
             # Plot flux data
             im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
             plot_kwargs['axes'] = ax_flux
-            model.plot(**plot_kwargs)
+            if model_geometry :
+                model.plot(**plot_kwargs)
             setup_ax(ax_flux, f"Dose map {self.plane.upper()} {particule_type}")
             fig.colorbar(im_flux, ax=ax_flux, label=label_flux)
 
             # Plot relative error
             im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
             plot_kwargs['axes'] = ax_error
-            model.plot(**plot_kwargs)
+            if model_geometry:
+                model.plot(**plot_kwargs)
             setup_ax(ax_error, f"Dose error map {self.plane.upper()} {particule_type}")
             fig.colorbar(im_error, ax=ax_error, label="Relative Error")
         else:
@@ -869,7 +872,8 @@ class mesh_tally_data:
             # Plot flux data
             im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap=cmap, norm=norm)
             plot_kwargs['axes'] = ax
-            model.plot(**plot_kwargs)
+            if model_geometry:
+                model.plot(**plot_kwargs)
             setup_ax(ax, f"Dose map {self.plane.upper()} {particule_type}")
             fig.colorbar(im_flux, ax=ax, label=label_flux)
         plt.tight_layout()
