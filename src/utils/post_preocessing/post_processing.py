@@ -570,7 +570,8 @@ class mesh_tally_data:
                   axis_two_index=None, 
                   x_lim:tuple=None, 
                   y_lim:tuple=None,
-                  save_fig:bool=False, 
+                  save_fig:bool=False,
+                  geometrical_limit: tuple = [(None, None)], 
                   fig_name:str="flux_plot.png"):
 
         if x_lim is None:
@@ -578,12 +579,23 @@ class mesh_tally_data:
         coords = self.get_coordinates
         plane = self.plane
 
+        if (geometrical_limit[0][0] is not None and geometrical_limit[0][1] is not None):
+            colors = ["black", "grey", "brown", "purple"]
+            for i in range(len(geometrical_limit)):
+                plt.axvline(x=geometrical_limit[i][0], color=colors[i], linestyle='--', label=geometrical_limit[i][1])
+
+
         if axis_one_index is not None:
             plt.errorbar(coords[0], self.get_flux_data[:, axis_one_index], yerr= self.get_flux_error[:, axis_one_index],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
             plt.xlabel(f'{plane[1].upper()} [cm]')
-            plt.legend()
+            if geometrical_limit[0][0] is not None and geometrical_limit[0][1] is not None:
+                legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
+                legend.get_frame().set_edgecolor('black')
+                legend.get_frame().set_linewidth(1.5)
+            else:
+                plt.legend()
             plt.ylabel('Flux [n/cm^2/P-source]')
             plt.title(f'Flux=f({plane[0].lower()}) at {plane[0].lower()}={coords[1][axis_one_index]:.2f} cm')
             plt.yscale('log')
@@ -601,7 +613,12 @@ class mesh_tally_data:
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
                  label='Flux values')
             plt.xlabel(f'{plane[0].upper()} [cm]')
-            plt.legend()
+            if geometrical_limit[0][0] is not None and geometrical_limit[0][1] is not None:
+                legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
+                legend.get_frame().set_edgecolor('black')
+                legend.get_frame().set_linewidth(1.5)
+            else:
+                plt.legend()
             plt.ylabel('Flux [n/cm^2/P-source]')
             plt.title(f'Flux=f({plane[1].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
             plt.yscale('log')
@@ -625,6 +642,7 @@ class mesh_tally_data:
                   save_fig:bool=False, 
                   fig_name:str="dose_plot.png",
                   radiological_area: bool = False,
+                  geometrical_limit: tuple = [(None, None)],
                   log_scale: bool = True):
         if x_lim is None:
             x_lim = (self.get_coordinates[0][0], self.get_coordinates[0][-1])
@@ -668,12 +686,17 @@ class mesh_tally_data:
         if radiological_area:
             plot_radiological_areas()
 
+        if (geometrical_limit[0][0] is not None and geometrical_limit[0][1] is not None):
+            colors = ["black", "grey", "brown", "purple"]
+            for i in range(len(geometrical_limit)):
+                plt.axvline(x=geometrical_limit[i][0], color=colors[i], linestyle='--', label=geometrical_limit[i][1])
+
         if axis_one_index is not None:
             plt.errorbar(
             coords[0], dose_data[:, axis_one_index], yerr=dose_error[:, axis_one_index],
             fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2, label='Dose values'
             )
-            if radiological_area:
+            if radiological_area or (geometrical_limit[0] is not None and geometrical_limit[1] is not None):
                 legend = plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0., frameon=True)
                 legend.get_frame().set_edgecolor('black')
                 legend.get_frame().set_linewidth(1.5)
@@ -683,7 +706,7 @@ class mesh_tally_data:
             f'{plane[1].upper()} [cm]',
             "Dose rate [µSv/h]",
             f'Dose {particule_type} = f({plane[1].lower()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
-            )
+        )
 
         if axis_two_index is not None:
             plt.errorbar(
@@ -699,7 +722,7 @@ class mesh_tally_data:
             finalize_plot(
             f'{plane[0].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm'
+            f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
             )
 
 
