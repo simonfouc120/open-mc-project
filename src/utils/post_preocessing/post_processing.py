@@ -526,12 +526,25 @@ class Pulse_height_tally:
         return efficiency
     
 class mesh_tally_data:
-    def __init__(self, statepoint, name_mesh_tally, plane, bin_number, lower_left, upper_right):
+    def __init__(self, statepoint, name_mesh_tally, plane):
         self.mesh_tally = statepoint.get_tally(name=name_mesh_tally)
         self.plane = plane
-        self.bin_number = bin_number
-        self.lower_left = lower_left
-        self.upper_right = upper_right
+        self.bin_number = np.sqrt(self.mesh_tally.num_bins).astype(int)
+        if plane.lower() == "xy":
+            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
+            mesh = mesh_filter.mesh
+            self.lower_left = mesh.lower_left[:-1]
+            self.upper_right = mesh.upper_right[:-1]
+        elif plane.lower() == "xz":
+            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
+            mesh = mesh_filter.mesh
+            self.lower_left = (mesh.lower_left[0], mesh.lower_left[2])
+            self.upper_right = (mesh.upper_right[0], mesh.upper_right[2])
+        elif plane.lower() == "yz":
+            mesh_filter = self.mesh_tally.find_filter(openmc.MeshFilter)
+            mesh = mesh_filter.mesh
+            self.lower_left = (mesh.lower_left[1], mesh.lower_left[2])
+            self.upper_right = (mesh.upper_right[1], mesh.upper_right[2])
 
     @property
     def get_coordinates(self):

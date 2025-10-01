@@ -22,7 +22,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.050.h5")
+statepoint = openmc.StatePoint(f"statepoint.090.h5")
 
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 photons_per_s = 2.5e15
@@ -69,11 +69,11 @@ save_tally_result_to_json(
     filename="results.json"
 )
 
-mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
+mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY")
 mesh_tally_photons.plot_dose(axis_two_index=250, 
                              particles_per_second=photons_per_s, 
                              x_lim=(-650, 0),
-                             y_lim=(1e1, 1e10),
+                             y_lim=(1e1, 1e8),
                              mesh_bin_volume=bin_mesh_volume,
                              save_fig=True,
                              radiological_area=True,
