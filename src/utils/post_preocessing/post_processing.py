@@ -784,21 +784,27 @@ class mesh_tally_data:
                         plot_error:bool=False,
                         dpi: int = 300):
         """
-        Load and plot the dose mesh tally from the statepoint file.
+        Overlay the dose mesh tally on the OpenMC model geometry.
 
         Parameters:
+        - model: The OpenMC model object to plot geometry.
         - cwd: Path or directory where the mesh tally image will be saved.
-        - statepoint_file: The OpenMC statepoint file object containing the tally data.
-        - name_mesh_tally_saving: Name of the tally (default is "mesh_tally.png").
-        - bin_number: Number of bins for the mesh tally in each dimension (default is 400).
-        - lower_left: Tuple specifying the lower left corner of the mesh (default is (-10.0, -10.0)).
-        - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
-        - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
-        - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+        - name_mesh_tally: Name of the tally (default is "flux_mesh_neutrons_dose_xy").
+        - particule_type: Type of particle for the tally (default is 'neutrons').
+        - particles_per_second: Number of particles per second (default is 1).
+        - plane_coord: Coordinate value for the orthogonal axis of the mesh plane.
+        - zoom_x: Tuple specifying the x-axis limits for zooming (default is mesh bounds).
+        - zoom_y: Tuple specifying the y-axis limits for zooming (default is mesh bounds).
+        - pixels_model_geometry: Number of pixels for the geometry plot (default is 1_000_000).
+        - radiological_area: Boolean to plot radiological area color map (default is False).
+        - suffix_saving: Suffix for the saved figure filename.
+        - color_by: How to color the geometry plot (default is "material").
+        - saving_figure: Boolean indicating whether to save the figure (default is True).
+        - plot_error: Boolean indicating whether to plot the error (default is False).
+        - dpi: Dots per inch for the saved figure (default is 300).
 
-        This function extracts the dose mesh tally from the statepoint file, reshapes the data,
-        and plots it using matplotlib with a logarithmic color scale. The resulting plot
-        is saved as a PNG file in the specified directory and displayed.
+        This method overlays the dose mesh tally as an image on top of the OpenMC model geometry
+        using matplotlib, with options for radiological area coloring and error plotting.
         """
         if self.plane not in ["xy", "xz", "yz"]:
             raise ValueError("plane must be 'xy', 'xz', or 'yz'")
