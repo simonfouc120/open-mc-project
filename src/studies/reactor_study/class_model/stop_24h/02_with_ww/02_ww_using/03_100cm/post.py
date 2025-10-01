@@ -22,7 +22,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.200.h5")
+statepoint = openmc.StatePoint(f"statepoint.010.h5")
 
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 photons_per_s = 2.5e15
@@ -31,8 +31,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            total_height_active_part=500.0, 
                            light_water_pool=False, 
                            slab_thickness=100,
-                           concrete_wall_thickness=50,
-                           calculation_sphere_coordinates=(-520, 0, 0),
+                           concrete_wall_thickness=100,
+                           calculation_sphere_coordinates=(-575, 0, 0),
                            calculation_sphere_radius=50)
 
 MODEL = my_reactor.model
@@ -61,7 +61,6 @@ dose_rate, dose_rate_error = compute_dose_rate_tally(
 relative_error = (dose_rate_error / dose_rate) * 100 if dose_rate > 0 else 0
 print(f"Dose rate in the calculation sphere: {dose_rate:.2f} mSv/h (relative error: {relative_error:.2f} %)")
 
-# Save the dose rate result using the new function
 save_tally_result_to_json(
     tally_name="dose_rate",
     value=dose_rate,

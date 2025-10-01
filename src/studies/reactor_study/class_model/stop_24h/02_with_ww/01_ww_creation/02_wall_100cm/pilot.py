@@ -9,7 +9,6 @@ from PIL import Image
 import numpy as np
 import copy
 
-
 CWD = Path(__file__).parent.resolve() 
 project_root = Path(__file__).resolve().parents[8]  
 sys.path.append(str(project_root))
@@ -21,7 +20,6 @@ from src.utils.post_preocessing.post_processing import *
 from src.models.model_complete_reactor_class import *
 
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
-
 
 for material in material_dict.values():
     material= reducing_density(material, factor=5)
@@ -37,7 +35,6 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_radius=50)
 
 MODEL = my_reactor.model
-
 
 data = np.loadtxt('gamma_spectrum_tabular.txt', comments='#')
 energies_eV = data[:,0]*1e6  # Energy in MeV
@@ -64,8 +61,8 @@ settings.source.strength = photons_per_s
 
 mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
 mesh.dimension = (65, 65, 65)
-mesh.lower_left = (-700.0, -700.0, -700.0)
-mesh.upper_right = (700.0, 700.0, 700.0)
+mesh.lower_left = (-850.0, -850.0, -850.0)
+mesh.upper_right = (850.0, 850.0, 850.0)
 
 wwg_photon = openmc.WeightWindowGenerator(
     mesh=mesh,  

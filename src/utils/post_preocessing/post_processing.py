@@ -8,7 +8,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[3]))  # Adjust path to
 from lib.constants.constant import DOSE_AREAS_LIMIT, AREAS_COLORS
 from typing import Optional
-
+import json
 
 def print_calculation_finished():
     """
@@ -978,3 +978,50 @@ def plot_flux_spectrum(
     if savefig:
         plt.savefig(f"spectrum_flux_{particle_name.lower()}.png", dpi=300)
     plt.show()
+
+
+def save_tally_result_to_json(tally_name: str, 
+                                value: float, 
+                                error: float, 
+                                unit: str, 
+                                filename: str = "results.json",
+                                group: str = None):
+    """
+    Saves or updates a scalar tally result in a JSON file.
+
+    This function handles reading an existing JSON file, updating it with new
+    tally data, and writing it back. If the file doesn't exist, it will be
+    created. Optionally, results can be grouped under a common key.
+
+    Args:
+        tally_name (str): The key for the result (e.g., "dose_rate", "fission_rate").
+        value (float): The calculated scalar value of the tally.
+        error (float): The statistical error associated with the value.
+        unit (str): The unit of the value and error.
+        filename (str): The path to the JSON file.
+        group (str, optional): If provided, results are nested under this group key.
+    """
+    try:
+        with open(filename, "r") as f:
+            results_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        results_data = {}
+
+    relative_error = (error / value) * 100 if value > 0 else 0
+
+    result_entry = {
+        f"value [{unit}]": value,
+        f"error [{unit}]": error,
+        "relative_error [%]": relative_error,
+        "unit": unit
+    }
+
+    if group:
+        if group not in results_data:
+            results_data[group] = {}
+        results_data[group][tally_name] = result_entry
+    else:
+        results_data[tally_name] = result_entry
+
+    with open(filename, "w") as f:
+        json.dump(results_data, f, indent=4)
