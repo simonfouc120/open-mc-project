@@ -526,7 +526,11 @@ class Pulse_height_tally:
         return efficiency
     
 class mesh_tally_data:
-    def __init__(self, statepoint, name_mesh_tally, plane):
+    def __init__(self, 
+                 statepoint:object, 
+                 name_mesh_tally:str, 
+                 plane:str, 
+                 particule_type:str='neutron'):
         self.mesh_tally = statepoint.get_tally(name=name_mesh_tally)
         self.plane = plane.lower()
         self.bin_number = np.sqrt(self.mesh_tally.num_bins).astype(int)
@@ -540,6 +544,7 @@ class mesh_tally_data:
         elif self.plane == "yz":
             self.lower_left = (self.mesh.lower_left[1], self.mesh.lower_left[2])
             self.upper_right = (self.mesh.upper_right[1], self.mesh.upper_right[2])
+        self.particule_type = particule_type
 
     @property
     def mesh_coordinates(self):
@@ -627,7 +632,6 @@ class mesh_tally_data:
             for i in range(len(geometrical_limit)):
                 plt.axvline(x=geometrical_limit[i][0], color=colors[i], linestyle='--', label=geometrical_limit[i][1])
 
-
         if axis_one_index is not None:
             plt.errorbar(coords[0], self.mesh_tally_value[:, axis_one_index], yerr= self.mesh_tally_error[:, axis_one_index],
                  fmt='o-', color='blue', ecolor='red', capsize=3, markersize=2,
@@ -639,8 +643,8 @@ class mesh_tally_data:
                 legend.get_frame().set_linewidth(1.5)
             else:
                 plt.legend()
-            plt.ylabel('Flux [n/cm^2/P-source]')
-            plt.title(f'Flux=f({plane[0].lower()}) at {plane[0].lower()}={coords[1][axis_one_index]:.2f} cm')
+            plt.ylabel(f'Flux [p/cm^2/P-source]')
+            plt.title(f'Flux ({self.particule_type})=f({plane[0].lower()}) at {plane[0].lower()}={coords[1][axis_one_index]:.2f} cm')
             plt.yscale('log')
             plt.grid()
             if y_lim is not None:
@@ -662,8 +666,8 @@ class mesh_tally_data:
                 legend.get_frame().set_linewidth(1.5)
             else:
                 plt.legend()
-            plt.ylabel('Flux [n/cm^2/P-source]')
-            plt.title(f'Flux=f({plane[1].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
+            plt.ylabel(f'Flux [p/cm^2/P-source]')
+            plt.title(f'Flux ({self.particule_type})=f({plane[1].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm')
             plt.yscale('log')
             plt.grid()
             if y_lim is not None:
@@ -676,7 +680,6 @@ class mesh_tally_data:
 
     def plot_dose(self, 
                   particles_per_second:int=1, 
-                  particule_type:str='neutrons',
                   mesh_bin_volume:float=1.0, 
                   axis_one_index=None, 
                   axis_two_index=None, 
@@ -748,7 +751,7 @@ class mesh_tally_data:
             finalize_plot(
             f'{plane[1].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[1].lower()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
+            f'Dose {self.particule_type} = f({plane[1].lower()}) at {plane[0].lower()}={coords[0][axis_one_index]:.2f} cm'
         )
 
         if axis_two_index is not None:
@@ -765,7 +768,7 @@ class mesh_tally_data:
             finalize_plot(
             f'{plane[0].upper()} [cm]',
             "Dose rate [µSv/h]",
-            f'Dose {particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
+            f'Dose {self.particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
             )
 
     def dose_cartography(self, model,

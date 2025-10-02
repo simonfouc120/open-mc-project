@@ -69,7 +69,7 @@ save_tally_result_to_json(
     filename="results.json"
 )
 
-mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY")
+mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
 mesh_tally_photons.plot_dose(axis_two_index=250, 
                              particles_per_second=photons_per_s, 
                              x_lim=(-650, 0),
@@ -81,4 +81,4 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              fig_name="dose_plot_photons.png")
 mesh_tally_photons.dose_cartography(model=MODEL, name_mesh_tally="flux_mesh_photons_xy", 
                 saving_figure=True, plot_error=True, particule_type="photon",
-                particles_per_second=photons_per_s, radiological_area=True)   
+                particles_per_second=photons_per_s, radiological_area=False)   
