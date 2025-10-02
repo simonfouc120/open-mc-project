@@ -545,6 +545,8 @@ class mesh_tally_data:
             self.lower_left = (self.mesh.lower_left[1], self.mesh.lower_left[2])
             self.upper_right = (self.mesh.upper_right[1], self.mesh.upper_right[2])
         self.particule_type = particule_type
+        self.score = self.mesh_tally.scores[0]
+        self.name_mesh_tally = name_mesh_tally
 
     @property
     def mesh_coordinates(self):
@@ -771,10 +773,8 @@ class mesh_tally_data:
             f'Dose {self.particule_type} = f({plane[0].upper()}) at {plane[1].lower()}={coords[1][axis_two_index]:.2f} cm',
             )
 
-    def dose_cartography(self, model,
+    def plot_dose_map(self, model,
                         cwd: Path = Path.cwd(), 
-                        name_mesh_tally:str = "flux_mesh_neutrons_dose_xy", 
-                        particule_type:str='neutrons',
                         particles_per_second:int=1,
                         plane_coord:float=0.0,
                         zoom_x:tuple=(None, None),
@@ -820,13 +820,11 @@ class mesh_tally_data:
 
         flux_data = self.mesh_tally_value * particles_per_second * 1e-6 * 3600 / self.voxel_volume  # Convert to dose rate from pSv/s to µSv/h per mesh bin volume
         nonzero_flux = flux_data != 0
-        # relative_error[nonzero_flux] = flux_error[nonzero_flux]
         flux_error = self.mesh_tally_error.reshape((self.bin_number, self.bin_number))
         flux_error = (flux_error * particles_per_second * 1e-6 * 3600 / self.voxel_volume) / flux_data
         relative_error = flux_error
 
-        mesh = self.mesh
-        extent = mesh.bounding_box.extent[self.plane]
+        extent = self.mesh.bounding_box.extent[self.plane]
         # Common settings for model.plot
         plot_kwargs = {
             'outline': "only",
@@ -859,7 +857,7 @@ class mesh_tally_data:
             plot_kwargs['axes'] = ax_flux
             if model_geometry :
                 model.plot(**plot_kwargs)
-            setup_ax(ax_flux, f"Dose map {self.plane.upper()} {particule_type}")
+            setup_ax(ax_flux, f"Dose map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_flux, ax=ax_flux, label=label_flux)
 
             # Plot relative error
@@ -867,7 +865,7 @@ class mesh_tally_data:
             plot_kwargs['axes'] = ax_error
             if model_geometry:
                 model.plot(**plot_kwargs)
-            setup_ax(ax_error, f"Dose error map {self.plane.upper()} {particule_type}")
+            setup_ax(ax_error, f"Dose error map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_error, ax=ax_error, label="Relative Error")
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
@@ -877,13 +875,110 @@ class mesh_tally_data:
             plot_kwargs['axes'] = ax
             if model_geometry:
                 model.plot(**plot_kwargs)
-            setup_ax(ax, f"Dose map {self.plane.upper()} {particule_type}")
+            setup_ax(ax, f"Dose map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_flux, ax=ax, label=label_flux)
+        plt.tight_layout()
+        name_mesh_tally_saving = f"{self.name_mesh_tally}{suffix_saving}.png"
+        if saving_figure:
+            plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
+        plt.show()
+
+    def plot_tally_map(self, model,
+                        cwd: Path = Path.cwd(), 
+                        name_mesh_tally:str = "flux_mesh_tally", 
+                        plot_error:bool=False,
+                        zoom_x:tuple=(-10.0, 10.0), 
+                        zoom_y:tuple=(-10.0, 10.0), 
+                        plane_coord:float=0.0,
+                        pixels_model_geometry:int=1_000_000,
+                        suffix_saving: str = "",
+                        color_by: str = "material",
+                        saving_figure:bool = True,
+                        dpi: int = 300):
+        """
+        Load and plot the mesh tally from the statepoint file.
+
+        Parameters:
+        - cwd: Path or directory where the mesh tally image will be saved.
+        - statepoint_file: The OpenMC statepoint file object containing the tally data.
+        - name_mesh_tally_saving: Name of the tally (default is "mesh_tally.png").
+        - bin_number: Number of bins for the mesh tally in each dimension (default is 400).
+        - lower_left: Tuple specifying the lower left corner of the mesh (default is (-10.0, -10.0)).
+        - upper_right: Tuple specifying the upper right corner of the mesh (default is (10.0, 10.0)).
+        - zoom_x: Tuple specifying the x-axis limits for zooming (default is (-10, 10)).
+        - zoom_y: Tuple specifying the y-axis limits for zooming (default is (-10.0, 10.0)).
+
+        This function extracts the mesh tally from the statepoint file, reshapes the data,
+        and plots it using matplotlib with a logarithmic color scale. The resulting plot
+        is saved as a PNG file in the specified directory and displayed.
+        """
+        if self.plane not in ["xy", "xz", "yz"]:
+            raise ValueError("plane must be 'xy', 'xz', or 'yz'")
+
+        # self.mesh_tally_value = statepoint_file.get_tally(name=name_mesh_tally)
+        flux_data = self.mesh_tally_value.reshape((self.bin_number, self.bin_number))
+        std_dev_data = self.mesh_tally_value.reshape((self.bin_number, self.bin_number))
+
+        # Calculate relative error, avoiding division by zero
+        relative_error = np.zeros_like(flux_data)
+        nonzero_flux = flux_data != 0
+        relative_error[nonzero_flux] = std_dev_data[nonzero_flux] / flux_data[nonzero_flux]
+
+        extent = self.mesh.bounding_box.extent[self.plane]
+
+        # Common settings for model.plot
+        plot_kwargs = {
+            'outline': "only",
+            'axes': None,  # This will be set per-plot
+            'pixels': pixels_model_geometry,
+            'color_by': color_by,
+            'origin': ((self.lower_left[0] + self.upper_right[0]) / 2, (self.lower_left[1] + self.upper_right[1]) / 2, plane_coord),
+            'width': (self.upper_right[0] - self.lower_left[0], self.upper_right[1] - self.lower_left[1])
+        }
+
+        def setup_ax(ax, title):
+            ax.set_title(title)
+            ax.set_xlabel(f'{self.plane[0].upper()} [cm]')
+            ax.set_ylabel(f'{self.plane[1].upper()} [cm]')
+            ax.set_xlim(zoom_x)
+            ax.set_ylim(zoom_y)
+
+        if plot_error:
+            fig, (ax_flux, ax_error) = plt.subplots(1, 2, figsize=(14, 6))
+
+            # Plot flux data
+            norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+            im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
+            plot_kwargs['axes'] = ax_flux
+            model.plot(**plot_kwargs)
+            setup_ax(ax_flux, f"Flux map {self.plane.upper()} {self.particule_type}")
+            fig.colorbar(im_flux, ax=ax_flux, label="Flux [p/p-source] (log scale)")
+
+            # Plot relative error
+            im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
+            plot_kwargs['axes'] = ax_error
+            model.plot(**plot_kwargs)
+            setup_ax(ax_error, f"Flux error map {self.plane.upper()} {self.particule_type}")
+            fig.colorbar(im_error, ax=ax_error, label="Relative Error")
+
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            # Plot flux data
+            norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
+            im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
+            plot_kwargs['axes'] = ax
+            model.plot(**plot_kwargs)
+            setup_ax(ax, f"Flux map {self.plane.upper()} {self.particule_type}")
+            fig.colorbar(im_flux, ax=ax, label="Flux [p/p-source] (log scale)")
+
         plt.tight_layout()
         name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
         if saving_figure:
             plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
         plt.show()
+
+
 
 def flux_over_geometry(model, statepoint_file: object,
                     cwd: Path = Path.cwd(), 
