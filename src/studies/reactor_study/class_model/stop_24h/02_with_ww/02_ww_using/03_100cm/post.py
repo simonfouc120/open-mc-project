@@ -81,5 +81,4 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              fig_name="dose_plot_photons.png")
 mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, 
                                  particles_per_second=photons_per_s, radiological_area=False)   
-mesh_tally_photons.plot_tally_map(model=MODEL, name_mesh_tally="flux_mesh_photons_xy", 
-                saving_figure=True, plot_error=True)
+mesh_tally_photons.plot_tally_map(model=MODEL, saving_figure=True, plot_error=True)

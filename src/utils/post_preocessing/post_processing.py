@@ -788,13 +788,11 @@ class mesh_tally_data:
                         plot_error: bool = False,
                         dpi: int = 300):
         """
-        Overlay the dose mesh tally on the OpenMC model geometry.
+        Plot the dose mesh tally overlaid on the OpenMC model geometry.
 
         Parameters:
         - model: The OpenMC model object to plot geometry.
         - cwd: Path or directory where the mesh tally image will be saved.
-        - name_mesh_tally: Name of the tally (default is "flux_mesh_neutrons_dose_xy").
-        - particule_type: Type of particle for the tally (default is 'neutrons').
         - particles_per_second: Number of particles per second (default is 1).
         - plane_coord: Coordinate value for the orthogonal axis of the mesh plane.
         - zoom_x: Tuple specifying the x-axis limits for zooming (default is mesh bounds).
@@ -802,6 +800,7 @@ class mesh_tally_data:
         - pixels_model_geometry: Number of pixels for the geometry plot (default is 1_000_000).
         - radiological_area: Boolean to plot radiological area color map (default is False).
         - suffix_saving: Suffix for the saved figure filename.
+        - model_geometry: Boolean to plot the OpenMC geometry (default is True).
         - color_by: How to color the geometry plot (default is "material").
         - saving_figure: Boolean indicating whether to save the figure (default is True).
         - plot_error: Boolean indicating whether to plot the error (default is False).
@@ -885,10 +884,10 @@ class mesh_tally_data:
 
     def plot_tally_map(self, model,
                         cwd: Path = Path.cwd(), 
-                        name_mesh_tally:str = "flux_mesh_tally", 
                         plot_error:bool=False,
-                        zoom_x:tuple=(-10.0, 10.0), 
-                        zoom_y:tuple=(-10.0, 10.0), 
+                        zoom_x:tuple=(None, None), 
+                        zoom_y:tuple=(None, None), 
+                        model_geometry: bool = True,
                         plane_coord:float=0.0,
                         pixels_model_geometry:int=1_000_000,
                         suffix_saving: str = "",
@@ -915,14 +914,17 @@ class mesh_tally_data:
         if self.plane not in ["xy", "xz", "yz"]:
             raise ValueError("plane must be 'xy', 'xz', or 'yz'")
 
-        # self.mesh_tally_value = statepoint_file.get_tally(name=name_mesh_tally)
-        flux_data = self.mesh_tally_value.reshape((self.bin_number, self.bin_number))
-        std_dev_data = self.mesh_tally_value.reshape((self.bin_number, self.bin_number))
+        if zoom_x == (None, None):
+            zoom_x = (self.lower_left[0], self.upper_right[0])
+        if zoom_y == (None, None):
+            zoom_y = (self.lower_left[1], self.upper_right[1])
 
-        # Calculate relative error, avoiding division by zero
-        relative_error = np.zeros_like(flux_data)
+        flux_data = self.mesh_tally_value.reshape((self.bin_number, self.bin_number))
+
         nonzero_flux = flux_data != 0
-        relative_error[nonzero_flux] = std_dev_data[nonzero_flux] / flux_data[nonzero_flux]
+        std_dev = self.mesh_tally_error.reshape((self.bin_number, self.bin_number))
+        std_dev = std_dev / flux_data
+        relative_error = std_dev
 
         extent = self.mesh.bounding_box.extent[self.plane]
 
@@ -945,35 +947,35 @@ class mesh_tally_data:
 
         if plot_error:
             fig, (ax_flux, ax_error) = plt.subplots(1, 2, figsize=(14, 6))
-
             # Plot flux data
             norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
             im_flux = ax_flux.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
             plot_kwargs['axes'] = ax_flux
-            model.plot(**plot_kwargs)
+            if model_geometry:
+                model.plot(**plot_kwargs)
             setup_ax(ax_flux, f"Flux map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_flux, ax=ax_flux, label="Flux [p/p-source] (log scale)")
 
             # Plot relative error
             im_error = ax_error.imshow(relative_error, origin='lower', extent=extent, cmap='plasma')
             plot_kwargs['axes'] = ax_error
-            model.plot(**plot_kwargs)
+            if model_geometry:
+                model.plot(**plot_kwargs)
             setup_ax(ax_error, f"Flux error map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_error, ax=ax_error, label="Relative Error")
 
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
-
-            # Plot flux data
             norm_flux = LogNorm(vmin=np.min(flux_data[nonzero_flux]), vmax=flux_data.max())
             im_flux = ax.imshow(flux_data, origin='lower', extent=extent, cmap='plasma', norm=norm_flux)
             plot_kwargs['axes'] = ax
-            model.plot(**plot_kwargs)
+            if model_geometry:
+                model.plot(**plot_kwargs)
             setup_ax(ax, f"Flux map {self.plane.upper()} {self.particule_type}")
             fig.colorbar(im_flux, ax=ax, label="Flux [p/p-source] (log scale)")
 
         plt.tight_layout()
-        name_mesh_tally_saving = f"{name_mesh_tally}{suffix_saving}.png"
+        name_mesh_tally_saving = f"{self.name_mesh_tally}{suffix_saving}.png"
         if saving_figure:
             plt.savefig(cwd / name_mesh_tally_saving, dpi=dpi)
         plt.show()
