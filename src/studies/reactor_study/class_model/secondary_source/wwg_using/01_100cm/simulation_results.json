@@ -1,0 +1,29 @@
+{
+  "fission_rate": {
+    "value": 0.6805062548156925,
+    "error": 0.0014512429976692167,
+    "units": "fissions/source particle"
+  },
+  "fission_rate_per_second": {
+    "value": 1.5259914945758656e+18,
+    "units": "fissions/s (for 5.00e+07 W reactor)"
+  },
+  "nu_fission_rate": {
+    "value": 1.660014566178006,
+    "error": 0.003526600134073865,
+    "units": "neutrons produced by fission/source particle"
+  },
+  "nu_bar": {
+    "value": 2.4393817902931727,
+    "units": "dimensionless (average neutrons per fission)"
+  },
+  "neutrons_emitted_per_second": {
+    "value": 3.722475864010629e+18,
+    "units": "neutrons/s (for 5.00e+07 W reactor)"
+  },
+  "keff": {
+    "mean": 1.6639936614002158,
+    "std_dev": 0.0013684797797995011,
+    "units": "dimensionless (effective multiplication factor)"
+  }
+}

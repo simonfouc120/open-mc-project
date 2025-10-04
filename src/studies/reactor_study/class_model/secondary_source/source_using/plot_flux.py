@@ -19,7 +19,7 @@ mesh_tally_neutrons.plot_flux(axis_one_index=250, x_lim=(0, 850), save_fig=True,
 mesh_tally_neutrons.plot_dose(axis_one_index=250, 
                               particles_per_second=1e18, 
                               y_lim=(1e5, 1e10),
-                              mesh_bin_volume=680.0,
+                              self.voxel_volume=680.0,
                               save_fig=True,
                               radiological_area=True,
                               fig_name="dose_plot_neutrons.png")

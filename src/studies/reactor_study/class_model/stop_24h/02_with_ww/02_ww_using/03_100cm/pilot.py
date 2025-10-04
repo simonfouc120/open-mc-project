@@ -63,13 +63,10 @@ mesh_bounds = ((lower_left[0], upper_right[0]), (lower_left[1], upper_right[1]),
 shape = (shape_ww[0] , shape_ww[1], shape_ww[2])  # number of voxels in each direction
 sphere_center = (-575.0, 0.0, 0.0)
 sphere_radius = 50.0
-# si tu veux diriger l'importance depuis +x vers la sphère : beam_dir = (-1,0,0)
 correction_matrix = make_oriented_importance(mesh_bounds, shape, sphere_center, sphere_radius,
                                         I_min=1e-5, I_max=1e-1, lambda_radial=0.005,
                                         beam_dir=None, angular_power=4.0, alpha=0.02)
 # sauvegarde
-# np.save("importance_grid.npy", importance)
-print("importance shape:", correction_matrix.shape, "min/max:", correction_matrix.min(), correction_matrix.max())
 ww_corrected = apply_correction_ww(ww=ww, correction_weight_window=correction_matrix)
 
 settings.weight_windows = ww_corrected

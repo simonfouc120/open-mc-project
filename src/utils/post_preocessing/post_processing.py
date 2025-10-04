@@ -682,7 +682,6 @@ class mesh_tally_data:
 
     def plot_dose(self, 
                   particles_per_second:int=1, 
-                  mesh_bin_volume:float=1.0, 
                   axis_one_index=None, 
                   axis_two_index=None, 
                   x_lim:tuple=None, 
@@ -699,8 +698,8 @@ class mesh_tally_data:
         coords = self.mesh_coordinates
         plane = self.plane
 
-        dose_data = self.mesh_tally_value * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
-        dose_error = self.mesh_tally_error * particles_per_second * 1e-6 * 3600 / mesh_bin_volume
+        dose_data = self.mesh_tally_value * particles_per_second * 1e-6 * 3600 / self.voxel_volume
+        dose_error = self.mesh_tally_error * particles_per_second * 1e-6 * 3600 / self.voxel_volume
 
         def plot_radiological_areas():
             for i in range(len(DOSE_AREAS_LIMIT) - 1):
