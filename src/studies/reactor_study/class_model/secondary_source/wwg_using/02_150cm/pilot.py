@@ -83,13 +83,12 @@ MODEL.export_to_xml()
 tallys = openmc.Tallies()
 
 mesh_tally_xy_neutrons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_neutrons_xy", particule_type='neutron', plane="xy",
-                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      bin_number=250, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
                                       thickness= 20.0, coord_value=0.0)
 tallys.append(mesh_tally_xy_neutrons)
 
-
 mesh_tally_xy_photons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy", particule_type='photon', plane="xy",
-                                      bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
+                                      bin_number=250, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0),
                                       thickness= 20.0, coord_value=0.0)
 tallys.append(mesh_tally_xy_photons)
 
