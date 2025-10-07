@@ -25,9 +25,9 @@ my_reactor = Reactor_model(materials=material_dict,
                            total_height_active_part=500.0, 
                            light_water_pool=True, 
                            slab_thickness=100,
-                           concrete_wall_thickness=100,
-                           calculation_sphere_coordinates=(-600, 0, 0), 
-                           calculation_sphere_radius=50.0)
+                           concrete_wall_thickness=150,
+                           calculation_sphere_coordinates=(0, -600, 0), 
+                           r_pin_fuel=1.5)
 
 MODEL = my_reactor.model
 MODEL.export_to_xml()

@@ -42,6 +42,10 @@ plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())),
               plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
               pixels=(700, 700))
 
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xz", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
+              pixels=(700, 700))
+
 # fonction material pas de fission
 
 tallys = openmc.Tallies()
@@ -50,7 +54,7 @@ tallys.export_to_xml()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 10
 settings.batches = batches_number
 settings.particles = 500000
 settings.source = openmc.FileSource('surface_source.h5')
@@ -59,9 +63,9 @@ settings.run_mode = "fixed source"
 settings.source.particles = ["neutron", "photon"]
 
 mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
-mesh.dimension = (30, 30, 30)
-mesh.lower_left = (-700.0, -700.0, -700.0)
-mesh.upper_right = (700.0, 700.0, 700.0)
+mesh.dimension = (50, 50, 50)
+mesh.lower_left = (-850.0, -850.0, -850.0)
+mesh.upper_right = (850.0, 850.0, 850.0)
 
 wwg_neutron = openmc.WeightWindowGenerator(
     mesh=mesh,  
@@ -76,11 +80,10 @@ wwg_photon.particle_type = 'photon'
 settings.max_history_splits = 1_000  
 settings.weight_window_generators = [wwg_neutron, wwg_photon]
 
-
 MODEL.settings = settings
 MODEL.export_to_xml()
 
-remove_previous_results(CWD)
+remove_previous_results(batches_number=batches_number)
 
 openmc.run()
 
@@ -88,13 +91,13 @@ statepoint = openmc.StatePoint(f"statepoint.{batches_number}.h5")
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 
-plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
+plot_weight_window(weight_window=ww[0], index_coord=mesh.dimension[0]//2, energy_index=0, saving_fig=True, plane="yz", particle_type='neutron')
 
-plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')
+plot_weight_window(weight_window=ww[1], index_coord=mesh.dimension[0]//2, energy_index=0, saving_fig=True, plane="yz", particle_type='photon')
 
-plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
+plot_weight_window(weight_window=ww[0], index_coord=mesh.dimension[0]//2, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
 
-plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
+plot_weight_window(weight_window=ww[1], index_coord=mesh.dimension[0]//2, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
 
 mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_xy_neutrons", "xy", 500, (-850.0, -850.0), (850.0, 850.0))
 mesh_tally_neutrons.plot_flux(axis_one_index=250, x_lim=(0, 850), save_fig=True, fig_name="flux_plot_neutrons.png")

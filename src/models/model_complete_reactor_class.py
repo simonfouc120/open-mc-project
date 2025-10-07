@@ -9,7 +9,7 @@ from PIL import Image
 import numpy as np
 
 CWD = Path(__file__).parent.resolve() 
-project_root = Path(__file__).resolve().parents[4]  
+project_root = Path(__file__).resolve().parents[2]  
 sys.path.append(str(project_root))
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
@@ -23,7 +23,8 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 material_list = openmc.Materials([FUEL_UO2_MATERIAL, HELIUM_MATERIAL, AIR_MATERIAL, 
                              CONCRETE_MATERIAL, GRAPHITE_MATERIAL, STEEL_MATERIAL, 
                              WATER_MATERIAL, HEAVY_WATER_MATERIAL, BERYLLIUM_MATERIAL, 
-                             BORATED_STEEL_MATERIAL, HEAVY_CONCRETE_HEMATITE_MATERIAL])
+                             BORATED_STEEL_MATERIAL, HEAVY_CONCRETE_HEMATITE_MATERIAL,
+                             B4C_MATERIAL, LEAD_MATERIAL])
 
 material_dict = materials = {
     "FUEL_UO2_MATERIAL": FUEL_UO2_MATERIAL,
@@ -37,6 +38,8 @@ material_dict = materials = {
     "BERYLLIUM_MATERIAL": BERYLLIUM_MATERIAL,
     "BORATED_STEEL_MATERIAL": BORATED_STEEL_MATERIAL,
     "HEAVY_CONCRETE_HEMATITE_MATERIAL": HEAVY_CONCRETE_HEMATITE_MATERIAL,
+    "B4C_MATERIAL": B4C_MATERIAL,
+    "LEAD_MATERIAL": LEAD_MATERIAL
 }
 
 EPSILON_DENSITY = 1e-6
@@ -67,6 +70,11 @@ class Reactor_model:
         slab_thickness: float = 40.0, # cm
         cavity: bool = True, 
         concrete_wall_thickness: float = 30.0, # cm
+        top_shielding: bool = True,
+        thickness_b4c_top_shielding: float = 50.0, # cm
+        thickness_lead_top_shielding: float = 25.0, # cm
+        radius_plug: float = 25.0, # cm
+        thickness_concrete_slab_top: float = 150.0, # cm
         universe_boundary: str = "vacuum",
     ):
         """Initialize the reactor model with specified parameters."""
@@ -210,7 +218,7 @@ class Reactor_model:
                 fill=self.material["WATER_MATERIAL"],
                 region=(
                     -openmc.model.RectangularParallelepiped(
-                        xmin=-315.0, xmax=315.0, ymin=-315.0, ymax=315.0, zmin=-350.0, zmax=-90.0
+                        xmin=-315.0, xmax=315.0, ymin=-315.0, ymax=315.0, zmin=-350.0, zmax=280.0
                     )
                     & ~self.graphite_assembly_main_cell.region
                     & ~self.beryllium_above_cell.region
@@ -225,7 +233,7 @@ class Reactor_model:
                 fill=self.material["STEEL_MATERIAL"],
                 region=(
                     -openmc.model.RectangularParallelepiped(
-                        xmin=-320.0, xmax=320.0, ymin=-320.0, ymax=320.0, zmin=-355.0, zmax=-90.0
+                        xmin=-320.0, xmax=320.0, ymin=-320.0, ymax=320.0, zmin=-355.0, zmax=280.0
                     )
                     & ~self.graphite_assembly_main_cell.region
                     & ~self.beryllium_above_cell.region
@@ -238,6 +246,53 @@ class Reactor_model:
         else:
             pass
 
+        if top_shielding:
+            self.radius_plug = radius_plug
+            self.altimetry_plug_starting = total_height_active_part / 2 + berryllium_thickness + thickness_steel_liner + 45
+            self.height_b4c_plug_part = thickness_b4c_top_shielding  # cm
+            self.height_lead_plug_part = thickness_lead_top_shielding  # cm
+            b4c_plug_part_cell = openmc.Cell(fill=B4C_MATERIAL, region=-openmc.ZCylinder(x0=0.0, y0=0.0, r=self.radius_plug) &
+                                            +openmc.ZPlane(z0=self.altimetry_plug_starting) &
+                                            -openmc.ZPlane(z0=self.altimetry_plug_starting + self.height_b4c_plug_part))
+            lead_plug_part_cell = openmc.Cell(fill=LEAD_MATERIAL, region=-openmc.ZCylinder(x0=0.0, y0=0.0, r=self.radius_plug) &
+                                            +openmc.ZPlane(z0=self.altimetry_plug_starting + self.height_b4c_plug_part) &
+                                            -openmc.ZPlane(z0=self.altimetry_plug_starting + self.height_b4c_plug_part + self.height_lead_plug_part))
+            steel_liner_plug_cell = openmc.Cell(fill=STEEL_MATERIAL, region=-openmc.ZCylinder(x0=0.0, y0=0.0, r=self.radius_plug*2) &
+                                            +openmc.ZPlane(z0=self.altimetry_plug_starting -1) &
+                                            -openmc.ZPlane(z0=self.altimetry_plug_starting + self.height_b4c_plug_part + self.height_lead_plug_part +1) &
+                                            ~b4c_plug_part_cell.region & ~lead_plug_part_cell.region)
+            # ajout cellule acier
+            plug_universe = openmc.Universe(cells=[lead_plug_part_cell, b4c_plug_part_cell, steel_liner_plug_cell])
+
+            plug_lat = openmc.HexLattice()
+            plug_lat.center = (0.0, 0.0)
+            plug_lat.pitch = (pitch_graphite_assembly,)
+            plug_lat.outer = openmc.Universe(cells=[openmc.Cell(fill=self.material["STEEL_MATERIAL"])])
+            plug_lat.universes = [
+                [plug_universe] * 18,  # 3rd ring
+                [plug_universe] * 12,  # 2nd ring
+                [plug_universe] * 6,   # 1st ring
+                [plug_universe],       # Center
+            ]
+
+            hex_prism_plug_assembly = -openmc.model.HexagonalPrism(edge_length=200, orientation="y", origin=(0.0, 0.0)) & +openmc.ZPlane(z0=self.altimetry_plug_starting -1) & -openmc.ZPlane(z0=self.altimetry_plug_starting + self.height_b4c_plug_part + self.height_lead_plug_part +1)
+
+            plug_assembly_main_cell = openmc.Cell(
+                name="plug_assembly_cell",
+                fill=plug_lat,
+                region=hex_prism_plug_assembly,
+            )
+
+            concrete_slab_top_region = -openmc.model.RectangularParallelepiped(xmin=-width_cavity, xmax=width_cavity, ymin=-width_cavity, ymax=width_cavity, zmin=self.altimetry_plug_starting -1, zmax=self.altimetry_plug_starting -1 + thickness_concrete_slab_top) &  +openmc.model.HexagonalPrism(edge_length=200, orientation="y", origin=(0.0, 0.0))
+            concrete_slab_top_cell = openmc.Cell(
+                name="concrete_slab_top_cell",
+                fill=self.material["HEAVY_CONCRETE_HEMATITE_MATERIAL"],
+                region=concrete_slab_top_region
+            )
+            self.other_cells.append(concrete_slab_top_cell)
+            self.other_cells.append(plug_assembly_main_cell)
+        else:
+            pass
 
         if cavity:
             # Concrete slab below light water
@@ -442,3 +497,17 @@ def set_low_density_for_materials(material_dict, low_density_material_types:list
         if material in low_density_material_types:
             material.set_density('g/cm3', density_value)
     return material_dict
+
+
+if __name__ == "__main__":
+    my_reactor = Reactor_model(materials=material_dict, 
+                           total_height_active_part=500.0, 
+                           light_water_pool=True, 
+                           slab_thickness=100,
+                           concrete_wall_thickness=150,
+                           calculation_sphere_coordinates=(0, -600, 0), 
+                           r_pin_fuel=1.5)
+    MODEL = my_reactor.model
+    MODEL.export_to_xml()
+    plot_geometry(materials = material_list, plane="xz", width=1000, height=1000, dpi=500, saving_figure=False, legend_materials=False, color_by="cell")
+    plot_geometry(materials = material_list, plane="xz", width=1000, height=1000, dpi=500, saving_figure=False, legend_materials=True, color_by="material")

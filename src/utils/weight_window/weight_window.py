@@ -215,3 +215,17 @@ def make_oriented_importance(mesh_bounds, shape,
 
     importance = fr * fa
     return importance
+
+def apply_spherical_correction_to_weight_windows(ww, particule_type='photon', sphere_center=(0.0, 0.0, 500.0), sphere_radius=50.0):
+    shape_ww = get_ww_size(weight_windows=ww, particule_type=particule_type)
+    lower_left = ww[0].mesh.bounding_box.lower_left
+    upper_right = ww[0].mesh.bounding_box.upper_right
+    mesh_bounds = ((lower_left[0], upper_right[0]), (lower_left[1], upper_right[1]), (lower_left[2], upper_right[2]))
+    shape = (shape_ww[0], shape_ww[1], shape_ww[2])
+    correction_matrix = make_oriented_importance(
+        mesh_bounds, shape, sphere_center, sphere_radius,
+        I_min=1e-5, I_max=1e-1, lambda_radial=0.005,
+        beam_dir=None, angular_power=4.0, alpha=0.02
+    )
+    ww_corrected = apply_correction_ww(ww=ww, correction_weight_window=correction_matrix)
+    return ww_corrected
