@@ -57,20 +57,21 @@ tallys = openmc.Tallies()
 # run the simulation
 
 settings = openmc.Settings()
-batches_number= 100
+batches_number= 1000
 settings.batches = batches_number
-settings.particles = 500
+settings.particles = 50000
 settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 settings.run_mode = "fixed source"
 settings.source.particles = ["neutron", "photon"]
+settings.statepoint = {"batches": list(range(10, batches_number + 1, 10))}
 
 ww = openmc.hdf5_to_wws("weight_windows.h5")  
 
 settings.weight_windows = apply_spherical_correction_to_weight_windows(ww, particule_type='photon', sphere_center=(0.0, 0.0, 500.0), sphere_radius=50.0)
-
-plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="xz", particle_type='neutron')
-plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="xz", particle_type='photon')
+size_ww = get_ww_size(ww)
+plot_weight_window(weight_window=ww[0], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xz", particle_type='neutron')
+plot_weight_window(weight_window=ww[1], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xz", particle_type='photon')
 
 MODEL.settings = settings
 MODEL.export_to_xml()
@@ -84,7 +85,7 @@ tallys.append(mesh_tally_xy_neutrons)
 
 
 mesh_tally_xy_photons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xy", particule_type='photon', plane="xy",
-                                      bin_number=500, lower_left=(-600.0, -600.0), upper_right=(600.0, 600.0),
+                                      bin_number=250, lower_left=(-600.0, -600.0), upper_right=(600.0, 600.0),
                                       thickness= 20.0, coord_value=450.0)
 tallys.append(mesh_tally_xy_photons)
 
@@ -95,7 +96,7 @@ tallys.append(mesh_tally_xz_neutrons)
 
 
 mesh_tally_xz_photons = mesh_tally_dose_plane(name_mesh_tally = "flux_mesh_photons_xz", particule_type='photon', plane="xz",
-                                      bin_number=500, lower_left=(-600.0, -600.0), upper_right=(600.0, 600.0),
+                                      bin_number=250, lower_left=(-600.0, -600.0), upper_right=(600.0, 600.0),
                                       thickness= 10.0, coord_value=0.0)
 tallys.append(mesh_tally_xz_photons)
 

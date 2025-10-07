@@ -19,7 +19,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.100.h5")
+statepoint = openmc.StatePoint(f"statepoint.0630.h5")
 
 results_path = "simulation_results.json"
 with open(results_path, "r") as f:
@@ -72,17 +72,33 @@ save_tally_result_to_json(
 
 mesh_tally_photons_xy = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
 mesh_tally_photons_xy.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
-                                 particles_per_second=neutron_emission_rate, radiological_area=False)   
+                                 particles_per_second=neutron_emission_rate, radiological_area=False, model_geometry=False)   
 
 mesh_tally_neutrons_xy = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
 mesh_tally_neutrons_xy.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
-                                 particles_per_second=neutron_emission_rate, radiological_area=False)   
+                                 particles_per_second=neutron_emission_rate, radiological_area=False, model_geometry=False)   
 
 
 mesh_tally_photons_xz = mesh_tally_data(statepoint, "flux_mesh_photons_xz", "XZ", "photon")
 mesh_tally_photons_xz.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
                                  particles_per_second=neutron_emission_rate, radiological_area=False)
+mesh_tally_photons_xz.plot_dose(axis_one_index=250, 
+                             particles_per_second=neutron_emission_rate, 
+                             x_lim=(0, 600),
+                             y_lim=(1e3, 1e14),
+                             save_fig=False,
+                             radiological_area=True,
+                             geometrical_limit=[(331, 'Neutrophage'), (381, "Plomb"), (406, "Fin des bouchons")],
+                             fig_name="dose_plot_photons.png")
 
 mesh_tally_neutrons_xz = mesh_tally_data(statepoint, "flux_mesh_neutrons_xz", "XZ", "neutron")
 mesh_tally_neutrons_xz.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False)
+mesh_tally_neutrons_xz.plot_dose(axis_one_index=250, 
+                             particles_per_second=neutron_emission_rate, 
+                             x_lim=(0, 600),
+                             y_lim=(1e3, 1e14),
+                             save_fig=False,
+                             radiological_area=True,
+                             geometrical_limit=[(331, 'Neutrophage'), (381, "Plomb"), (406, "Fin des bouchons")],
+                             fig_name="dose_plot_neutrons.png")

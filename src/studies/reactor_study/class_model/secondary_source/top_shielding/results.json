@@ -1,14 +1,14 @@
 {
     "dose_rate_photon": {
-        "value [mSv/h]": 0.0,
-        "error [mSv/h]": 0.0,
-        "relative_error [%]": 0,
+        "value [mSv/h]": 1635.3656734825895,
+        "error [mSv/h]": 155.12730562882808,
+        "relative_error [%]": 9.485787071614208,
         "unit": "mSv/h"
     },
     "dose_rate_neutron": {
-        "value [mSv/h]": 11785.489996202366,
-        "error [mSv/h]": 11785.489996202365,
-        "relative_error [%]": 99.99999999999999,
+        "value [mSv/h]": 56140.985609019066,
+        "error [mSv/h]": 4189.671997230103,
+        "relative_error [%]": 7.46276886980237,
         "unit": "mSv/h"
     }
 }
