@@ -455,8 +455,10 @@ class Reactor_model:
             cells_to_be_excluded_by=cells_to_be_excluded_by
         )
 
-    def add_calculation_sphere(self, coordinates: tuple = (0.0, 350.0, -300.0), radius: float = 10.0,
+    def add_calculation_sphere(self, coordinates: tuple = (0.0, 350.0, -300.0), 
+                               radius: float = 10.0,
                                cells_to_exclude: list = [],
+                               material_name: str = "AIR_MATERIAL",
                                cells_to_be_excluded_by: list = []) -> openmc.Cell:
         """
         Adds a calculation sphere cell using the add_cell method.
@@ -470,7 +472,7 @@ class Reactor_model:
         sphere_surface = openmc.Sphere(x0=x0, y0=y0, z0=z0, r=radius)
         sphere_cell = self.add_cell(
             surface=sphere_surface,
-            material_name="AIR_MATERIAL",
+            material_name=material_name,
             cells_to_exclude=cells_to_exclude,
             cells_to_be_excluded_by=cells_to_be_excluded_by
         )
