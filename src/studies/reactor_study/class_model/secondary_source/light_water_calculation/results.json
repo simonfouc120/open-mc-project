@@ -1,0 +1,50 @@
+{
+    "dose_rate_photon_P1": {
+        "value [mSv/h]": 11540440.889620865,
+        "error [mSv/h]": 236235.973573791,
+        "relative_error [%]": 2.047027282867977,
+        "unit": "mSv/h"
+    },
+    "dose_rate_neutron_P1": {
+        "value [mSv/h]": 463827464.52157664,
+        "error [mSv/h]": 7640723.3923291555,
+        "relative_error [%]": 1.64732017329123,
+        "unit": "mSv/h"
+    },
+    "dose_rate_photon_P2": {
+        "value [mSv/h]": 485314.5552899106,
+        "error [mSv/h]": 50523.43936717304,
+        "relative_error [%]": 10.410452111206935,
+        "unit": "mSv/h"
+    },
+    "dose_rate_neutron_P2": {
+        "value [mSv/h]": 18800025.642031588,
+        "error [mSv/h]": 1411045.5343992633,
+        "relative_error [%]": 7.505551116082315,
+        "unit": "mSv/h"
+    },
+    "dose_rate_photon_P3": {
+        "value [mSv/h]": 32512.867213869446,
+        "error [mSv/h]": 6641.365086893596,
+        "relative_error [%]": 20.426882203918638,
+        "unit": "mSv/h"
+    },
+    "dose_rate_neutron_P3": {
+        "value [mSv/h]": 1304655.9267198574,
+        "error [mSv/h]": 223165.61377650657,
+        "relative_error [%]": 17.10532326615689,
+        "unit": "mSv/h"
+    },
+    "dose_rate_photon_P4": {
+        "value [mSv/h]": 6632.187606306866,
+        "error [mSv/h]": 2907.9194861898,
+        "relative_error [%]": 43.84555532513163,
+        "unit": "mSv/h"
+    },
+    "dose_rate_neutron_P4": {
+        "value [mSv/h]": 245455.57568891248,
+        "error [mSv/h]": 95258.60657180237,
+        "relative_error [%]": 38.80889904596505,
+        "unit": "mSv/h"
+    }
+}

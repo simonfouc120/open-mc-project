@@ -66,6 +66,9 @@ class Reactor_model:
         calculation_sphere_coordinates: tuple = (0.0, 350.0, -300.0), # cm
         calculation_sphere_radius: float = 10.0, # cm
         light_water_pool: bool = True,
+        light_water_length: float = 630.0, # cm
+        light_water_height: float = 630.0, # cm
+        thickness_steel_light_water_liner: float = 2.0, # cm
         width_cavity: float = 400.0, # cm
         slab_thickness: float = 40.0, # cm
         cavity: bool = True, 
@@ -214,11 +217,15 @@ class Reactor_model:
         ]
 
         if light_water_pool:
+            self.light_water_length = light_water_length
+            self.light_water_height = light_water_height
             self.light_water_main_cell = openmc.Cell(
                 fill=self.material["WATER_MATERIAL"],
                 region=(
                     -openmc.model.RectangularParallelepiped(
-                        xmin=-315.0, xmax=315.0, ymin=-315.0, ymax=315.0, zmin=-350.0, zmax=280.0
+                        xmin=-self.light_water_length/2, xmax=self.light_water_length/2, 
+                        ymin=-self.light_water_length/2, ymax=self.light_water_length/2, 
+                        zmin=-self.light_water_height / 2, zmax=self.light_water_height / 2 
                     )
                     & ~self.graphite_assembly_main_cell.region
                     & ~self.beryllium_above_cell.region
@@ -229,11 +236,16 @@ class Reactor_model:
             self.other_cells.append(self.light_water_main_cell)
 
             # Steel liner for light water
+            self.thickness_steel_light_water_liner = thickness_steel_light_water_liner
             self.light_water_liner_main_cell = openmc.Cell(
                 fill=self.material["STEEL_MATERIAL"],
                 region=(
                     -openmc.model.RectangularParallelepiped(
-                        xmin=-320.0, xmax=320.0, ymin=-320.0, ymax=320.0, zmin=-355.0, zmax=280.0
+                        xmin=-self.light_water_length/2 - self.thickness_steel_light_water_liner, 
+                        xmax=self.light_water_length/2 + self.thickness_steel_light_water_liner, 
+                        ymin=-self.light_water_length/2 - self.thickness_steel_light_water_liner, 
+                        ymax=self.light_water_length/2 + self.thickness_steel_light_water_liner, 
+                        zmin=-355.0, zmax=280.0
                     )
                     & ~self.graphite_assembly_main_cell.region
                     & ~self.beryllium_above_cell.region
