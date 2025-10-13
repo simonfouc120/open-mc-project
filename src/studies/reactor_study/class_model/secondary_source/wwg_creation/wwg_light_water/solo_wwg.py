@@ -23,7 +23,11 @@ from src.models.model_complete_reactor_class import material_dict
 
 
 
-def plot_ww_slices(ww_list, mesh, fac_div, energy_index=0, particles=("neutron", "photon"), planes=("yz", "xy")):
+def plot_ww_slices(ww_list, mesh, fac_div:int=1, 
+                   energy_index:int=0, 
+                   particles:tuple=("neutron", "photon"), 
+                   planes:tuple=("yz", "xy"),
+                   bound_type:str='lower'):
     mid_idx = mesh.dimension[0] // 2
     for i, particle in enumerate(particles):
         if i >= len(ww_list):
@@ -36,6 +40,7 @@ def plot_ww_slices(ww_list, mesh, fac_div, energy_index=0, particles=("neutron",
                 saving_fig=True,
                 plane=plane,
                 particle_type=particle,
+                bound_type=bound_type,
                 suffix_fig=f"_factor_{fac_div}_reduced_density",
             )
 
@@ -54,62 +59,67 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(0, 0, 500), 
                            calculation_sphere_radius=50.0)
 
-ww = dict()
-
-
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-
+factor = 0.1
 MATERIAL_DICT_ORIGINAL = deepcopy(material_dict)
 new_material_dict = deepcopy(material_dict)
 
 for material_name, material in new_material_dict.items():
-    new_material_dict[material_name] = reducing_density(material, factor=10)
+    new_material_dict[material_name] = reducing_density(material, factor=factor)
 
 new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
+my_reactor.material = new_material_dict
 MODEL = my_reactor.model
-MODEL.material = openmc.Materials(list(new_material_dict.values()))
 
-mesh, _ = setup_and_run_wwg(source='surface_source.h5',
-                            model=MODEL,
-                            mesh_dimension=(50, 50, 50),
-                            mesh_size=850.0,
-                            particle_types=("neutron", "photon"),
-                            batches=5,
-                            particles_per_batch=50_000,
-                            max_history_splits=1_000)
 
-ww["10"]= openmc.hdf5_to_wws("weight_windows.h5")  
+settings = openmc.Settings()
+batches_number= 4
+particles_per_batch = 50000
+max_history_splits = 10_000
+src = openmc.FileSource('surface_source.h5')
+particle_types = ("neutron", "photon")
+settings.weight_windows = openmc.hdf5_to_wws("weight_windows_f8.h5")  
 
-plot_ww_slices(openmc.hdf5_to_wws("weight_windows.h5")  , mesh, 10)
+settings.batches = batches_number
+settings.particles = particles_per_batch
+settings.run_mode = "fixed source"
+src.particles = list(particle_types)  
+settings.source = src
+settings.photon_transport = True
+# add random ray 
 
-for fac_div in [8, 6, 4]:
-    MATERIAL_DICT_ORIGINAL = deepcopy(material_dict)
-    new_material_dict = deepcopy(material_dict)
 
-    for material_name, material in new_material_dict.items():
-        new_material_dict[material_name] = reducing_density(material, factor=fac_div)
+# Mesh (from model geometry)
+mesh_dimension = (50, 50, 50)
+mesh_size = 850.0
+mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
+mesh.dimension = tuple(mesh_dimension)
+mesh.lower_left = (-mesh_size, -mesh_size, -mesh_size)
+mesh.upper_right = (mesh_size, mesh_size, mesh_size)
 
-    new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
+# Weight-window generators for each particle type
+wwgs: List[openmc.WeightWindowGenerator] = []
+for ptype in particle_types:
+    wwg = openmc.WeightWindowGenerator(
+        mesh=mesh,
+        max_realizations=settings.batches,
+        particle_type=ptype,
+        method="magic",
+        on_the_fly=True,
+    )
+    wwgs.append(wwg)
 
-    MODEL = my_reactor.model
-    MODEL.material = openmc.Materials(list(new_material_dict.values()))
+settings.max_history_splits = max_history_splits
+settings.weight_window_generators = wwgs
+# Attach settings to model and run
+MODEL.settings = settings
+MODEL.export_to_xml()
 
-    weight_window = openmc.hdf5_to_wws("weight_windows.h5")
-    if os.path.exists("weight_windows.h5"):
-        os.remove("weight_windows.h5")
+remove_previous_results(batches_number=batches_number)
+# openmc.run()
+MODEL.run()
+ww= openmc.hdf5_to_wws("weight_windows.h5")  
+plot_ww_slices(ww, mesh, factor)
 
-    mesh, _ = setup_and_run_wwg(source='surface_source.h5',
-                                model=MODEL,
-                                mesh_dimension=(50, 50, 50),
-                                mesh_size=850.0,
-                                particle_types=("neutron", "photon"),
-                                batches=5,
-                                particles_per_batch=5_000,
-                                max_history_splits=1_000, 
-                                ww=weight_window)
-    ww[f"{fac_div}"] = openmc.hdf5_to_wws("weight_windows.h5")  
-
-    # call the function
-    plot_ww_slices(ww[f"{fac_div}"], mesh, fac_div)

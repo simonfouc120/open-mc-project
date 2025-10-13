@@ -33,4 +33,5 @@ surface_source*
 
 # weight windows
 weight_windows.h5
+weight_windows*
 src/studies/reactor_study/class_model/.DS_Store

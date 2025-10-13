@@ -10,6 +10,7 @@ project_root = Path(__file__).resolve()
 sys.path.append(str(project_root))
 
 from src.utils.pre_processing.pre_processing import remove_previous_results
+from typing import Iterable, Optional, Tuple, Union, Sequence, Any, List
 
 def plot_weight_window(weight_window, 
                        index_coord:int=0, 
@@ -17,6 +18,7 @@ def plot_weight_window(weight_window,
                        plane:str='xy', 
                        saving_fig:bool=False, 
                        particle_type:str='neutron',
+                       bound_type:str='lower',
                        suffix_fig:str=''):
     """
     Plot the weight window bounds for a given energy index.
@@ -27,19 +29,28 @@ def plot_weight_window(weight_window,
     """
     plt.figure(figsize=(10, 6))
     if plane == "xy":
-        plt.imshow(weight_window.upper_ww_bounds[:, :, index_coord, energy_index].T, origin="lower", norm=LogNorm())
+        if bound_type == 'lower':
+            plt.imshow(weight_window.lower_ww_bounds[:, :, index_coord, energy_index].T, origin="lower", norm=LogNorm())
+        elif bound_type == 'upper':
+            plt.imshow(weight_window.upper_ww_bounds[:, :, index_coord, energy_index].T, origin="lower", norm=LogNorm())
         plt.xlabel('X')
         plt.ylabel('Y')
     elif plane == "xz":
-        plt.imshow(weight_window.upper_ww_bounds[:, index_coord, :, energy_index].T, origin="lower", norm=LogNorm())
+        if bound_type == 'lower':
+            plt.imshow(weight_window.lower_ww_bounds[:, index_coord, :, energy_index].T, origin="lower", norm=LogNorm())
+        elif bound_type == 'upper':
+            plt.imshow(weight_window.upper_ww_bounds[:, index_coord, :, energy_index].T, origin="lower", norm=LogNorm())
         plt.xlabel('X')
         plt.ylabel('Z')
     elif plane == "yz":
-        plt.imshow(weight_window.upper_ww_bounds[index_coord, :, :, energy_index].T, origin="lower", norm=LogNorm())
+        if bound_type == 'lower':
+            plt.imshow(weight_window.lower_ww_bounds[index_coord, :, :, energy_index].T, origin="lower", norm=LogNorm())
+        elif bound_type == 'upper':
+            plt.imshow(weight_window.upper_ww_bounds[index_coord, :, :, energy_index].T, origin="lower", norm=LogNorm())
         plt.xlabel('Y')
         plt.ylabel('Z')
-    plt.colorbar(label='Weight Window Lower Bound')
-    plt.title(f'Weight Window Lower Bounds ({particle_type})')
+    plt.colorbar(label=f'Weight Window {bound_type} Bound')
+    plt.title(f'Weight Window {bound_type} Bounds ({particle_type})')
     if saving_fig:
         plt.savefig(f'weight_window_{plane}_{particle_type}{suffix_fig}.png', dpi=300)
     plt.show()
@@ -240,38 +251,48 @@ def apply_spherical_correction_to_weight_windows(ww, particule_type='photon', sp
     return ww_corrected
 
 
-def setup_and_run_wwg(source,
-                      model: openmc.Model,
-                      settings:object = openmc.Settings(),
-                      mesh_dimension=(50, 50, 50),
-                      mesh_size=850.0,
-                      particle_types=("neutron", "photon"),
-                      batches=10,
-                      particles_per_batch=500,
-                      max_history_splits=1_000):
+def setup_and_run_wwg(
+    source: Union[str, Any],
+    model: openmc.Model,
+    settings: Optional[openmc.Settings] = None,
+    mesh_dimension: Tuple[int, int, int] = (50, 50, 50),
+    mesh_size: float = 850.0,
+    particle_types: Iterable[str] = ("neutron", "photon"),
+    batches: int = 10,
+    particles_per_batch: int = 500,
+    max_history_splits: int = 1_000,
+    ww: Optional[Sequence[Any]] = None,
+) -> Tuple[openmc.RegularMesh, int]:
     """
     Configure weight-window generation and run OpenMC.
 
     Parameters
     - source: path to a surface source file (str) or an openmc.Source / openmc.FileSource instance.
+    - model: openmc.Model instance.
+    - settings: optional openmc.Settings (if None a new Settings() is created).
     - mesh_dimension: tuple (nx, ny, nz) for the RegularMesh.dimension.
     - mesh_size: half-extent in each axis (mesh lower_left = -mesh_size, upper_right = +mesh_size).
     - particle_types: iterable of particle type strings, e.g. ("neutron", "photon").
     - batches: number of batches to request for the generator run (int).
     - particles_per_batch: number of particles per batch (int).
     - max_history_splits: settings.max_history_splits value (int).
+    - ww: optional preexisting weight windows to set on settings.
 
     Returns
     - mesh, batches_number  (so caller can open the corresponding statepoint)
     """
     # normalize source input
     if isinstance(source, str):
-        src = openmc.FileSource(source)
+        src: Any = openmc.FileSource(source)
     else:
         src = source
 
     # Settings
-    batches_number = batches
+    batches_number: int = batches
+    if settings is None:
+        settings = openmc.Settings()
+    if ww is not None:
+        settings.weight_windows = ww
     settings.batches = batches_number
     settings.particles = particles_per_batch
     settings.run_mode = "fixed source"
@@ -279,22 +300,26 @@ def setup_and_run_wwg(source,
     settings.photon_transport = "photon" in [p.lower() for p in particle_types]
     # if the source object supports a particles attribute, set it
     if hasattr(src, "particles"):
-        src.particles = list(particle_types)
+        try:
+            src.particles = list(particle_types)  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
     # Mesh (from model geometry)
-    mesh = openmc.RegularMesh().from_domain(model.geometry)
+    mesh: openmc.RegularMesh = openmc.RegularMesh().from_domain(model.geometry)
     mesh.dimension = tuple(mesh_dimension)
     mesh.lower_left = (-mesh_size, -mesh_size, -mesh_size)
     mesh.upper_right = (mesh_size, mesh_size, mesh_size)
 
     # Weight-window generators for each particle type
-    wwgs = []
+    wwgs: List[openmc.WeightWindowGenerator] = []
     for ptype in particle_types:
         wwg = openmc.WeightWindowGenerator(
             mesh=mesh,
             max_realizations=settings.batches,
             particle_type=ptype,
-            method="magic"
+            method="magic",
+            on_the_fly=True,
         )
         wwgs.append(wwg)
 
