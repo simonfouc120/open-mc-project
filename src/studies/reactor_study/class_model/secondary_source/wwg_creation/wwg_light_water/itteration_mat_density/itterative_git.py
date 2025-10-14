@@ -36,12 +36,18 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_radius=50.0)
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-factor = 5
-MATERIAL_DICT_ORIGINAL = deepcopy(material_dict)
-new_material_dict = deepcopy(material_dict)
+def create_reduced_density_material_dict(material_dict, factor=10):
+    """
+    Returns a deepcopy of material_dict with all material densities reduced by the given factor.
+    """
+    new_material_dict = deepcopy(material_dict)
+    for material_name, material in new_material_dict.items():
+        new_material_dict[material_name] = reducing_density(material, factor=factor)
+    return new_material_dict
 
-for material_name, material in new_material_dict.items():
-    new_material_dict[material_name] = reducing_density(material, factor=factor)
+factor = 16
+MATERIAL_DICT_ORIGINAL = deepcopy(material_dict)
+new_material_dict = create_reduced_density_material_dict(material_dict, factor=factor)
 
 new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
@@ -74,7 +80,7 @@ tallies = openmc.Tallies([flux_tally_neutrons, flux_tally_photons])
 
 settings = openmc.Settings()
 batches_number= 10
-particles_per_batch = 10000
+particles_per_batch = 100000
 max_history_splits = 1_000
 src = openmc.FileSource('surface_source.h5')
 particle_types = ("neutron", "photon")
@@ -102,20 +108,12 @@ def plot_mesh_tally_and_weight_window(statepoint_filename,
     tally_mesh = flux_tally.find_filter(openmc.MeshFilter).mesh
     tally_mesh_extent = tally_mesh.bounding_box.extent['xy']
 
-    # get slice of flux mean and std dev values on the xy basis mid z axis.
     flux_mean = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
     flux_std_dev = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
     
-
-    # flux_rel_err = np.zeros_like(flux_mean)
-    # nonzero_flux = flux_mean != 0
-    # flux_rel_err[nonzero_flux] = flux_std_dev[nonzero_flux] / flux_mean[nonzero_flux]
-
-    # calculate values for a slice showing relative uncertainties
     flux_rel_err = np.divide(flux_std_dev, flux_mean, out=np.zeros_like(flux_std_dev), where=flux_mean!=0)
     flux_rel_err[flux_rel_err == 0.0] = np.nan
     
-    # get slice of ww lower bounds
     wws=openmc.hdf5_to_wws(weight_window_filename)
     if particle_type == 'photon':
         ww = wws[1]  # get the one and only mesh tally
@@ -125,19 +123,15 @@ def plot_mesh_tally_and_weight_window(statepoint_filename,
     ww_mesh_extent = ww_mesh.bounding_box.extent['xy']
     reshaped_ww_vals = ww.lower_ww_bounds.reshape(mesh.dimension)
 
-    # slice on XZ basis, midplane Y axis
     slice_of_ww = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
     
-    # set up 3 subplots for the flux, std dev and ww slices
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 
-    # function will set colour bar on a sub plot
     def add_colourbar(ax, im):
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         return fig.colorbar(im, cax=cax)
 
-    # add slice of flux to subplots
     im_flux = axes[0].imshow(
         flux_mean.T,
         # origin="lower",
@@ -147,7 +141,6 @@ def plot_mesh_tally_and_weight_window(statepoint_filename,
     axes[0].set_title("Flux Mean")
     add_colourbar(axes[0], im_flux)
 
-    # add slice of flux std dev to subplots
     im_std_dev = axes[1].imshow(
         flux_rel_err.T,
         # origin="lower",
@@ -159,7 +152,6 @@ def plot_mesh_tally_and_weight_window(statepoint_filename,
     axes[1].set_title("Flux Mean rel. error")
     add_colourbar(axes[1], im_std_dev)
 
-    # add slice of ww to subplots
     im_ww_lower = axes[2].imshow(
         slice_of_ww.T,
         # origin="lower",
@@ -173,33 +165,38 @@ def plot_mesh_tally_and_weight_window(statepoint_filename,
     plt.savefig(image_filename + f'_{particle_type}.png')
     plt.close()
 
-# AFFICHER YZ 
+
+intermediate_step = 10
+# AFFICHER YZ
 with openmc.lib.run_in_memory():
 
-    # loads up a live pointer to the tally with id=55, at this stage the tally is empty
     tally_neutron = openmc.lib.tallies[55]
     tally_photon = openmc.lib.tallies[56]
-    # makes weight windows from the tally, at this stage the values are empty
+
     wws = openmc.lib.WeightWindows.from_tally(tally_neutron, particle="neutron")
-    wws_photon = openmc.lib.WeightWindows.from_tally(tally_photon, particle='photon')
-    
-    for i in range(15):
+    wws_photon = openmc.lib.WeightWindows.from_tally(tally_photon, particle="photon")
 
-        # run the simulation
-        openmc.lib.run()
+    import copy
+    original_materials = copy.deepcopy(openmc.lib.materials)
 
-        # improves the weight window with the latest tally results
-        wws.update_magic(tally_neutron)
-        wws_photon.update_magic(tally_photon)
-        # we write out the weight window map for plotting later
-        openmc.lib.export_weight_windows(filename=f'weight_windows{i}.h5')
-        # we write out the statepoint so that the tally can be plotted later
-        openmc.lib.statepoint_write(filename=f'statepoint_simulation_{i}.h5')
+    mult_factor = 1.5
+    while factor >= 1.0:
+        # Deepcopy original materials to reset densities each iteration
+        materials = copy.deepcopy(original_materials)
 
-        # turns on the weight windows to ensure they are used
-        openmc.lib.settings.weight_windows_on = True
+        for i_step in range(intermediate_step):
 
-        # creates a plot of the flux, std_dev and weight window
+            print(f"--- Simulation avec facteur de densité = {factor} ---")
+            openmc.lib.materials = materials
+            openmc.lib.run()
+
+            wws.update_magic(tally_neutron)
+            wws_photon.update_magic(tally_photon)
+
+            i = int(factor)
+            openmc.lib.export_weight_windows(f'weight_windows{i}.h5')
+            openmc.lib.statepoint_write(f'statepoint_simulation_{i}.h5')
+
         plot_mesh_tally_and_weight_window(
             f'statepoint_simulation_{i}.h5',
             f'weight_windows{i}.h5',
@@ -212,4 +209,8 @@ with openmc.lib.run_in_memory():
             f'plot_{i}',
             particle_type='photon'
         )
+        for mat, name in zip(materials.values(), materials.keys()):
+            mat.set_density(materials[name].get_density('g/cm3') * mult_factor, 'g/cm3')
+            print(f"Material: {mat.name}, New Density: {mat.get_density('g/cm3')} g/cm3")
 
+        factor /= mult_factor

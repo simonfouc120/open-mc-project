@@ -141,28 +141,57 @@ def get_ww_size(weight_windows:list, particule_type:str = "neutron") -> tuple:
 
 def remove_zeros_from_ww(weight_windows:list) -> list:
     """
-    Remove zeros from the weight window arrays by replacing them with the minimum nonzero value
-    in each energy group slice.
+    Replace zero (or non-positive) entries in the weight window arrays by the nearest
+    (Euclidean-neighbour) entry that is positive.
 
     Parameters:
         weight_windows (list): List of weight window objects.
 
     Returns:
-        list: List of weight window objects with zeros replaced by the minimum nonzero value.
+        list: List of weight window objects with zeros replaced by the nearest non-zero value.
     """
     for wwg in weight_windows:
         for index_energy in range(wwg.lower_ww_bounds.shape[-1]):
-            current_slice = wwg.lower_ww_bounds[:, :, :, index_energy]
-            if np.sum(current_slice[current_slice > 0]) != 0:
-                min_nonzero = np.min(current_slice[current_slice > 0])
-                current_slice[current_slice <= 0] = min_nonzero
-                wwg.lower_ww_bounds[:, :, :, index_energy] = current_slice
+            # lower bounds
+            arr = wwg.lower_ww_bounds[:, :, :, index_energy]
+            mask_zero = arr <= 0
+            if np.any(mask_zero):
+                nonzero_coords = np.argwhere(~mask_zero)
+                if nonzero_coords.size > 0:
+                    zero_coords = np.argwhere(mask_zero)
+                    # choose vectorized or loop strategy depending on size to avoid huge memory use
+                    if zero_coords.shape[0] * nonzero_coords.shape[0] < 5e7:
+                        # vectorized nearest neighbour search (squared distances)
+                        d2 = np.sum((zero_coords[:, None, :] - nonzero_coords[None, :, :]) ** 2, axis=2)
+                        nn_idx = np.argmin(d2, axis=1)
+                        nearest_coords = nonzero_coords[nn_idx]
+                        arr[tuple(zero_coords.T)] = arr[tuple(nearest_coords.T)]
+                    else:
+                        # fallback per-zero search to save memory
+                        for z in zero_coords:
+                            d2 = np.sum((nonzero_coords - z) ** 2, axis=1)
+                            nn = np.argmin(d2)
+                            arr[tuple(z)] = arr[tuple(nonzero_coords[nn])]
+                    wwg.lower_ww_bounds[:, :, :, index_energy] = arr
 
-            current_slice_upper = wwg.upper_ww_bounds[:, :, :, index_energy]
-            if np.sum(current_slice_upper[current_slice_upper > 0]) != 0:
-                min_nonzero_upper = np.min(current_slice_upper[current_slice_upper > 0])
-                current_slice_upper[current_slice_upper <= 0] = min_nonzero_upper
-                wwg.upper_ww_bounds[:, :, :, index_energy] = current_slice_upper
+            # upper bounds
+            arr_u = wwg.upper_ww_bounds[:, :, :, index_energy]
+            mask_zero_u = arr_u <= 0
+            if np.any(mask_zero_u):
+                nonzero_coords_u = np.argwhere(~mask_zero_u)
+                if nonzero_coords_u.size > 0:
+                    zero_coords_u = np.argwhere(mask_zero_u)
+                    if zero_coords_u.shape[0] * nonzero_coords_u.shape[0] < 5e7:
+                        d2_u = np.sum((zero_coords_u[:, None, :] - nonzero_coords_u[None, :, :]) ** 2, axis=2)
+                        nn_idx_u = np.argmin(d2_u, axis=1)
+                        nearest_coords_u = nonzero_coords_u[nn_idx_u]
+                        arr_u[tuple(zero_coords_u.T)] = arr_u[tuple(nearest_coords_u.T)]
+                    else:
+                        for z in zero_coords_u:
+                            d2_u = np.sum((nonzero_coords_u - z) ** 2, axis=1)
+                            nn_u = np.argmin(d2_u)
+                            arr_u[tuple(z)] = arr_u[tuple(nonzero_coords_u[nn_u])]
+                    wwg.upper_ww_bounds[:, :, :, index_energy] = arr_u
     return weight_windows
 
 
