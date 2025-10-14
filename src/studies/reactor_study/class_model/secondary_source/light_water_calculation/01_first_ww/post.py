@@ -6,7 +6,7 @@ import sys
 import numpy as np
 from pilot import MODEL, P1, P2, P3, P4, my_reactor
 CWD = Path(__file__).parent.resolve() 
-project_root = Path(__file__).resolve().parents[6]  
+project_root = Path(__file__).resolve().parents[7]  
 sys.path.append(str(project_root))
 
 from parameters.parameters_paths import PATH_TO_CROSS_SECTIONS, IMAGE_PATH
@@ -19,7 +19,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.0720.h5")
+statepoint = openmc.StatePoint(f"statepoint.0870.h5")
 
 results_path = "simulation_results.json"
 with open(results_path, "r") as f:
@@ -63,7 +63,7 @@ for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
 
 
 mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
-mesh_tally_photons.plot_dose(axis_two_index=150, 
+mesh_tally_photons.plot_dose(axis_two_index=136, 
                              particles_per_second=neutron_emission_rate, 
                              x_lim=(0, 600),
                              y_lim=(1e3, 1e14),
@@ -74,12 +74,12 @@ mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=Tru
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   
 
 mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
-# mesh_tally_neutrons.plot_dose(axis_two_index=250, 
-#                              particles_per_second=neutron_emission_rate, 
-#                              x_lim=(0, 600),
-#                              y_lim=(1e3, 1e14),
-#                              save_fig=True,
-#                              radiological_area=True,
-#                              fig_name="dose_plot_neutrons.png")
+mesh_tally_neutrons.plot_dose(axis_two_index=150, 
+                             particles_per_second=neutron_emission_rate, 
+                             x_lim=(0, 600),
+                             y_lim=(1e3, 1e14),
+                             save_fig=True,
+                             radiological_area=True,
+                             fig_name="dose_plot_neutrons.png")
 mesh_tally_neutrons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   

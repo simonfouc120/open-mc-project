@@ -1,0 +1,1 @@
+# Calcul with a ww created without and density divided by 4

@@ -1,0 +1,1 @@
+# Calcul with a ww created with itterations (15 itterations) and density divided by 4
