@@ -48,7 +48,8 @@ def compute_dose_rate_tally(statepoint: openmc.StatePoint,
     tally = statepoint.get_tally(name=tally_name)
     mean = tally.mean.flatten()[0]
     std_dev = tally.std_dev.flatten()[0]
-    
+    fom = tally.figure_of_merit[0][0][0]
+
     # Dose rate in pSv/s
     dose_rate_pSv_s = (mean / volume) * particule_per_second
     error_pSv_s = (std_dev / volume) * particule_per_second
@@ -68,8 +69,7 @@ def compute_dose_rate_tally(statepoint: openmc.StatePoint,
     
     dose_rate = dose_rate_pSv_s * conversion_factor
     dose_rate_error = error_pSv_s * conversion_factor
-    
-    return dose_rate, dose_rate_error
+    return dose_rate, dose_rate_error, fom
 
 def load_mesh_tally(statepoint_file: object,
                     cwd: Path = Path.cwd(), 
@@ -1262,6 +1262,7 @@ def save_tally_result_to_json(tally_name: str,
                                 value: float, 
                                 error: float, 
                                 unit: str, 
+                                fom: float,
                                 filename: str = "results.json",
                                 group: str = None):
     """
@@ -1291,7 +1292,8 @@ def save_tally_result_to_json(tally_name: str,
         f"value [{unit}]": value,
         f"error [{unit}]": error,
         "relative_error [%]": relative_error,
-        "unit": unit
+        "unit": unit,
+        "fom": fom
     }
 
     if group:
