@@ -46,170 +46,157 @@ for material_name, material in new_material_dict.items():
 new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
 my_reactor.material = new_material_dict
-MODEL = my_reactor.model
+model = my_reactor.model
 
 # add random ray 
 
 # Mesh (from model geometry)
-mesh_dimension = (50, 50, 50)
-mesh_size = 850.0
-mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
-mesh.dimension = tuple(mesh_dimension)
-mesh.lower_left = (-mesh_size, -mesh_size, -mesh_size)
-mesh.upper_right = (mesh_size, mesh_size, mesh_size)
+def create_weight_window(
+    model,
+    mesh_dimension=(50, 50, 50),
+    side_length_mesh=850.0,
+    batches_number=10,
+    particles_per_batch=10000,
+    particle_types=("neutron", "photon"),
+    num_iterations=15
+):
+    mesh = openmc.RegularMesh().from_domain(model.geometry)
+    mesh.dimension = tuple(mesh_dimension)
+    mesh.lower_left = (-side_length_mesh, -side_length_mesh, -side_length_mesh)
+    mesh.upper_right = (side_length_mesh, side_length_mesh, side_length_mesh)
 
-mesh_filter = openmc.MeshFilter(mesh)
+    mesh_filter = openmc.MeshFilter(mesh)
 
-flux_tally_neutrons = openmc.Tally(name="flux_tally_neutron")
-flux_tally_neutrons.filters = [mesh_filter, openmc.ParticleFilter("neutron")]
-flux_tally_neutrons.scores = ["flux"]
-flux_tally_neutrons.id = 55  # we set the ID number here as we need to access it during the openmc lib run
+    tallies = openmc.Tallies()
 
-flux_tally_photons = openmc.Tally(name="flux_tally_photon")
-flux_tally_photons.filters = [mesh_filter, openmc.ParticleFilter("photon")]
-flux_tally_photons.scores = ["flux"]
-flux_tally_photons.id = 56  # we set the ID number here as we need to access it during the openmc lib run
+    if "neutron" in particle_types:
+        flux_tally_neutrons = openmc.Tally(name="flux_tally_neutron")
+        flux_tally_neutrons.filters = [mesh_filter, openmc.ParticleFilter("neutron")]
+        flux_tally_neutrons.scores = ["flux"]
+        flux_tally_neutrons.id = 55  
+        tallies.append(flux_tally_neutrons)
 
-tallies = openmc.Tallies([flux_tally_neutrons, flux_tally_photons])
+    if "photon" in particle_types:
+        flux_tally_photons = openmc.Tally(name="flux_tally_photon")
+        flux_tally_photons.filters = [mesh_filter, openmc.ParticleFilter("photon")]
+        flux_tally_photons.scores = ["flux"]
+        flux_tally_photons.id = 56
+        tallies.append(flux_tally_photons)
 
-settings = openmc.Settings()
-batches_number= 10
-particles_per_batch = 10000
-max_history_splits = 1_000
-src = openmc.FileSource('surface_source.h5')
-particle_types = ("neutron", "photon")
+    settings = openmc.Settings()
+    src = openmc.FileSource('surface_source.h5')
+    settings.batches = batches_number
+    settings.particles = particles_per_batch
+    settings.run_mode = "fixed source"
+    src.particles = list(particle_types)  
+    settings.source = src
+    settings.photon_transport = True
+    settings.output = {'tallies': True}
 
-settings.batches = batches_number
-settings.particles = particles_per_batch
-settings.run_mode = "fixed source"
-src.particles = list(particle_types)  
-settings.source = src
-settings.photon_transport = True
-settings.output = {'tallies': True}
+    model.settings = settings
+    model.tallies = tallies
+    model.export_to_xml()
 
-MODEL.settings = settings
-MODEL.tallies = tallies
-MODEL.export_to_xml()
+    def plot_mesh_tally_and_weight_window(statepoint_filename, 
+                                          weight_window_filename, 
+                                          image_filename,
+                                          particle_type:str='neutron'):
 
-def plot_mesh_tally_and_weight_window(statepoint_filename, 
-                                      weight_window_filename, 
-                                      image_filename,
-                                      particle_type:str='neutron'):
-    # load flux tally from statepoint file
-    with openmc.StatePoint(statepoint_filename) as sp:
-        flux_tally = sp.get_tally(name=f"flux_tally_{particle_type}")
+        with openmc.StatePoint(statepoint_filename) as sp:
+            flux_tally = sp.get_tally(name=f"flux_tally_{particle_type}")
 
-    tally_mesh = flux_tally.find_filter(openmc.MeshFilter).mesh
-    tally_mesh_extent = tally_mesh.bounding_box.extent['xy']
+        tally_mesh = flux_tally.find_filter(openmc.MeshFilter).mesh
+        tally_mesh_extent = tally_mesh.bounding_box.extent['xy']
 
-    # get slice of flux mean and std dev values on the xy basis mid z axis.
-    flux_mean = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
-    flux_std_dev = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
-    
+        flux_mean = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
+        flux_std_dev = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
+        
+        flux_rel_err = np.divide(flux_std_dev, flux_mean, out=np.zeros_like(flux_std_dev), where=flux_mean!=0)
+        flux_rel_err[flux_rel_err == 0.0] = np.nan
+        
+        # get slice of ww lower bounds
+        wws=openmc.hdf5_to_wws(weight_window_filename)
+        if particle_type == 'photon':
+            ww = wws[1]  
+        else:
+            ww = wws[0]  
+        ww_mesh = ww.mesh  # get the mesh that the weight window is mapped on
+        ww_mesh_extent = ww_mesh.bounding_box.extent['xy']
+        reshaped_ww_vals = ww.lower_ww_bounds.reshape(mesh.dimension)
 
-    # flux_rel_err = np.zeros_like(flux_mean)
-    # nonzero_flux = flux_mean != 0
-    # flux_rel_err[nonzero_flux] = flux_std_dev[nonzero_flux] / flux_mean[nonzero_flux]
+        # slice on XZ basis, midplane Y axis
+        slice_of_ww = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
 
-    # calculate values for a slice showing relative uncertainties
-    flux_rel_err = np.divide(flux_std_dev, flux_mean, out=np.zeros_like(flux_std_dev), where=flux_mean!=0)
-    flux_rel_err[flux_rel_err == 0.0] = np.nan
-    
-    # get slice of ww lower bounds
-    wws=openmc.hdf5_to_wws(weight_window_filename)
-    if particle_type == 'photon':
-        ww = wws[1]  # get the one and only mesh tally
-    else:
-        ww = wws[0]  # get the one and only mesh tally
-    ww_mesh = ww.mesh  # get the mesh that the weight window is mapped on
-    ww_mesh_extent = ww_mesh.bounding_box.extent['xy']
-    reshaped_ww_vals = ww.lower_ww_bounds.reshape(mesh.dimension)
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        def add_colourbar(ax, im):
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            return fig.colorbar(im, cax=cax)
 
-    # slice on XZ basis, midplane Y axis
-    slice_of_ww = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
-    
-    # set up 3 subplots for the flux, std dev and ww slices
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-
-    # function will set colour bar on a sub plot
-    def add_colourbar(ax, im):
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        return fig.colorbar(im, cax=cax)
-
-    # add slice of flux to subplots
-    im_flux = axes[0].imshow(
-        flux_mean.T,
-        # origin="lower",
-        extent=tally_mesh_extent,
-        norm=LogNorm(vmin=1e-10, vmax=1)
-    )
-    axes[0].set_title("Flux Mean")
-    add_colourbar(axes[0], im_flux)
-
-    # add slice of flux std dev to subplots
-    im_std_dev = axes[1].imshow(
-        flux_rel_err.T,
-        # origin="lower",
-        extent=tally_mesh_extent,
-        vmin=0.0,
-        vmax=1.0,
-        cmap='RdYlGn_r'
-    )
-    axes[1].set_title("Flux Mean rel. error")
-    add_colourbar(axes[1], im_std_dev)
-
-    # add slice of ww to subplots
-    im_ww_lower = axes[2].imshow(
-        slice_of_ww.T,
-        # origin="lower",
-        extent=ww_mesh_extent,
-        norm=LogNorm(vmin=1e-14, vmax=1e-1),
-    )
-    axes[2].set_title("WW lower bound")
-    add_colourbar(axes[2], im_ww_lower)
-    
-    plt.tight_layout()
-    plt.savefig(image_filename + f'_{particle_type}.png')
-    plt.close()
-
-# AFFICHER YZ 
-with openmc.lib.run_in_memory():
-
-    # loads up a live pointer to the tally with id=55, at this stage the tally is empty
-    tally_neutron = openmc.lib.tallies[55]
-    tally_photon = openmc.lib.tallies[56]
-    # makes weight windows from the tally, at this stage the values are empty
-    wws = openmc.lib.WeightWindows.from_tally(tally_neutron, particle="neutron")
-    wws_photon = openmc.lib.WeightWindows.from_tally(tally_photon, particle='photon')
-    
-    for i in range(15):
-
-        # run the simulation
-        openmc.lib.run()
-
-        # improves the weight window with the latest tally results
-        wws.update_magic(tally_neutron)
-        wws_photon.update_magic(tally_photon)
-        # we write out the weight window map for plotting later
-        openmc.lib.export_weight_windows(filename=f'weight_windows{i}.h5')
-        # we write out the statepoint so that the tally can be plotted later
-        openmc.lib.statepoint_write(filename=f'statepoint_simulation_{i}.h5')
-
-        # turns on the weight windows to ensure they are used
-        openmc.lib.settings.weight_windows_on = True
-
-        # creates a plot of the flux, std_dev and weight window
-        plot_mesh_tally_and_weight_window(
-            f'statepoint_simulation_{i}.h5',
-            f'weight_windows{i}.h5',
-            f'plot_{i}',
-            particle_type='neutron'
+        # add slice of flux to subplots
+        im_flux = axes[0].imshow(
+            flux_mean.T,
+            extent=tally_mesh_extent,
+            norm=LogNorm(vmin=1e-10, vmax=1)
         )
-        plot_mesh_tally_and_weight_window(
-            f'statepoint_simulation_{i}.h5',
-            f'weight_windows{i}.h5',
-            f'plot_{i}',
-            particle_type='photon'
-        )
+        axes[0].set_title("Flux Mean")
+        axes[0].set_xlabel("X (cm)")
+        axes[0].set_ylabel("Y (cm)")
+        add_colourbar(axes[0], im_flux)
 
+        # add slice of flux std dev to subplots
+        im_std_dev = axes[1].imshow(
+            flux_rel_err.T,
+            extent=tally_mesh_extent,
+            vmin=0.0,
+            vmax=1.0,
+            cmap='RdYlGn_r'
+        )
+        axes[1].set_title("Flux Mean rel. error")
+        axes[1].set_xlabel("X (cm)")
+        axes[1].set_ylabel("Y (cm)")
+        add_colourbar(axes[1], im_std_dev)
+
+        im_ww_lower = axes[2].imshow(
+            slice_of_ww.T,
+            extent=ww_mesh_extent,
+            norm=LogNorm(vmin=1e-14, vmax=1e-1),
+        )
+        axes[2].set_xlabel("X (cm)")
+        axes[2].set_ylabel("Y (cm)")
+        axes[2].set_title("WW lower bound")
+        add_colourbar(axes[2], im_ww_lower)
+        
+        plt.tight_layout()
+        plt.savefig(image_filename + f'_{particle_type}.png')
+        plt.close()
+
+    with openmc.lib.run_in_memory():
+        tally_neutron = openmc.lib.tallies[55]
+        tally_photon = openmc.lib.tallies[56]
+        wws = openmc.lib.WeightWindows.from_tally(tally_neutron, particle="neutron", )
+        wws_photon = openmc.lib.WeightWindows.from_tally(tally_photon, particle='photon')
+        
+        for i in range(num_iterations):
+            openmc.lib.run()
+            wws.update_magic(tally_neutron)
+            wws_photon.update_magic(tally_photon)
+            openmc.lib.export_weight_windows(filename=f'weight_windows{i}.h5')
+            openmc.lib.statepoint_write(filename=f'statepoint_simulation_{i}.h5')
+            openmc.lib.settings.weight_windows_on = True
+
+            plot_mesh_tally_and_weight_window(
+                f'statepoint_simulation_{i}.h5',
+                f'weight_windows{i}.h5',
+                f'plot_{i}',
+                particle_type='neutron'
+            )
+            plot_mesh_tally_and_weight_window(
+                f'statepoint_simulation_{i}.h5',
+                f'weight_windows{i}.h5',
+                f'plot_{i}',
+                particle_type='photon'
+            )
+
+# Example usage:
+create_weight_window(model, num_iterations=3)

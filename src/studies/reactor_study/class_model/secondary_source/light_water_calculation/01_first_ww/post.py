@@ -26,7 +26,7 @@ with open(results_path, "r") as f:
     results = json.load(f)
 neutron_emission_rate = results["neutrons_emitted_per_second"]["value"]
 
-MODEL.export_to_xml()
+model.export_to_xml()
 
 for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
     dose_rate_photon, dose_rate_error_photon, fom_photon = compute_dose_rate_tally(
@@ -72,7 +72,7 @@ mesh_tally_photons.plot_dose(axis_two_index=mesh_tally_photons.bin_number//2,
                              save_fig=True,
                              radiological_area=True,
                              fig_name="dose_plot_photons.png")
-mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
+mesh_tally_photons.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell", 
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   
 
 mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
@@ -83,5 +83,5 @@ mesh_tally_neutrons.plot_dose(axis_two_index=mesh_tally_neutrons.bin_number//2,
                              save_fig=True,
                              radiological_area=True,
                              fig_name="dose_plot_neutrons.png")
-mesh_tally_neutrons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
+mesh_tally_neutrons.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   

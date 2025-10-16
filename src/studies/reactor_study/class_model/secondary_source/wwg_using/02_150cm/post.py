@@ -35,8 +35,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-650, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 dose_rate_photon, dose_rate_error_photon = compute_dose_rate_tally(
     statepoint=statepoint,
@@ -80,7 +80,7 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              radiological_area=True,
                              geometrical_limit=[(-400, 'Concrete wall start'), (-550, 'Concrete wall end')],
                              fig_name="dose_plot_photons.png")
-mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
+mesh_tally_photons.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell", 
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   
 
 mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
@@ -92,5 +92,5 @@ mesh_tally_neutrons.plot_dose(axis_two_index=250,
                              radiological_area=True,
                              geometrical_limit=[(-400, 'Concrete wall start'), (-550, 'Concrete wall end')],
                              fig_name="dose_plot_neutrons.png")
-mesh_tally_neutrons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
+mesh_tally_neutrons.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   

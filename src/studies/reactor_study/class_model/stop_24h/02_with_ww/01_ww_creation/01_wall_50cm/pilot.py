@@ -36,7 +36,7 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-520, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
+model = my_reactor.model
 
 # fonction material pas de fission
 # run the simulation
@@ -64,7 +64,7 @@ settings.source.particles = ["photon"]
 settings.source.energy = openmc.stats.Discrete(energies_eV, pdf_list)
 settings.source.strength = photons_per_s
 
-mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
+mesh = openmc.RegularMesh().from_domain(model.geometry)
 mesh.dimension = (65, 65, 65)
 mesh.lower_left = (-700.0, -700.0, -700.0)
 mesh.upper_right = (700.0, 700.0, 700.0)
@@ -83,8 +83,8 @@ settings.weight_window_generators = [wwg_photon]
 # rr_model.export_to_xml()
 
 # ##
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 
 remove_previous_results()

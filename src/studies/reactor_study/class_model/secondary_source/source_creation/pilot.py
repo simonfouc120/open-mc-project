@@ -26,8 +26,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            concrete_wall_thickness=50,
                            calculation_sphere_coordinates=(0, -350, 0))
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 # fonction material pas de fission
 
@@ -51,9 +51,9 @@ settings.surf_source_write = {
     'max_source_files': 3, 
     'max_particles' : 100000000,  # Nombre de particules par fichier
 }
-MODEL.settings = settings
+model.settings = settings
 settings.export_to_xml()
-MODEL.export_to_xml()
+model.export_to_xml()
 
 remove_previous_results(CWD)
 

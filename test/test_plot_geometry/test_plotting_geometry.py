@@ -32,8 +32,8 @@ my_reactor = Reactor_model(materials=material_dict,
 my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(-500, -400, 190, 210, -10, 10), material_name="AIR_MATERIAL",
                     cells_to_be_excluded_by=[my_reactor.concrete_walls_cells[i] for i in range(len(my_reactor.concrete_walls_cells))] + [my_reactor.air_main_cell])
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
@@ -74,14 +74,14 @@ bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850
 dose_over_geometry(statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
-                model=MODEL, particles_per_second=neutron_emission_rate)
+                model=model, particles_per_second=neutron_emission_rate)
 
 dose_over_geometry(statepoint_file=statepoint, name_mesh_tally="flux_mesh_xy_neutrons", plane="xy", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="neutron", 
-                model=MODEL, particles_per_second=neutron_emission_rate, suffix_saving="_zoom")
+                model=model, particles_per_second=neutron_emission_rate, suffix_saving="_zoom")
 
 dose_over_geometry(statepoint_file=statepoint, name_mesh_tally="flux_mesh_yz_photons", plane="yz",
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
-                model=MODEL, particles_per_second=neutron_emission_rate)
+                model=model, particles_per_second=neutron_emission_rate)

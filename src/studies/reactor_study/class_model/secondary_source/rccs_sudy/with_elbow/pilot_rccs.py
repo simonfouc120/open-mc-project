@@ -37,8 +37,8 @@ my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(-460, -440, 1
 my_reactor.add_cell(surface=openmc.model.RectangularParallelepiped(-440, -400, 180, 200, -10, 10), material_name="AIR_MATERIAL",
                     cells_to_be_excluded_by=[my_reactor.concrete_walls_cells[i] for i in range(len(my_reactor.concrete_walls_cells))] + [my_reactor.air_main_cell])
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
@@ -76,8 +76,8 @@ settings.weight_windows = ww_corrected_factor
 plot_weight_window(weight_window=ww[0], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
 plot_weight_window(weight_window=ww[1], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

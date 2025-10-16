@@ -51,8 +51,8 @@ P1 = my_reactor.add_calculation_sphere(coordinates=(0, 350, 0), radius=10.0)
 P2 = my_reactor.add_calculation_sphere(coordinates=(0, 400, 0), radius=10.0)
 
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 # plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="yz", saving_figure=True, dpi=500, height=1000, width=1000)
 # plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), plane="xy", saving_figure=True, dpi=500, height=400, width=400)
@@ -100,9 +100,9 @@ settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
 settings.photon_transport = True
 settings.source.angle = openmc.stats.Isotropic()  
-MODEL.settings = settings
+model.settings = settings
 settings.export_to_xml()
-MODEL.export_to_xml()
+model.export_to_xml()
 
 openmc.run()
 remove_previous_results(CWD)

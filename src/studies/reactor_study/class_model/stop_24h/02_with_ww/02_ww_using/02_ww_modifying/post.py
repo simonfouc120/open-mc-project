@@ -22,7 +22,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.010.h5")
+statepoint = openmc.StatePoint(f"statepoint.030.h5")
 
 bin_mesh_volume = get_mesh_volumes(lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), thickness=20.0, bin_number=500)
 photons_per_s = 2.5e15
@@ -35,15 +35,15 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-520, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
-dose_over_geometry(model=MODEL ,statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
+dose_over_geometry(model=model ,statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xy", plane="xy", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-850, 850), zoom_y=(-850, 850), plot_error=True, particule_type="photon", 
                 particles_per_second=photons_per_s, mesh_bin_volume=bin_mesh_volume, radiological_area=True)   
 
-dose_over_geometry(model=MODEL ,statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xz", plane="xz", 
+dose_over_geometry(model=model ,statepoint_file=statepoint, name_mesh_tally="flux_mesh_photons_xz", plane="xz", 
                 saving_figure=True, bin_number=500, lower_left=(-850.0, -850.0), upper_right=(850.0, 850.0), 
                 zoom_x=(-800, 800), zoom_y=(-800, 800), plot_error=True, particule_type="photon", 
                 particles_per_second=photons_per_s, mesh_bin_volume=bin_mesh_volume, pixels_model_geometry=1_000_000)  

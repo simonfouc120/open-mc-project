@@ -35,8 +35,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-575, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 volume_tally_sphere = Volume_cell(cell=my_reactor.calc_sphere_cell).get_volume()
 
@@ -69,6 +69,6 @@ mesh_tally_photons.plot_dose(axis_two_index=250,
                              radiological_area=True,
                              geometrical_limit=[(-400, 'Concrete wall start'), (-500, 'Concrete wall end')],
                              fig_name="dose_plot_photons.png")
-mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, 
+mesh_tally_photons.plot_dose_map(model=model, saving_figure=True, plot_error=True, 
                                  particles_per_second=photons_per_s, radiological_area=False)   
-mesh_tally_photons.plot_tally_map(model=MODEL, saving_figure=True, plot_error=True)
+mesh_tally_photons.plot_tally_map(model=model, saving_figure=True, plot_error=True)

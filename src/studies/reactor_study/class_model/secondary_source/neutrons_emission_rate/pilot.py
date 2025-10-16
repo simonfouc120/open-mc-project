@@ -26,8 +26,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            concrete_wall_thickness=50,
                            calculation_sphere_coordinates=(0, -350, 0))
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 # run the simulation
 
@@ -40,9 +40,9 @@ settings.source = openmc.IndependentSource()
 settings.source.space = openmc.stats.Point((0, 0, 0))
 settings.source.particle = 'neutron'
 settings.photon_transport = True
-MODEL.settings = settings
+model.settings = settings
 settings.export_to_xml()
-MODEL.export_to_xml()
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

@@ -521,7 +521,7 @@ if __name__ == "__main__":
                            concrete_wall_thickness=150,
                            calculation_sphere_coordinates=(0, -600, 0), 
                            r_pin_fuel=1.5)
-    MODEL = my_reactor.model
-    MODEL.export_to_xml()
+    model = my_reactor.model
+    model.export_to_xml()
     plot_geometry(materials = material_list, plane="xz", width=1000, height=1000, dpi=500, saving_figure=False, legend_materials=False, color_by="cell")
     plot_geometry(materials = material_list, plane="xz", width=1000, height=1000, dpi=500, saving_figure=False, legend_materials=True, color_by="material")

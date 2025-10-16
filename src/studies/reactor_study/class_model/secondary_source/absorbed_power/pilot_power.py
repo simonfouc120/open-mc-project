@@ -28,8 +28,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            concrete_wall_thickness=50,
                            calculation_sphere_coordinates=(0, -350, 0))
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
@@ -46,9 +46,9 @@ settings.source = openmc.FileSource('surface_source.h5')
 settings.photon_transport = True
 settings.run_mode = "fixed source"
 settings.source.particles = ["neutron", "photon"]
-MODEL.settings = settings
+model.settings = settings
 settings.export_to_xml()
-MODEL.export_to_xml()
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

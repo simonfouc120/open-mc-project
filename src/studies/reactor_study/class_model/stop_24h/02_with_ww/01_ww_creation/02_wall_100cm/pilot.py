@@ -34,7 +34,7 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-575, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
+model = my_reactor.model
 
 data = np.loadtxt('gamma_spectrum_tabular.txt', comments='#')
 energies_eV = data[:,0]*1e6  # Energy in MeV
@@ -59,7 +59,7 @@ settings.source.particles = ["photon"]
 settings.source.energy = openmc.stats.Discrete(energies_eV, pdf_list)
 settings.source.strength = photons_per_s
 
-mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
+mesh = openmc.RegularMesh().from_domain(model.geometry)
 mesh.dimension = (65, 65, 65)
 mesh.lower_left = (-850.0, -850.0, -850.0)
 mesh.upper_right = (850.0, 850.0, 850.0)
@@ -74,8 +74,8 @@ wwg_photon = openmc.WeightWindowGenerator(
 settings.max_history_splits = 10_000  
 settings.weight_window_generators = [wwg_photon]
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,

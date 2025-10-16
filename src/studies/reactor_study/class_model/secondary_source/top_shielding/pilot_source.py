@@ -31,8 +31,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(0, 0, 500), 
                            calculation_sphere_radius=50.0)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
@@ -73,8 +73,8 @@ size_ww = get_ww_size(ww)
 plot_weight_window(weight_window=ww[0], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xz", particle_type='neutron')
 plot_weight_window(weight_window=ww[1], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xz", particle_type='photon')
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

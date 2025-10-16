@@ -34,8 +34,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-520, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=True, dpi=500, height=1700, width=1700,
@@ -72,8 +72,8 @@ settings.source.strength = photons_per_s
 
 settings.statepoint = {"batches": list(range(10, batches_number + 1, 10))}
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

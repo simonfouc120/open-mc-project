@@ -33,7 +33,7 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-520, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
+model = my_reactor.model
 
 # fonction material pas de fission
 # run the simulation
@@ -77,8 +77,8 @@ plot_weight_window(weight_window=openmc.hdf5_to_wws("weight_windows.h5")[0], ind
 plot_weight_window(weight_window=ww_corrected[0], index_coord=15, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
 
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 tallys = openmc.Tallies()
 

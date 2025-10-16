@@ -50,8 +50,8 @@ for coord in sphere_coords:
 
 P1, P2, P3, P4 = spheres
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 if __name__ == "__main__":
         
@@ -78,8 +78,8 @@ if __name__ == "__main__":
     plot_weight_window(weight_window=ww[0], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xy", particle_type='neutron')
     plot_weight_window(weight_window=ww[1], index_coord=size_ww[1]//2, energy_index=0, saving_fig=True, plane="xy", particle_type='photon')
 
-    MODEL.settings = settings
-    MODEL.export_to_xml()
+    model.settings = settings
+    model.export_to_xml()
 
     tallys = openmc.Tallies()
 

@@ -35,8 +35,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-600, 0, 0), 
                            calculation_sphere_radius=50.0)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
               plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
@@ -62,7 +62,7 @@ settings.photon_transport = True
 settings.run_mode = "fixed source"
 settings.source.particles = ["neutron", "photon"]
 
-mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
+mesh = openmc.RegularMesh().from_domain(model.geometry)
 mesh.dimension = (50, 50, 50)
 mesh.lower_left = (-850.0, -850.0, -850.0)
 mesh.upper_right = (850.0, 850.0, 850.0)
@@ -80,8 +80,8 @@ wwg_photon.particle_type = 'photon'
 settings.max_history_splits = 1_000  
 settings.weight_window_generators = [wwg_neutron, wwg_photon]
 
-MODEL.settings = settings
-MODEL.export_to_xml()
+model.settings = settings
+model.export_to_xml()
 
 remove_previous_results(batches_number=batches_number)
 

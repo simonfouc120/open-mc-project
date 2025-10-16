@@ -52,14 +52,14 @@ new_material_dict = create_reduced_density_material_dict(material_dict, factor=f
 new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
 my_reactor.material = new_material_dict
-MODEL = my_reactor.model
+model = my_reactor.model
 
 # add random ray 
 
 # Mesh (from model geometry)
 mesh_dimension = (50, 50, 50)
 mesh_size = 850.0
-mesh = openmc.RegularMesh().from_domain(MODEL.geometry)
+mesh = openmc.RegularMesh().from_domain(model.geometry)
 mesh.dimension = tuple(mesh_dimension)
 mesh.lower_left = (-mesh_size, -mesh_size, -mesh_size)
 mesh.upper_right = (mesh_size, mesh_size, mesh_size)
@@ -93,9 +93,9 @@ settings.source = src
 settings.photon_transport = True
 settings.output = {'tallies': True}
 
-MODEL.settings = settings
-MODEL.tallies = tallies
-MODEL.export_to_xml()
+model.settings = settings
+model.tallies = tallies
+model.export_to_xml()
 
 def plot_mesh_tally_and_weight_window(statepoint_filename, 
                                       weight_window_filename, 

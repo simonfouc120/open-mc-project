@@ -35,17 +35,17 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(-520, 0, 0),
                            calculation_sphere_radius=50)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 
 mesh_tally_photons_xy = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
-mesh_tally_photons_xy.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, model_geometry=False,
+mesh_tally_photons_xy.plot_dose_map(model=model, saving_figure=True, plot_error=True, model_geometry=False,
                                  particles_per_second=photons_per_s, radiological_area=False)   
 
 
 
 mesh_tally_photons_xz = mesh_tally_data(statepoint, "flux_mesh_photons_xz", "XZ", "photon")
-mesh_tally_photons_xz.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, model_geometry=False,
+mesh_tally_photons_xz.plot_dose_map(model=model, saving_figure=True, plot_error=True, model_geometry=False,
                                  particles_per_second=photons_per_s, radiological_area=False)   
 

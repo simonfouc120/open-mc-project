@@ -34,8 +34,8 @@ my_reactor = Reactor_model(materials=material_dict,
                            calculation_sphere_coordinates=(0, 0, 500), 
                            calculation_sphere_radius=50.0)
 
-MODEL = my_reactor.model
-MODEL.export_to_xml()
+model = my_reactor.model
+model.export_to_xml()
 
 dose_rate_photon, dose_rate_error_photon = compute_dose_rate_tally(
     statepoint=statepoint,
@@ -71,16 +71,16 @@ save_tally_result_to_json(
 )
 
 mesh_tally_photons_xy = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
-mesh_tally_photons_xy.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
+mesh_tally_photons_xy.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell", 
                                  particles_per_second=neutron_emission_rate, radiological_area=False, model_geometry=False)   
 
 mesh_tally_neutrons_xy = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
-mesh_tally_neutrons_xy.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
+mesh_tally_neutrons_xy.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False, model_geometry=False)   
 
 
 mesh_tally_photons_xz = mesh_tally_data(statepoint, "flux_mesh_photons_xz", "XZ", "photon")
-mesh_tally_photons_xz.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell", 
+mesh_tally_photons_xz.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell", 
                                  particles_per_second=neutron_emission_rate, radiological_area=False)
 mesh_tally_photons_xz.plot_dose(axis_one_index=250, 
                              particles_per_second=neutron_emission_rate, 
@@ -92,7 +92,7 @@ mesh_tally_photons_xz.plot_dose(axis_one_index=250,
                              fig_name="dose_plot_photons.png")
 
 mesh_tally_neutrons_xz = mesh_tally_data(statepoint, "flux_mesh_neutrons_xz", "XZ", "neutron")
-mesh_tally_neutrons_xz.plot_dose_map(model=MODEL, saving_figure=True, plot_error=True, color_by="cell",
+mesh_tally_neutrons_xz.plot_dose_map(model=model, saving_figure=True, plot_error=True, color_by="cell",
                                  particles_per_second=neutron_emission_rate, radiological_area=False)
 mesh_tally_neutrons_xz.plot_dose(axis_one_index=250, 
                              particles_per_second=neutron_emission_rate, 
