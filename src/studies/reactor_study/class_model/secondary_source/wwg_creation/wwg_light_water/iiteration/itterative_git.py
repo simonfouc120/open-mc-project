@@ -52,14 +52,14 @@ model = my_reactor.model
 
 # Mesh (from model geometry)
 def create_weight_window(
-    model,
-    mesh_dimension=(50, 50, 50),
-    side_length_mesh=850.0,
-    batches_number=10,
-    particles_per_batch=10000,
-    particle_types=("neutron", "photon"),
-    num_iterations=15
-):
+    model: openmc.Model,
+    mesh_dimension: tuple[int, int, int] = (50, 50, 50),
+    side_length_mesh: float = 850.0,
+    batches_number: int = 10,
+    particles_per_batch: int = 10000,
+    particle_types: tuple[str, ...] = ("neutron", "photon"),
+    num_iterations: int = 15
+) -> None:
     mesh = openmc.RegularMesh().from_domain(model.geometry)
     mesh.dimension = tuple(mesh_dimension)
     mesh.lower_left = (-side_length_mesh, -side_length_mesh, -side_length_mesh)
@@ -97,10 +97,12 @@ def create_weight_window(
     model.tallies = tallies
     model.export_to_xml()
 
-    def plot_mesh_tally_and_weight_window(statepoint_filename, 
-                                          weight_window_filename, 
-                                          image_filename,
-                                          particle_type:str='neutron'):
+    def plot_mesh_tally_and_weight_window(
+        statepoint_filename: str, 
+        weight_window_filename: str, 
+        image_filename: str,
+        particle_type: str = 'neutron'
+    ) -> None:
 
         with openmc.StatePoint(statepoint_filename) as sp:
             flux_tally = sp.get_tally(name=f"flux_tally_{particle_type}")
