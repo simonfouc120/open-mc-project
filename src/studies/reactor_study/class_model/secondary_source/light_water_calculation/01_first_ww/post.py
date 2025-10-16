@@ -29,7 +29,7 @@ neutron_emission_rate = results["neutrons_emitted_per_second"]["value"]
 MODEL.export_to_xml()
 
 for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
-    dose_rate_photon, dose_rate_error_photon = compute_dose_rate_tally(
+    dose_rate_photon, dose_rate_error_photon, fom_photon = compute_dose_rate_tally(
         statepoint=statepoint,
         tally_name=f"flux_tally_sphere_dose_photon_{tally_suffix}",
         particule_per_second=neutron_emission_rate,
@@ -37,7 +37,7 @@ for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
         unit="mSv/h"
     )
 
-    dose_rate_neutron, dose_rate_error_neutron = compute_dose_rate_tally(
+    dose_rate_neutron, dose_rate_error_neutron, fom_neutron = compute_dose_rate_tally(
         statepoint=statepoint,
         tally_name=f"flux_tally_sphere_dose_neutron_{tally_suffix}",
         particule_per_second=neutron_emission_rate,
@@ -50,6 +50,7 @@ for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
         value=dose_rate_photon,
         error=dose_rate_error_photon,
         unit="mSv/h",
+        fom=fom_photon,
         filename="results.json"
     )
 
@@ -58,12 +59,13 @@ for tally, tally_suffix in zip([P1, P2, P3, P4],["P1", "P2", "P3", "P4"]):
         value=dose_rate_neutron,
         error=dose_rate_error_neutron,
         unit="mSv/h",
+        fom=fom_neutron,
         filename="results.json"
     )
 
 
 mesh_tally_photons = mesh_tally_data(statepoint, "flux_mesh_photons_xy", "XY", "photon")
-mesh_tally_photons.plot_dose(axis_two_index=136, 
+mesh_tally_photons.plot_dose(axis_two_index=mesh_tally_photons.bin_number//2, 
                              particles_per_second=neutron_emission_rate, 
                              x_lim=(0, 600),
                              y_lim=(1e3, 1e14),
@@ -74,7 +76,7 @@ mesh_tally_photons.plot_dose_map(model=MODEL, saving_figure=True, plot_error=Tru
                                  particles_per_second=neutron_emission_rate, radiological_area=False)   
 
 mesh_tally_neutrons = mesh_tally_data(statepoint, "flux_mesh_neutrons_xy", "XY", "neutron")
-mesh_tally_neutrons.plot_dose(axis_two_index=150, 
+mesh_tally_neutrons.plot_dose(axis_two_index=mesh_tally_neutrons.bin_number//2, 
                              particles_per_second=neutron_emission_rate, 
                              x_lim=(0, 600),
                              y_lim=(1e3, 1e14),
