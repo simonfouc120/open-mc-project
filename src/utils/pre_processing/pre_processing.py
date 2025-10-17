@@ -5,7 +5,8 @@ import numpy as np
 from PIL import Image
 
 
-def remove_previous_results(batches_number: int = None):
+def remove_previous_results(batches_number: int = None,
+                            suffix: str = "") -> None:
     """
     Remove previous simulation results.
     If batches_number is provided, it removes the specific statepoint file.
@@ -17,7 +18,7 @@ def remove_previous_results(batches_number: int = None):
         os.remove(summary_path)
 
     if batches_number is not None:
-        statepoint_path = f"statepoint.{batches_number}.h5"
+        statepoint_path = f"statepoint{suffix}.{batches_number}.h5"
         if os.path.exists(statepoint_path):
             os.remove(statepoint_path)
     else:

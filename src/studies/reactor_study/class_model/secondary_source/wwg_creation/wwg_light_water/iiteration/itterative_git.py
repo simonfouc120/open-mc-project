@@ -58,7 +58,8 @@ def create_weight_window(
     batches_number: int = 10,
     particles_per_batch: int = 10000,
     particle_types: tuple[str, ...] = ("neutron", "photon"),
-    num_iterations: int = 15
+    num_iterations: int = 15, 
+    rm_intermediate_files: bool = True
 ) -> None:
     mesh = openmc.RegularMesh().from_domain(model.geometry)
     mesh.dimension = tuple(mesh_dimension)
@@ -110,12 +111,17 @@ def create_weight_window(
         tally_mesh = flux_tally.find_filter(openmc.MeshFilter).mesh
         tally_mesh_extent = tally_mesh.bounding_box.extent['xy']
 
-        flux_mean = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
-        flux_std_dev = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
+        flux_mean_xy = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
+        flux_std_dev_xy = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,:,int(mesh.dimension[2]/2)]
         
-        flux_rel_err = np.divide(flux_std_dev, flux_mean, out=np.zeros_like(flux_std_dev), where=flux_mean!=0)
-        flux_rel_err[flux_rel_err == 0.0] = np.nan
+        flux_rel_err_xy = np.divide(flux_std_dev_xy, flux_mean_xy, out=np.zeros_like(flux_std_dev_xy), where=flux_mean_xy!=0)
+        flux_rel_err_xy[flux_rel_err_xy == 0.0] = np.nan
         
+        flux_mean_xz = flux_tally.get_reshaped_data(value='mean', expand_dims=True).squeeze()[:,int(mesh.dimension[1]/2),:]
+        flux_std_dev_xz = flux_tally.get_reshaped_data(value='std_dev', expand_dims=True).squeeze()[:,int(mesh.dimension[1]/2),:]   
+        flux_rel_err_xz = np.divide(flux_std_dev_xz, flux_mean_xz, out=np.zeros_like(flux_std_dev_xz), where=flux_mean_xz!=0)
+        flux_rel_err_xz[flux_rel_err_xz == 0.0] = np.nan
+
         # get slice of ww lower bounds
         wws=openmc.hdf5_to_wws(weight_window_filename)
         if particle_type == 'photon':
@@ -129,46 +135,80 @@ def create_weight_window(
         # slice on XZ basis, midplane Y axis
         slice_of_ww = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
 
-        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        fig, axes = plt.subplots(2, 3, figsize=(12, 8))
         def add_colourbar(ax, im):
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="5%", pad=0.05)
             return fig.colorbar(im, cax=cax)
 
         # add slice of flux to subplots
-        im_flux = axes[0].imshow(
-            flux_mean.T,
+        im_flux = axes[0, 0].imshow(
+            flux_mean_xy.T,
             extent=tally_mesh_extent,
             norm=LogNorm(vmin=1e-10, vmax=1)
         )
-        axes[0].set_title("Flux Mean")
-        axes[0].set_xlabel("X (cm)")
-        axes[0].set_ylabel("Y (cm)")
-        add_colourbar(axes[0], im_flux)
+        axes[0, 0].set_title("Flux Mean")
+        axes[0, 0].set_xlabel("X (cm)")
+        axes[0, 0].set_ylabel("Y (cm)")
+        add_colourbar(axes[0, 0], im_flux)
 
         # add slice of flux std dev to subplots
-        im_std_dev = axes[1].imshow(
-            flux_rel_err.T,
+        im_std_dev = axes[0, 1].imshow(
+            flux_rel_err_xy.T,
             extent=tally_mesh_extent,
             vmin=0.0,
             vmax=1.0,
             cmap='RdYlGn_r'
         )
-        axes[1].set_title("Flux Mean rel. error")
-        axes[1].set_xlabel("X (cm)")
-        axes[1].set_ylabel("Y (cm)")
-        add_colourbar(axes[1], im_std_dev)
+        axes[0, 1].set_title("Flux Mean rel. error")
+        axes[0, 1].set_xlabel("X (cm)")
+        axes[0, 1].set_ylabel("Y (cm)")
+        add_colourbar(axes[0, 1], im_std_dev)
 
-        im_ww_lower = axes[2].imshow(
+        im_ww_lower = axes[0, 2].imshow(
             slice_of_ww.T,
             extent=ww_mesh_extent,
             norm=LogNorm(vmin=1e-14, vmax=1e-1),
         )
-        axes[2].set_xlabel("X (cm)")
-        axes[2].set_ylabel("Y (cm)")
-        axes[2].set_title("WW lower bound")
-        add_colourbar(axes[2], im_ww_lower)
-        
+        axes[0, 2].set_xlabel("X (cm)")
+        axes[0, 2].set_ylabel("Y (cm)")
+        axes[0, 2].set_title("WW lower bound")
+        add_colourbar(axes[0, 2], im_ww_lower)
+
+        im_flux_xz = axes[1, 0].imshow(
+            flux_mean_xz.T,
+            extent=ww_mesh.bounding_box.extent['xz'],
+            norm=LogNorm(vmin=1e-10, vmax=1)
+        )
+        axes[1, 0].set_title("Flux Mean")
+        axes[1, 0].set_xlabel("X (cm)")
+        axes[1, 0].set_ylabel("Z (cm)")
+        add_colourbar(axes[1, 0], im_flux_xz)
+
+        im_std_dev_xz = axes[1, 1].imshow(
+            flux_rel_err_xz.T,
+            extent=ww_mesh.bounding_box.extent['xz'],
+            vmin=0.0,
+            vmax=1.0,
+            cmap='RdYlGn_r'
+        )
+        axes[1, 1].set_title("Flux Mean rel. error")
+        axes[1, 1].set_xlabel("X (cm)")
+        axes[1, 1].set_ylabel("Z (cm)")
+
+
+        add_colourbar(axes[1, 1], im_std_dev_xz)
+        im_ww_lower_xz = axes[1, 2].imshow(
+            slice_of_ww.T,
+            extent=ww_mesh.bounding_box.extent['xz'],
+            norm=LogNorm(vmin=1e-14, vmax=1e-1),
+        )
+        axes[1, 2].set_xlabel("X (cm)")
+        axes[1, 2].set_ylabel("Z (cm)")
+        axes[1, 2].set_title("WW lower bound")
+        add_colourbar(axes[1, 2], im_ww_lower_xz)
+
+
         plt.tight_layout()
         plt.savefig(image_filename + f'_{particle_type}.png')
         plt.close()
@@ -184,21 +224,22 @@ def create_weight_window(
             wws.update_magic(tally_neutron)
             wws_photon.update_magic(tally_photon)
             openmc.lib.export_weight_windows(filename=f'weight_windows{i}.h5')
-            openmc.lib.statepoint_write(filename=f'statepoint_simulation_{i}.h5')
+            openmc.lib.statepoint_write(filename=f'statepoint_itteration_{i}.h5')
             openmc.lib.settings.weight_windows_on = True
 
             plot_mesh_tally_and_weight_window(
-                f'statepoint_simulation_{i}.h5',
+                f'statepoint_itteration_{i}.h5',
                 f'weight_windows{i}.h5',
                 f'plot_{i}',
                 particle_type='neutron'
             )
             plot_mesh_tally_and_weight_window(
-                f'statepoint_simulation_{i}.h5',
+                f'statepoint_itteration_{i}.h5',
                 f'weight_windows{i}.h5',
                 f'plot_{i}',
                 particle_type='photon'
             )
-
+        if rm_intermediate_files :
+            remove_previous_results()
 # Example usage:
-create_weight_window(model, num_iterations=3)
+create_weight_window(model, num_iterations=3, particles_per_batch=1000)
