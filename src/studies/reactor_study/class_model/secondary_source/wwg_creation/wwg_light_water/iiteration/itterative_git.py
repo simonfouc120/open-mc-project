@@ -133,7 +133,8 @@ def create_weight_window(
         reshaped_ww_vals = ww.lower_ww_bounds.reshape(mesh.dimension)
 
         # slice on XZ basis, midplane Y axis
-        slice_of_ww = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
+        slice_of_ww_xy = reshaped_ww_vals[:,:,int(mesh.dimension[1]/2)]
+        slice_of_ww_xz = reshaped_ww_vals[:,int(mesh.dimension[1]/2),:]
 
         fig, axes = plt.subplots(2, 3, figsize=(12, 8))
         def add_colourbar(ax, im):
@@ -166,7 +167,7 @@ def create_weight_window(
         add_colourbar(axes[0, 1], im_std_dev)
 
         im_ww_lower = axes[0, 2].imshow(
-            slice_of_ww.T,
+            slice_of_ww_xy.T,
             extent=ww_mesh_extent,
             norm=LogNorm(vmin=1e-14, vmax=1e-1),
         )
@@ -196,10 +197,9 @@ def create_weight_window(
         axes[1, 1].set_xlabel("X (cm)")
         axes[1, 1].set_ylabel("Z (cm)")
 
-
         add_colourbar(axes[1, 1], im_std_dev_xz)
         im_ww_lower_xz = axes[1, 2].imshow(
-            slice_of_ww.T,
+            slice_of_ww_xz.T,
             extent=ww_mesh.bounding_box.extent['xz'],
             norm=LogNorm(vmin=1e-14, vmax=1e-1),
         )
@@ -207,7 +207,6 @@ def create_weight_window(
         axes[1, 2].set_ylabel("Z (cm)")
         axes[1, 2].set_title("WW lower bound")
         add_colourbar(axes[1, 2], im_ww_lower_xz)
-
 
         plt.tight_layout()
         plt.savefig(image_filename + f'_{particle_type}.png')
@@ -239,7 +238,7 @@ def create_weight_window(
                 f'plot_{i}',
                 particle_type='photon'
             )
-        if rm_intermediate_files :
-            remove_previous_results()
+            if rm_intermediate_files :
+                remove_previous_results()
 # Example usage:
 create_weight_window(model, num_iterations=3, particles_per_batch=1000)

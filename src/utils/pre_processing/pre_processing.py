@@ -23,7 +23,7 @@ def remove_previous_results(batches_number: int = None,
             os.remove(statepoint_path)
     else:
         for file in os.listdir('.'):
-            if file.startswith('statepoint.') and file.endswith('.h5'):
+            if file.startswith('statepoint') and file.endswith('.h5'):
                 os.remove(file)
 
 def remove_intermediate_files():
