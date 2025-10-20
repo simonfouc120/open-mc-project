@@ -29,7 +29,9 @@ my_reactor = Reactor_model(materials=material_dict,
                            slab_thickness=100,
                            concrete_wall_thickness=100,
                            calculation_sphere_coordinates=(0, 0, 500), 
-                           calculation_sphere_radius=50.0)
+                           calculation_sphere_radius=50.0,
+                           thickness_lead_top_shielding=20.0, 
+                           thickness_b4c_top_shielding=65.0)
 
 model = my_reactor.model
 if __name__ == "__main__":
