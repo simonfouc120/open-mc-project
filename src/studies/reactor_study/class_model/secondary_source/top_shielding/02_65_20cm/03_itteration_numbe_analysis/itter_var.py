@@ -63,9 +63,7 @@ if __name__ == "__main__":
     fom_photon_list = []
 
 
-    for itteration in range(1, 8):
-
-        # run the simulation
+    for itteration in range(1, 9):
 
         settings = openmc.Settings()
         batches_number= 50
@@ -78,7 +76,7 @@ if __name__ == "__main__":
 
         ww = openmc.hdf5_to_wws(f"weight_windows{itteration}.h5")
 
-        settings.weight_windows = apply_spherical_correction_to_weight_windows(ww, particule_type='photon', sphere_center=(0.0, 0.0, 500.0), sphere_radius=50.0)
+        settings.weight_windows = apply_spherical_correction_to_weight_windows(ww, sphere_center=(0.0, 0.0, 500.0), sphere_radius=50.0)
         size_ww = get_ww_size(ww)
 
         model.settings = settings
@@ -134,7 +132,7 @@ if __name__ == "__main__":
     plt.plot(itterations_number, fom_photon_list, marker='o', label='Photons FOM')
     plt.yscale('log')
     plt.xlabel('Number of Iterations')
-    plt.ylabel('Figure of Merit (FOM)')
+    plt.ylabel('Figure of Merit')
     plt.title('FOM vs Number of Iterations')
     plt.grid(True, which="both", ls="--")
     plt.legend()
