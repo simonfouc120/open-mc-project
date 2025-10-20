@@ -461,11 +461,11 @@ def create_weight_window(
         im_flux = axes[0, 0].imshow(
             flux_mean_xy.T,
             extent=tally_mesh_extent,
-            norm=LogNorm(vmin=1e-10, vmax=1)
+            norm=LogNorm(vmin=np.min(flux_mean_xy[flux_mean_xy>0]), vmax=np.max(flux_mean_xy[flux_mean_xy>0]))
         )
         axes[0, 0].set_title("Flux Mean")
-        axes[0, 0].set_xlabel("X (cm)")
-        axes[0, 0].set_ylabel("Y (cm)")
+        axes[0, 0].set_xlabel("X [cm]")
+        axes[0, 0].set_ylabel("Y [cm]")
         add_colourbar(axes[0, 0], im_flux)
 
         # add slice of flux std dev to subplots
@@ -477,28 +477,28 @@ def create_weight_window(
             cmap='RdYlGn_r'
         )
         axes[0, 1].set_title("Flux Mean rel. error")
-        axes[0, 1].set_xlabel("X (cm)")
-        axes[0, 1].set_ylabel("Y (cm)")
+        axes[0, 1].set_xlabel("X [cm]")
+        axes[0, 1].set_ylabel("Y [cm]")
         add_colourbar(axes[0, 1], im_std_dev)
 
         im_ww_lower = axes[0, 2].imshow(
             slice_of_ww_xy.T,
             extent=ww_mesh_extent,
-            norm=LogNorm(vmin=1e-14, vmax=1e-1),
+            norm=LogNorm(vmin=np.min(slice_of_ww_xy[slice_of_ww_xy>0]), vmax=np.max(slice_of_ww_xy[slice_of_ww_xy>0])),
         )
-        axes[0, 2].set_xlabel("X (cm)")
-        axes[0, 2].set_ylabel("Y (cm)")
+        axes[0, 2].set_xlabel("X [cm]")
+        axes[0, 2].set_ylabel("Y [cm]")
         axes[0, 2].set_title("WW lower bound")
         add_colourbar(axes[0, 2], im_ww_lower)
 
         im_flux_xz = axes[1, 0].imshow(
             flux_mean_xz.T,
             extent=ww_mesh.bounding_box.extent['xz'],
-            norm=LogNorm(vmin=1e-10, vmax=1)
+            norm=LogNorm(vmin=np.min(flux_mean_xz[flux_mean_xz>0]), vmax=np.max(flux_mean_xz[flux_mean_xz>0]))
         )
         axes[1, 0].set_title("Flux Mean")
-        axes[1, 0].set_xlabel("X (cm)")
-        axes[1, 0].set_ylabel("Z (cm)")
+        axes[1, 0].set_xlabel("X [cm]")
+        axes[1, 0].set_ylabel("Z [cm]")
         add_colourbar(axes[1, 0], im_flux_xz)
 
         im_std_dev_xz = axes[1, 1].imshow(
@@ -509,17 +509,17 @@ def create_weight_window(
             cmap='RdYlGn_r'
         )
         axes[1, 1].set_title("Flux Mean rel. error")
-        axes[1, 1].set_xlabel("X (cm)")
-        axes[1, 1].set_ylabel("Z (cm)")
+        axes[1, 1].set_xlabel("X [cm]")
+        axes[1, 1].set_ylabel("Z [cm]")
 
         add_colourbar(axes[1, 1], im_std_dev_xz)
         im_ww_lower_xz = axes[1, 2].imshow(
             slice_of_ww_xz.T,
             extent=ww_mesh.bounding_box.extent['xz'],
-            norm=LogNorm(vmin=1e-14, vmax=1e-1),
+            norm=LogNorm(vmin=np.min(slice_of_ww_xz[slice_of_ww_xz>0]), vmax=np.max(slice_of_ww_xz[slice_of_ww_xz>0])),
         )
-        axes[1, 2].set_xlabel("X (cm)")
-        axes[1, 2].set_ylabel("Z (cm)")
+        axes[1, 2].set_xlabel("X [cm]")
+        axes[1, 2].set_ylabel("Z [cm]")
         axes[1, 2].set_title("WW lower bound")
         add_colourbar(axes[1, 2], im_ww_lower_xz)
 

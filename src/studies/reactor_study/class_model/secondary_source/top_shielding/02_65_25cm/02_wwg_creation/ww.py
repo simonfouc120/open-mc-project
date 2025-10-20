@@ -60,4 +60,4 @@ model = my_reactor.model
 model.export_to_xml()
 
 # Example usage:
-create_weight_window(model, num_iterations=10, batches_number=100, particles_per_batch=10000)
+create_weight_window(model, num_iterations=15, batches_number=50, particles_per_batch=10000, mesh_dimension=(100, 100, 100))

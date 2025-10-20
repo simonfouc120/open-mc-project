@@ -22,7 +22,7 @@ def compute_dose_rate_tally(statepoint: openmc.StatePoint,
                             tally_name: str, 
                             particule_per_second: float, 
                             volume: float,
-                            unit: str = 'µSv/h') -> tuple[float, float]:
+                            unit: str = 'µSv/h') -> tuple[float, float, float]:
     """
     Calculates the dose rate and its error from a tally.
 
