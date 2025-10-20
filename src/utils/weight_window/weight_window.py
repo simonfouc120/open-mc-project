@@ -374,7 +374,8 @@ def create_weight_window(
     particles_per_batch: int = 10000,
     particle_types: tuple[str, ...] = ("neutron", "photon"),
     num_iterations: int = 15, 
-    rm_intermediate_files: bool = True
+    rm_intermediate_files: bool = True,
+    src: openmc.Source = openmc.FileSource('surface_source.h5'),
 ) -> None:
     mesh = openmc.RegularMesh().from_domain(model.geometry)
     mesh.dimension = tuple(mesh_dimension)
@@ -400,7 +401,6 @@ def create_weight_window(
         tallies.append(flux_tally_photons)
 
     settings = openmc.Settings()
-    src = openmc.FileSource('surface_source.h5')
     settings.batches = batches_number
     settings.particles = particles_per_batch
     settings.run_mode = "fixed source"

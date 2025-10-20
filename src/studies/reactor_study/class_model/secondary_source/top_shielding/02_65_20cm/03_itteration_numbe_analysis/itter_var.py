@@ -66,7 +66,7 @@ if __name__ == "__main__":
     for itteration in range(1, 9):
 
         settings = openmc.Settings()
-        batches_number= 50
+        batches_number= 100
         settings.batches = batches_number
         settings.particles = 50000
         settings.source = openmc.FileSource('surface_source.h5')
@@ -124,8 +124,6 @@ if __name__ == "__main__":
         itterations_number.append(itteration)
         fom_neutron_list.append(fom_neutron)
         fom_photon_list.append(fom_photon)
-
-
 
     plt.figure(figsize=(8,6))
     plt.plot(itterations_number, fom_neutron_list, marker='o', label='Neutrons FOM')
