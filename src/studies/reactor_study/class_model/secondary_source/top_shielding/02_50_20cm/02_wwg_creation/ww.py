@@ -20,22 +20,34 @@ from src.utils.pre_processing.pre_processing import *
 from src.utils.post_preocessing.post_processing import *
 from src.models.model_complete_reactor_class import *
 from src.utils.weight_window.weight_window import *
-from src.models.model_complete_reactor_class import material_dict
 
 my_reactor = Reactor_model(materials=material_dict, 
                            total_height_active_part=500.0, 
-                           light_water_pool=True, 
-                           light_water_length=900.0, # cm
-                           light_water_height=900.0, # cm
-                           cavity=False,
-                           top_shielding= False,
+                           light_water_pool=False, 
                            slab_thickness=100,
                            concrete_wall_thickness=100,
                            calculation_sphere_coordinates=(0, 0, 500), 
-                           calculation_sphere_radius=50.0)
+                           calculation_sphere_radius=50.0,
+                           thickness_lead_top_shielding=20.0, 
+                           thickness_b4c_top_shielding=65.0)
+model = my_reactor.model
+model.export_to_xml()
+
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xy", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
+              pixels=(700, 700))
+
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xz", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
+              pixels=(700, 700))
+
+plot_geometry(materials = openmc.Materials(list(my_reactor.material.values())), 
+              plane="xz", origin=(0,0,0), saving_figure=False, dpi=500, height=1700, width=1700,
+              pixels=(700, 700), color_by="cell")
+
 os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
-factor = 5
+factor = 4
 new_material_dict = deepcopy(material_dict)
 
 for material_name, material in new_material_dict.items():
@@ -46,5 +58,6 @@ new_material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 my_reactor.material = new_material_dict
 model = my_reactor.model
 model.export_to_xml()
+
 # Example usage:
-create_weight_window(my_reactor.model, num_iterations=10, particles_per_batch=1000)
+create_weight_window(model, num_iterations=10, batches_number=100, particles_per_batch=10000)
