@@ -544,13 +544,13 @@ def create_weight_window(
             plot_mesh_tally_and_weight_window(
                 f'statepoint_itteration_{i}.h5',
                 f'weight_windows{i}.h5',
-                f'plot_{i}',
+                f'ww_{i}',
                 particle_type='neutron'
             )
             plot_mesh_tally_and_weight_window(
                 f'statepoint_itteration_{i}.h5',
                 f'weight_windows{i}.h5',
-                f'plot_{i}',
+                f'ww_{i}',
                 particle_type='photon'
             )
             if rm_intermediate_files :

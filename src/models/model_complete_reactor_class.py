@@ -295,7 +295,7 @@ class Reactor_model:
                 region=hex_prism_plug_assembly,
             )
 
-            concrete_slab_top_region = -openmc.model.RectangularParallelepiped(xmin=-width_cavity, xmax=width_cavity, ymin=-width_cavity, ymax=width_cavity, zmin=self.altimetry_plug_starting -1, zmax=self.altimetry_plug_starting -1 + thickness_concrete_slab_top) &  +openmc.model.HexagonalPrism(edge_length=200, orientation="y", origin=(0.0, 0.0))
+            concrete_slab_top_region = -openmc.model.RectangularParallelepiped(xmin=-width_cavity, xmax=width_cavity, ymin=-width_cavity, ymax=width_cavity, zmin=self.altimetry_plug_starting -1 -20, zmax=self.altimetry_plug_starting -1 + thickness_concrete_slab_top) &  +openmc.model.HexagonalPrism(edge_length=200, orientation="y", origin=(0.0, 0.0))
             concrete_slab_top_cell = openmc.Cell(
                 name="concrete_slab_top_cell",
                 fill=self.material["HEAVY_CONCRETE_HEMATITE_MATERIAL"],

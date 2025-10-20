@@ -62,7 +62,6 @@ if __name__ == "__main__":
     fom_neutron_list = []
     fom_photon_list = []
 
-
     for itteration in range(1, 9):
 
         settings = openmc.Settings()

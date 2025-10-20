@@ -20,7 +20,7 @@ os.environ["OPENMC_CROSS_SECTIONS"] = PATH_TO_CROSS_SECTIONS
 
 material_dict["FUEL_UO2_MATERIAL"].remove_element("U")
 
-statepoint = openmc.StatePoint(f"statepoint.0190.h5")
+statepoint = openmc.StatePoint(f"statepoint.0680.h5")
 
 results_path = "simulation_results.json"
 with open(results_path, "r") as f:
